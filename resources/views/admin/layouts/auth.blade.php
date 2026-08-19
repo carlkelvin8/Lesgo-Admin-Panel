@@ -13,17 +13,14 @@
         <main class="auth-shell-card grid overflow-hidden rounded-3xl lg:grid-cols-[0.9fr_1.1fr]">
             <section class="auth-visual hidden min-h-[620px] flex-col justify-between p-10 text-white lg:flex">
                 <div>
-                    <div class="flex items-center gap-3">
-                        <span class="auth-brand-mark inline-flex h-11 w-11 items-center justify-center rounded-xl">
-                            <i class="fas fa-bolt"></i>
+                    <a href="{{ route('admin.login') }}" class="block" aria-label="LesGo Courier Service admin login">
+                        <span class="lesgo-logo-crop lesgo-logo-login" aria-hidden="true">
+                            <img src="{{ asset('images/lesgo-brand.png') }}" alt="" class="lesgo-logo-source">
                         </span>
-                        <div>
-                            <p class="text-xl font-bold leading-tight">LesGo</p>
-                            <p class="text-xs uppercase tracking-[0.2em] text-white/60">Courier Service</p>
-                        </div>
-                    </div>
+                        <span class="mt-2 block text-xs font-semibold uppercase tracking-[0.28em] text-purple-100/75">Admin Panel</span>
+                    </a>
 
-                    <div class="mt-20">
+                    <div class="mt-14">
                         <p class="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-purple-200">Operations command center</p>
                         <h1 class="max-w-sm text-4xl font-semibold leading-tight">Everything moving. All in one place.</h1>
                         <p class="mt-5 max-w-sm leading-relaxed text-white/68">Monitor users, drivers, partners, orders, payments, and support activity from one secure workspace.</p>
@@ -43,11 +40,11 @@
             </section>
 
             <section class="auth-form-panel flex min-h-[620px] flex-col justify-center bg-white px-6 py-10 sm:px-12 lg:px-16">
-                <div class="mb-9 flex items-center gap-3 lg:hidden">
-                    <span class="login-brand-mark inline-flex h-11 w-11 items-center justify-center rounded-xl text-white">
-                        <i class="fas fa-bolt"></i>
+                <div class="mb-8 lg:hidden">
+                    <span class="lesgo-logo-crop lesgo-logo-mobile" aria-hidden="true">
+                        <img src="{{ asset('images/lesgo-brand.png') }}" alt="" class="lesgo-logo-source">
                     </span>
-                    <div><p class="text-lg font-bold text-gray-900">LesGo Admin</p><p class="text-xs text-gray-500">Courier Service</p></div>
+                    <p class="mt-2 text-center text-[10px] font-semibold uppercase tracking-[0.24em] text-purple-700">Admin Panel</p>
                 </div>
 
                 @yield('content')

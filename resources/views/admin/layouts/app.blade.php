@@ -11,13 +11,13 @@
     <div class="flex min-h-screen">
         <!-- Sidebar -->
         <aside class="admin-sidebar w-64 text-gray-300 flex flex-col fixed h-full">
-            <div class="admin-brand p-4 border-b">
-                <h1 class="text-xl font-bold text-white flex items-center gap-2">
-                    <span class="admin-brand-mark w-9 h-9 rounded-xl inline-flex items-center justify-center">
-                        <i class="fas fa-bolt text-sm"></i>
+            <div class="admin-brand border-b px-4 py-3">
+                <a href="{{ route('admin.dashboard') }}" class="block" aria-label="LesGo Admin dashboard">
+                    <span class="lesgo-logo-crop lesgo-logo-sidebar" aria-hidden="true">
+                        <img src="{{ asset('images/lesgo-brand.png') }}" alt="" class="lesgo-logo-source">
                     </span>
-                    <span>LesGo <span class="font-medium text-purple-200">Admin</span></span>
-                </h1>
+                    <span class="mt-1 block text-center text-[10px] font-semibold uppercase tracking-[0.24em] text-purple-200/70">Admin Panel</span>
+                </a>
             </div>
             <nav class="flex-1 overflow-y-auto py-4">
                 <a href="{{ route('admin.dashboard') }}"

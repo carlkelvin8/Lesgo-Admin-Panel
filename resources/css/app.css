@@ -54,12 +54,60 @@
 
     .admin-brand {
         border-color: rgba(255, 255, 255, 0.13);
+        background: rgba(27, 7, 38, 0.12);
     }
 
-    .admin-brand-mark {
-        background: rgba(255, 255, 255, 0.96);
-        color: var(--lesgo-plum-700);
-        box-shadow: 0 8px 24px rgba(20, 4, 30, 0.22);
+    .lesgo-logo-crop {
+        --logo-canvas-size: 24rem;
+        position: relative;
+        display: block;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 1rem;
+        background: #421451;
+        box-shadow: 0 14px 34px rgba(15, 2, 24, 0.22);
+        isolation: isolate;
+    }
+
+    .lesgo-logo-crop::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        pointer-events: none;
+        background: linear-gradient(120deg, rgba(255, 255, 255, 0.06), transparent 45%);
+    }
+
+    .lesgo-logo-source {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: var(--logo-canvas-size);
+        max-width: none;
+        height: auto;
+        transform: translate(-50%, -50%);
+        user-select: none;
+    }
+
+    .lesgo-logo-sidebar {
+        --logo-canvas-size: 23rem;
+        width: 100%;
+        height: 4.75rem;
+    }
+
+    .lesgo-logo-login {
+        --logo-canvas-size: 34rem;
+        width: 100%;
+        max-width: 23rem;
+        height: 7rem;
+    }
+
+    .lesgo-logo-mobile {
+        --logo-canvas-size: 27rem;
+        width: 100%;
+        max-width: 19rem;
+        height: 5.75rem;
+        margin-inline: auto;
     }
 
     .sidebar-section-label {
@@ -183,12 +231,6 @@
         background: rgba(255, 255, 255, 0.035);
     }
 
-    .auth-brand-mark {
-        background: #fff;
-        color: var(--lesgo-plum-700);
-        box-shadow: 0 12px 30px rgba(16, 2, 24, 0.22);
-    }
-
     .auth-feature {
         border: 1px solid rgba(255, 255, 255, 0.1);
         background: rgba(255, 255, 255, 0.065);
@@ -282,13 +324,8 @@
         accent-color: var(--lesgo-plum-700);
     }
 
-    .login-brand-mark,
     .brand-button {
         background: linear-gradient(135deg, var(--lesgo-violet), var(--lesgo-plum-700) 55%, var(--lesgo-plum-900));
-    }
-
-    .login-brand-mark {
-        box-shadow: 0 12px 28px rgba(96, 39, 119, 0.28);
     }
 
     .brand-button {
