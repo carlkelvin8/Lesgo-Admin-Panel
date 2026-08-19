@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Models\SecuritySetting;
-use App\Models\RateLimitRule;
 use App\Models\DataRetentionPolicy;
+use App\Models\RateLimitRule;
+use App\Models\SecuritySetting;
 use Illuminate\Database\Seeder;
 
 class SecuritySettingsSeeder extends Seeder
@@ -24,7 +24,7 @@ class SecuritySettingsSeeder extends Seeder
             ],
             [
                 'setting_key' => '2fa_required_for_admin',
-                'setting_value' => '1',
+                'setting_value' => '0',
                 'data_type' => 'boolean',
                 'description' => 'Require 2FA for admin users',
                 'category' => 'authentication',
@@ -54,7 +54,7 @@ class SecuritySettingsSeeder extends Seeder
                 'setting_value' => '15',
                 'data_type' => 'integer',
                 'description' => 'Account lockout duration in minutes',
-                'category' => 'authentication',ptable for now
+                'category' => 'authentication',
                 'is_sensitive' => false,
                 'requires_restart' => false,
             ],

@@ -22,6 +22,14 @@ class Payment extends Model
         'provider_reference',
         'paid_at',
         'meta',
+        'refund_status',
+        'refunded_amount',
+        'refund_reason',
+        'refunded_at',
+        'reconciliation_status',
+        'reconciled_at',
+        'reconciled_by',
+        'reconciliation_notes',
     ];
 
     protected function casts(): array
@@ -29,6 +37,10 @@ class Payment extends Model
         return [
             'paid_at' => 'datetime',
             'meta' => 'array',
+            'amount' => 'decimal:2',
+            'refunded_amount' => 'decimal:2',
+            'refunded_at' => 'datetime',
+            'reconciled_at' => 'datetime',
         ];
     }
 
@@ -40,5 +52,10 @@ class Payment extends Model
     public function customer()
     {
         return $this->belongsTo(User::class, 'customer_id');
+    }
+
+    public function reconciler()
+    {
+        return $this->belongsTo(User::class, 'reconciled_by');
     }
 }

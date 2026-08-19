@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\DeliverAdminNotification;
 use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -36,6 +37,10 @@ class NotificationController extends Controller
             } else {
                 $query->whereNull('read_at');
             }
+        }
+
+        if ($request->filled('delivery_status')) {
+            $query->where('delivery_status', $request->delivery_status);
         }
 
         $notifications = $query->latest()->paginate(20)->withQueryString();
@@ -94,7 +99,7 @@ class NotificationController extends Controller
 
         DB::transaction(function () use ($recipients, $validated, $payload) {
             foreach ($recipients as $userId) {
-                Notification::create([
+                $notification = Notification::create([
                     'user_id' => $userId,
                     'type' => $validated['type'],
                     'title' => $validated['title'],
@@ -102,6 +107,8 @@ class NotificationController extends Controller
                     'channel' => $validated['channel'],
                     'data' => $payload,
                 ]);
+
+                DeliverAdminNotification::dispatch($notification->id)->afterCommit();
             }
         });
 
@@ -124,5 +131,24 @@ class NotificationController extends Controller
 
         return redirect()->route('admin.notifications.index')
             ->with('success', 'Notification deleted successfully.');
+    }
+
+    public function retry(Notification $notification)
+    {
+        if ($notification->delivery_status === 'delivered') {
+            return back()->withErrors(['notification' => 'This notification was already delivered.']);
+        }
+
+        $notification->update([
+            'delivery_status' => 'pending',
+            'delivered_via' => null,
+            'delivery_reference' => null,
+            'failure_reason' => null,
+            'failed_at' => null,
+        ]);
+
+        DeliverAdminNotification::dispatch($notification->id)->afterCommit();
+
+        return back()->with('success', 'Notification delivery has been queued again.');
     }
 }

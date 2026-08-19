@@ -2,17 +2,25 @@
 
 namespace Tests\Feature;
 
-use Illuminate\Auth\Notifications\ResetPassword as ResetPasswordNotification;
 use App\Models\DailyReport;
+use App\Models\DataRetentionPolicy;
+use App\Models\IpBlacklist;
 use App\Models\MenuCategory;
 use App\Models\Notification;
 use App\Models\Order;
 use App\Models\Partner;
 use App\Models\Payment;
 use App\Models\SecurityEvent;
+use App\Models\SecuritySetting;
 use App\Models\Service;
 use App\Models\SupportTicket;
 use App\Models\User;
+use App\Models\Wallet;
+use App\Models\WalletTopUp;
+use App\Models\WalletTransaction;
+use App\Services\AdminNetworkAccess;
+use Database\Seeders\SecuritySettingsSeeder;
+use Illuminate\Auth\Notifications\ResetPassword as ResetPasswordNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification as NotificationFacade;
@@ -41,7 +49,8 @@ class AdminFeaturesTest extends TestCase
             'admin.tickets.index', 'admin.ratings.index', 'admin.notifications.index',
             'admin.faq.categories', 'admin.faq.articles', 'admin.document-verifications.index',
             'admin.security-events.index', 'admin.audit-logs.index', 'admin.analytics.index',
-            'admin.reports.index',
+            'admin.reports.index', 'admin.security-settings.index', 'admin.profile.edit',
+            'admin.wallets.top-ups.index',
             'admin.users.create', 'admin.drivers.create', 'admin.partners.create',
             'admin.services.create', 'admin.notifications.create',
             'admin.faq.categories.create', 'admin.faq.articles.create',
@@ -68,6 +77,8 @@ class AdminFeaturesTest extends TestCase
 
         $this->assertSame(2, Notification::count());
         $this->assertDatabaseMissing('notifications', ['user_id' => $this->admin->id]);
+        $this->assertSame(0, Notification::where('delivery_status', '!=', 'delivered')->count());
+        $this->assertSame(2, Notification::where('delivered_via', 'database')->count());
     }
 
     public function test_inactive_admin_cannot_log_in_and_repeated_failures_create_a_security_event(): void
@@ -279,5 +290,195 @@ class AdminFeaturesTest extends TestCase
         $this->assertTrue($event->fresh()->is_resolved);
         $this->assertSame($this->admin->email, $event->fresh()->resolved_by);
         $this->get(route('admin.security-events.show', $event))->assertOk()->assertSee('Verified with the account owner.');
+    }
+
+    public function test_finance_admin_is_limited_to_financial_and_read_only_user_modules(): void
+    {
+        $finance = User::factory()->create([
+            'role' => 'admin',
+            'admin_role' => 'finance',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($finance);
+
+        $this->get(route('admin.payments.index'))->assertOk();
+        $this->get(route('admin.wallets.index'))->assertOk();
+        $this->get(route('admin.users.index'))->assertOk();
+        $this->get(route('admin.users.create'))->assertForbidden();
+        $this->get(route('admin.partners.index'))->assertForbidden();
+        $this->get(route('admin.notifications.index'))->assertForbidden();
+        $this->get(route('admin.security-settings.index'))->assertForbidden();
+    }
+
+    public function test_super_admin_can_manage_security_settings_and_network_rules_safely(): void
+    {
+        $setting = SecuritySetting::create([
+            'setting_key' => 'max_failed_login_attempts',
+            'setting_value' => '5',
+            'data_type' => 'integer',
+            'description' => 'Maximum failed logins',
+            'category' => 'authentication',
+        ]);
+        DataRetentionPolicy::create([
+            'data_type' => 'security_events',
+            'category' => 'security',
+            'retention_days' => 730,
+            'deletion_method' => 'hard_delete',
+            'is_active' => true,
+        ]);
+
+        $this->get(route('admin.security-settings.index'))
+            ->assertOk()
+            ->assertSee('Security Center')
+            ->assertSee('Maximum failed logins');
+
+        $this->patch(route('admin.security-settings.settings.update', $setting), [
+            'setting_value' => '7',
+        ])->assertSessionHas('success');
+
+        $this->assertSame('7', $setting->fresh()->setting_value);
+        $this->assertSame($this->admin->email, $setting->fresh()->updated_by);
+
+        IpBlacklist::create([
+            'ip_address' => '203.0.113.5',
+            'reason' => 'security_threat',
+            'description' => 'Automated test rule',
+            'is_active' => true,
+            'created_by' => $this->admin->email,
+        ]);
+
+        $networkAccess = app(AdminNetworkAccess::class);
+        $this->assertFalse($networkAccess->allows('203.0.113.5'));
+        $this->assertTrue($networkAccess->allows('203.0.113.6'));
+
+        $this->post(route('admin.security-settings.ip-rules.store'), [
+            'list' => 'blacklist',
+            'ip_address' => '127.0.0.1',
+            'reason' => 'security_threat',
+        ])->assertSessionHasErrors('ip_address');
+    }
+
+    public function test_security_defaults_can_be_seeded_without_enabling_unconfigured_two_factor_auth(): void
+    {
+        $this->seed(SecuritySettingsSeeder::class);
+
+        $this->assertDatabaseHas('security_settings', [
+            'setting_key' => '2fa_required_for_admin',
+            'setting_value' => '0',
+        ]);
+        $this->assertDatabaseHas('rate_limit_rules', ['name' => 'Authentication Endpoints']);
+        $this->assertDatabaseHas('data_retention_policies', ['data_type' => 'security_events']);
+    }
+
+    public function test_admin_can_update_profile_password_and_invalidate_other_sessions(): void
+    {
+        $this->put(route('admin.profile.update'), [
+            'name' => 'Updated Administrator',
+            'email' => $this->admin->email,
+            'phone_number' => '09171234567',
+        ])->assertSessionHas('success');
+
+        $this->put(route('admin.profile.password'), [
+            'current_password' => 'password',
+            'password' => 'StrongerPassword123',
+            'password_confirmation' => 'StrongerPassword123',
+        ])->assertSessionHas('success');
+
+        $admin = $this->admin->fresh();
+        $this->assertSame('Updated Administrator', $admin->name);
+        $this->assertTrue(Hash::check('StrongerPassword123', $admin->password));
+        $this->assertNotNull($admin->password_changed_at);
+    }
+
+    public function test_finance_admin_can_adjust_wallet_and_approve_top_up_once(): void
+    {
+        $customer = User::factory()->create(['role' => 'customer', 'is_active' => true]);
+        $wallet = Wallet::create(['user_id' => $customer->id, 'balance' => 100, 'currency' => 'PHP']);
+
+        $this->post(route('admin.wallets.adjust', $wallet), [
+            'type' => 'debit',
+            'amount' => 25,
+            'reason' => 'Correction requested in support ticket TKT-100.',
+            'reference' => 'TKT-100',
+        ])->assertSessionHas('success');
+
+        $this->assertSame('75.00', $wallet->fresh()->balance);
+        $this->assertDatabaseHas('wallet_transactions', [
+            'wallet_id' => $wallet->id,
+            'type' => 'debit',
+            'amount' => 25,
+            'created_by' => $this->admin->id,
+        ]);
+
+        $topUp = WalletTopUp::create([
+            'user_id' => $customer->id,
+            'wallet_id' => $wallet->id,
+            'amount' => 150,
+            'fee' => 5,
+            'total_charged' => 155,
+            'currency' => 'PHP',
+            'status' => 'pending',
+            'payment_method' => 'xendit',
+            'provider' => 'xendit',
+            'external_id' => 'TOPUP-TEST-001',
+        ]);
+
+        $this->post(route('admin.wallets.top-ups.review', $topUp), [
+            'decision' => 'approve',
+        ])->assertSessionHas('success');
+
+        $this->assertSame('225.00', $wallet->fresh()->balance);
+        $this->assertSame('paid', $topUp->fresh()->status);
+        $this->assertSame(1, WalletTransaction::where('source_type', 'wallet_top_up')->where('source_id', $topUp->id)->count());
+
+        $this->post(route('admin.wallets.top-ups.review', $topUp), [
+            'decision' => 'approve',
+        ])->assertSessionHasErrors('decision');
+
+        $this->assertSame('225.00', $wallet->fresh()->balance);
+    }
+
+    public function test_finance_admin_can_record_partial_refund_and_reconcile_payment(): void
+    {
+        $customer = User::factory()->create(['role' => 'customer', 'is_active' => true]);
+        $service = Service::create([
+            'code' => 'REFUND-RIDE', 'name' => 'Refund Ride', 'base_fare' => 50,
+            'per_km_rate' => 10, 'per_minute_rate' => 2, 'minimum_fare' => 50,
+        ]);
+        $order = Order::create([
+            'customer_id' => $customer->id,
+            'service_id' => $service->id,
+            'status' => 'completed',
+            'payment_status' => 'paid',
+            'estimated_fare' => 200,
+        ]);
+        $payment = Payment::create([
+            'order_id' => $order->id,
+            'customer_id' => $customer->id,
+            'amount' => 200,
+            'currency' => 'PHP',
+            'status' => 'paid',
+            'provider_reference' => 'PAY-TEST-001',
+            'paid_at' => now(),
+        ]);
+
+        $this->post(route('admin.payments.refund', $payment), [
+            'amount' => 50,
+            'reason' => 'Partial service refund approved after investigation.',
+        ])->assertSessionHas('success');
+
+        $this->assertSame('paid', $payment->fresh()->status);
+        $this->assertSame('50.00', $payment->fresh()->refunded_amount);
+        $this->assertSame('paid', $order->fresh()->payment_status);
+
+        $this->post(route('admin.payments.reconcile', $payment), [
+            'reconciliation_status' => 'matched',
+            'reconciliation_notes' => 'Matched against the provider settlement report.',
+        ])->assertSessionHas('success');
+
+        $this->assertSame('matched', $payment->fresh()->reconciliation_status);
+        $this->assertSame($this->admin->id, $payment->fresh()->reconciled_by);
+        $this->assertNotNull($payment->fresh()->reconciled_at);
     }
 }

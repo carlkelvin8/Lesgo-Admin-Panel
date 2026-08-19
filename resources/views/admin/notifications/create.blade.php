@@ -31,7 +31,7 @@
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div><label class="block text-sm font-medium mb-1">Type</label><input name="type" value="{{ old('type', 'admin.announcement') }}" required class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="admin.announcement"></div>
-        <div><label class="block text-sm font-medium mb-1">Channel</label><select name="channel" class="w-full border border-gray-300 rounded-lg px-3 py-2">@foreach(['in_app','push','sms','email'] as $channel)<option value="{{ $channel }}" @selected(old('channel', 'in_app') === $channel)>{{ strtoupper(str_replace('_', ' ', $channel)) }}</option>@endforeach</select></div>
+        <div><label class="block text-sm font-medium mb-1">Channel</label><select name="channel" class="w-full border border-gray-300 rounded-lg px-3 py-2">@foreach(['in_app','push','sms','email'] as $channel)<option value="{{ $channel }}" @selected(old('channel', 'in_app') === $channel)>{{ strtoupper(str_replace('_', ' ', $channel)) }}</option>@endforeach</select><p class="mt-1 text-xs text-gray-500">Push, SMS, and email are delivered by the notification queue and tracked per recipient.</p></div>
     </div>
     <div><label class="block text-sm font-medium mb-1">Title</label><input name="title" value="{{ old('title') }}" required maxlength="255" class="w-full border border-gray-300 rounded-lg px-3 py-2"></div>
     <div><label class="block text-sm font-medium mb-1">Message</label><textarea name="body" rows="6" required class="w-full border border-gray-300 rounded-lg px-3 py-2">{{ old('body') }}</textarea></div>

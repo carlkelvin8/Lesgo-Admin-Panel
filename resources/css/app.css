@@ -50,6 +50,32 @@
             radial-gradient(circle at 15% 70%, rgba(122, 54, 153, 0.2), transparent 20rem),
             linear-gradient(165deg, var(--lesgo-plum-800) 0%, var(--lesgo-plum-900) 48%, var(--lesgo-plum-950) 100%);
         box-shadow: 12px 0 36px rgba(48, 16, 63, 0.14);
+        z-index: 40;
+        transition: transform 200ms ease;
+    }
+
+    .admin-sidebar-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 35;
+        display: none;
+        border: 0;
+        background: rgba(24, 7, 32, 0.55);
+        backdrop-filter: blur(2px);
+    }
+
+    @media (max-width: 767px) {
+        .admin-sidebar {
+            transform: translateX(-100%);
+        }
+
+        .admin-sidebar.is-open {
+            transform: translateX(0);
+        }
+
+        .admin-sidebar-overlay.is-open {
+            display: block;
+        }
     }
 
     .admin-brand {

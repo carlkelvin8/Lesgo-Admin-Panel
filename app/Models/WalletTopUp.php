@@ -25,6 +25,9 @@ class WalletTopUp extends Model
         'invoice_url',
         'paid_at',
         'meta',
+        'reviewed_at',
+        'reviewed_by',
+        'review_notes',
     ];
 
     protected function casts(): array
@@ -35,6 +38,7 @@ class WalletTopUp extends Model
             'total_charged' => 'decimal:2',
             'paid_at' => 'datetime',
             'meta' => 'array',
+            'reviewed_at' => 'datetime',
         ];
     }
 
@@ -46,5 +50,10 @@ class WalletTopUp extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function reviewer()
+    {
+        return $this->belongsTo(User::class, 'reviewed_by');
     }
 }

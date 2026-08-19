@@ -30,6 +30,15 @@
                 <option value="read" @selected(request('read_status') === 'read')>Read</option>
             </select>
         </div>
+        <div>
+            <label class="block text-xs text-gray-500 mb-1">Delivery</label>
+            <select name="delivery_status" class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                <option value="">All</option>
+                @foreach(['pending','processing','retrying','delivered','failed'] as $status)
+                    <option value="{{ $status }}" @selected(request('delivery_status') === $status)>{{ ucfirst($status) }}</option>
+                @endforeach
+            </select>
+        </div>
         <button class="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm">Filter</button>
         <a href="{{ route('admin.notifications.index') }}" class="text-gray-500 px-3 py-2 text-sm">Clear</a>
     </form>
@@ -52,7 +61,11 @@
                         <td class="px-6 py-4"><p class="font-medium">{{ $notification->user->name ?? 'Deleted user' }}</p><p class="text-xs text-gray-500">{{ $notification->user->email ?? '—' }}</p></td>
                         <td class="px-6 py-4 max-w-md"><p class="font-medium text-gray-800">{{ $notification->title }}</p><p class="text-xs text-gray-500 truncate">{{ $notification->body }}</p></td>
                         <td class="px-6 py-4"><p>{{ $notification->type }}</p><p class="text-xs text-gray-500">{{ strtoupper(str_replace('_', ' ', $notification->channel)) }}</p></td>
-                        <td class="px-6 py-4"><span class="px-2 py-1 rounded-full text-xs {{ $notification->read_at ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700' }}">{{ $notification->read_at ? 'Read' : 'Unread' }}</span></td>
+                        <td class="px-6 py-4">
+                            @php $deliveryColors = ['delivered'=>'bg-green-100 text-green-700','failed'=>'bg-red-100 text-red-700','retrying'=>'bg-orange-100 text-orange-700','processing'=>'bg-blue-100 text-blue-700','pending'=>'bg-yellow-100 text-yellow-700']; @endphp
+                            <span class="px-2 py-1 rounded-full text-xs {{ $deliveryColors[$notification->delivery_status] ?? 'bg-gray-100 text-gray-700' }}">{{ ucfirst($notification->delivery_status ?? 'pending') }}</span>
+                            <p class="mt-1 text-[11px] text-gray-400">{{ $notification->read_at ? 'Read' : 'Unread' }}</p>
+                        </td>
                         <td class="px-6 py-4 text-xs text-gray-500">{{ $notification->created_at->format('M d, Y H:i') }}</td>
                         <td class="px-6 py-4 text-right"><a href="{{ route('admin.notifications.show', $notification) }}" class="text-blue-600 hover:underline">View</a></td>
                     </tr>

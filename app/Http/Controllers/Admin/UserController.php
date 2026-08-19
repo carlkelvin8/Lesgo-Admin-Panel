@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
@@ -56,8 +57,13 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email',
             'phone_number' => 'nullable|string|max:20',
             'role' => 'required|in:customer,driver,partner,admin',
+            'admin_role' => ['nullable', 'required_if:role,admin', Rule::in(array_keys(config('admin.roles')))],
             'password' => 'required|string|min:8|confirmed',
         ]);
+
+        if ($validated['role'] !== 'admin') {
+            $validated['admin_role'] = null;
+        }
 
         $validated['password'] = Hash::make($validated['password']);
         $validated['is_active'] = true;
@@ -80,11 +86,20 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email,'.$user->id,
             'phone_number' => 'nullable|string|max:20',
             'role' => 'required|in:customer,driver,partner,admin',
+            'admin_role' => ['nullable', 'required_if:role,admin', Rule::in(array_keys(config('admin.roles')))],
             'is_active' => 'boolean',
         ]);
 
+        if ($validated['role'] !== 'admin') {
+            $validated['admin_role'] = null;
+        }
+
         if ($user->is($request->user()) && ($validated['role'] !== 'admin' || ! $request->boolean('is_active'))) {
             return back()->withInput()->withErrors(['role' => 'You cannot remove your own admin access or deactivate your own account.']);
+        }
+
+        if ($this->wouldRemoveLastSuperAdmin($user, $validated['role'], $validated['admin_role'], $request->boolean('is_active'))) {
+            return back()->withInput()->withErrors(['admin_role' => 'At least one active super administrator must remain.']);
         }
 
         $user->update($validated);
@@ -97,6 +112,10 @@ class UserController extends Controller
     {
         if ($user->is(auth()->user()) && $user->is_active) {
             return back()->withErrors(['user' => 'You cannot deactivate your own admin account.']);
+        }
+
+        if ($user->is_active && $this->wouldRemoveLastSuperAdmin($user, $user->role, $user->admin_role, false)) {
+            return back()->withErrors(['user' => 'The last active super administrator cannot be deactivated.']);
         }
 
         $newStatus = ! $user->is_active;
@@ -116,9 +135,32 @@ class UserController extends Controller
             return back()->withErrors(['user' => 'You cannot delete your own admin account.']);
         }
 
+        if ($this->wouldRemoveLastSuperAdmin($user, $user->role, $user->admin_role, false)) {
+            return back()->withErrors(['user' => 'The last active super administrator cannot be deleted.']);
+        }
+
         $user->delete();
 
         return redirect()->route('admin.users.index')
             ->with('success', 'User deleted successfully.');
+    }
+
+    private function wouldRemoveLastSuperAdmin(User $user, string $role, ?string $adminRole, bool $isActive): bool
+    {
+        if (! $user->isAdmin() || ! $user->isSuperAdmin() || ! $user->is_active) {
+            return false;
+        }
+
+        if ($role === 'admin' && ($adminRole ?: 'super_admin') === 'super_admin' && $isActive) {
+            return false;
+        }
+
+        return User::query()
+            ->where('role', 'admin')
+            ->where('is_active', true)
+            ->where(function ($query) {
+                $query->where('admin_role', 'super_admin')->orWhereNull('admin_role');
+            })
+            ->count() <= 1;
     }
 }

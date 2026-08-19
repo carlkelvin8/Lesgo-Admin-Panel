@@ -35,4 +35,15 @@ return [
         ],
     ],
 
+    'firebase' => [
+        'project_id' => env('FIREBASE_PROJECT_ID'),
+        'credentials' => env('FIREBASE_CREDENTIALS'),
+        'credentials_base64' => env('FIREBASE_CREDENTIALS_BASE64'),
+    ],
+
+    'sms' => [
+        'webhook_url' => env('SMS_WEBHOOK_URL'),
+        'webhook_token' => env('SMS_WEBHOOK_TOKEN'),
+    ],
+
 ];

@@ -17,6 +17,13 @@ class Notification extends Model
         'data',
         'channel',
         'read_at',
+        'delivery_status',
+        'delivery_attempts',
+        'delivered_via',
+        'delivery_reference',
+        'sent_at',
+        'failed_at',
+        'failure_reason',
     ];
 
     protected function casts(): array
@@ -24,6 +31,9 @@ class Notification extends Model
         return [
             'data' => 'array',
             'read_at' => 'datetime',
+            'delivery_attempts' => 'integer',
+            'sent_at' => 'datetime',
+            'failed_at' => 'datetime',
         ];
     }
 

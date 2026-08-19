@@ -12,6 +12,10 @@ Operations and management dashboard for LesGo Courier Service, built with Larave
 - Support tickets, FAQ knowledge base, ratings, and review moderation
 - Analytics, daily reports, revenue reports, and CSV export
 - Security-event monitoring and audit logs
+- Role-based access for Super Admin, Operations, Finance, and Support staff
+- Administrator profile, password rotation, and active-session management
+- Queued in-app, email, Firebase HTTP v1 push, and SMS-webhook delivery tracking
+- Wallet adjustments, top-up review, refund records, and payment reconciliation
 - Responsive LesGo purple-and-white interface
 
 ## Requirements
@@ -73,6 +77,10 @@ Open `http://127.0.0.1:8000/admin/login`.
 
 Change this password immediately outside local development.
 
+In production, the seeder will only create/update the administrator when
+`ADMIN_PASSWORD` is explicitly configured. Existing administrator accounts are
+automatically assigned the backward-compatible `super_admin` access level.
+
 ## Testing
 
 The automated tests use an isolated SQLite in-memory database; the application itself defaults to MySQL.
@@ -84,3 +92,22 @@ php artisan test
 ## Password Reset Email
 
 The local environment defaults to the `log` mailer. Reset links are written to `storage/logs/laravel.log`. Configure a production mail provider in `.env` before deployment.
+
+## Production Operations
+
+Run migrations during deployment and configure a persistent queue worker:
+
+```bash
+php artisan migrate --force
+php artisan db:seed --class=SecuritySettingsSeeder --force
+php artisan queue:work --queue=notifications,default --tries=3 --timeout=60
+```
+
+Email notifications use the configured Laravel mailer. Firebase push uses the
+FCM HTTP v1 API and accepts either `FIREBASE_CREDENTIALS` (service-account JSON
+file path) or `FIREBASE_CREDENTIALS_BASE64` plus `FIREBASE_PROJECT_ID`. SMS uses
+the provider-neutral `SMS_WEBHOOK_URL` and optional `SMS_WEBHOOK_TOKEN`.
+
+The August 19 operations migration is additive: it does not remove or rename
+existing mobile columns, and partial refunds remain `paid` in the existing
+payment status until the full amount has been refunded.

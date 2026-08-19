@@ -2,6 +2,10 @@
 @section('title', 'Wallet Details - LesGo Admin')
 @section('header', 'Wallet Details')
 
+@section('actions')
+<a href="{{ route('admin.wallets.top-ups.index', ['search' => $wallet->user->email ?? '']) }}" class="rounded-lg border bg-white px-4 py-2 text-sm text-gray-700"><i class="fas fa-arrow-up-right-dots mr-1"></i> Review Top-ups</a>
+@endsection
+
 @section('content')
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <div class="bg-white rounded-xl shadow-sm p-6">
@@ -24,6 +28,20 @@
         </div>
     </div>
 </div>
+
+@if(auth()->user()->hasAdminPermission('wallets.manage'))
+<div class="mt-6 rounded-xl border border-purple-100 bg-white p-6 shadow-sm">
+    <h3 class="font-semibold text-gray-900">Manual wallet adjustment</h3>
+    <p class="mt-1 text-sm text-gray-500">Every credit or debit creates an immutable ledger record with your administrator ID.</p>
+    <form method="POST" action="{{ route('admin.wallets.adjust', $wallet) }}" class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-5" onsubmit="return confirm('Record this wallet adjustment?')">
+        @csrf
+        <div><label class="mb-1 block text-xs font-medium">Type</label><select name="type" required class="w-full rounded-lg border px-3 py-2"><option value="credit">Credit</option><option value="debit">Debit</option></select></div>
+        <div><label class="mb-1 block text-xs font-medium">Amount</label><input type="number" name="amount" min="0.01" step="0.01" required class="w-full rounded-lg border px-3 py-2"></div>
+        <div><label class="mb-1 block text-xs font-medium">Reference</label><input name="reference" maxlength="255" class="w-full rounded-lg border px-3 py-2" placeholder="Optional ticket/reference"></div>
+        <div class="lg:col-span-2"><label class="mb-1 block text-xs font-medium">Reason</label><div class="flex gap-2"><input name="reason" minlength="10" maxlength="1000" required class="min-w-0 flex-1 rounded-lg border px-3 py-2" placeholder="Required operational reason"><button class="rounded-lg bg-purple-700 px-4 py-2 text-sm font-semibold text-white">Record</button></div></div>
+    </form>
+</div>
+@endif
 
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
     <div class="bg-white rounded-xl shadow-sm overflow-hidden">

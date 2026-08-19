@@ -2,11 +2,10 @@
 
 namespace App\Models;
 
-use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class User extends Authenticatable
 {
@@ -17,6 +16,8 @@ class User extends Authenticatable
         'email',
         'phone_number',
         'role',
+        'admin_role',
+        'admin_permissions',
         'is_active',
         'password',
         'profile_picture',
@@ -36,6 +37,8 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_active' => 'boolean',
             'deactivated_at' => 'datetime',
+            'admin_permissions' => 'array',
+            'password_changed_at' => 'datetime',
         ];
     }
 
@@ -57,5 +60,38 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return $this->role === 'admin';
+    }
+
+    public function effectiveAdminRole(): ?string
+    {
+        if (! $this->isAdmin()) {
+            return null;
+        }
+
+        return $this->admin_role ?: 'super_admin';
+    }
+
+    public function adminRoleLabel(): string
+    {
+        $role = $this->effectiveAdminRole();
+
+        return config("admin.roles.{$role}.label", 'Administrator');
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->effectiveAdminRole() === 'super_admin';
+    }
+
+    public function hasAdminPermission(string $permission): bool
+    {
+        if (! $this->isAdmin() || ! $this->is_active) {
+            return false;
+        }
+
+        $rolePermissions = config('admin.roles.'.$this->effectiveAdminRole().'.permissions', []);
+        $permissions = array_unique([...$rolePermissions, ...($this->admin_permissions ?? [])]);
+
+        return in_array('*', $permissions, true) || in_array($permission, $permissions, true);
     }
 }
