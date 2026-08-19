@@ -1,0 +1,317 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+
+    /* LesGo plum palette. Existing blue utilities become the brand color. */
+    --color-blue-50: #fbf7ff;
+    --color-blue-100: #f4eafd;
+    --color-blue-200: #e8d4f7;
+    --color-blue-300: #d2aae9;
+    --color-blue-400: #b878d5;
+    --color-blue-500: #974eb8;
+    --color-blue-600: #7a3699;
+    --color-blue-700: #602777;
+    --color-blue-800: #4d205f;
+    --color-blue-900: #371642;
+    --color-blue-950: #230c2c;
+}
+
+:root {
+    --lesgo-plum-950: #210d2d;
+    --lesgo-plum-900: #30103f;
+    --lesgo-plum-800: #461457;
+    --lesgo-plum-700: #602777;
+    --lesgo-violet: #8c4bab;
+    --lesgo-lilac: #f4eafd;
+}
+
+@layer base {
+    ::selection {
+        background: #d2aae9;
+        color: #30103f;
+    }
+}
+
+@layer components {
+    .admin-shell {
+        background:
+            radial-gradient(circle at 92% 3%, rgba(184, 120, 213, 0.13), transparent 24rem),
+            linear-gradient(145deg, #ffffff 0%, #fbf9fd 48%, #f7f1fa 100%);
+    }
+
+    .admin-sidebar {
+        background:
+            radial-gradient(circle at 90% 12%, rgba(184, 120, 213, 0.38), transparent 17rem),
+            radial-gradient(circle at 15% 70%, rgba(122, 54, 153, 0.2), transparent 20rem),
+            linear-gradient(165deg, var(--lesgo-plum-800) 0%, var(--lesgo-plum-900) 48%, var(--lesgo-plum-950) 100%);
+        box-shadow: 12px 0 36px rgba(48, 16, 63, 0.14);
+    }
+
+    .admin-brand {
+        border-color: rgba(255, 255, 255, 0.13);
+    }
+
+    .admin-brand-mark {
+        background: rgba(255, 255, 255, 0.96);
+        color: var(--lesgo-plum-700);
+        box-shadow: 0 8px 24px rgba(20, 4, 30, 0.22);
+    }
+
+    .sidebar-section-label {
+        color: rgba(244, 234, 253, 0.5);
+    }
+
+    .sidebar-link {
+        position: relative;
+        margin-inline: 0.65rem;
+        border-radius: 0.75rem;
+        color: rgba(255, 255, 255, 0.72);
+        transition: background-color 160ms ease, color 160ms ease, transform 160ms ease;
+    }
+
+    .sidebar-link:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+        transform: translateX(2px);
+    }
+
+    .sidebar-link.active {
+        background: #fff;
+        color: var(--lesgo-plum-700);
+        box-shadow: 0 10px 25px rgba(20, 4, 30, 0.18);
+    }
+
+    .sidebar-link.active::before {
+        content: '';
+        position: absolute;
+        left: -0.65rem;
+        width: 0.22rem;
+        height: 1.4rem;
+        border-radius: 999px;
+        background: #fff;
+    }
+
+    .admin-user-panel {
+        border-color: rgba(255, 255, 255, 0.13);
+        background: rgba(14, 3, 22, 0.14);
+    }
+
+    .admin-topbar {
+        border-color: #f0e6f5;
+        background: rgba(255, 255, 255, 0.92);
+        box-shadow: 0 5px 24px rgba(48, 16, 63, 0.05);
+        backdrop-filter: blur(12px);
+    }
+
+    .login-shell {
+        position: relative;
+        isolation: isolate;
+        overflow: hidden;
+        background:
+            radial-gradient(circle at 82% 18%, rgba(190, 123, 211, 0.62), transparent 30rem),
+            radial-gradient(circle at 15% 75%, rgba(91, 29, 119, 0.42), transparent 34rem),
+            linear-gradient(155deg, #4c175f 0%, #35103f 48%, #1f0c2a 100%);
+    }
+
+    .login-shell::before,
+    .login-shell::after {
+        content: '';
+        position: absolute;
+        z-index: -1;
+        border-radius: 999px;
+        filter: blur(1px);
+    }
+
+    .login-shell::before {
+        top: -10rem;
+        right: -8rem;
+        width: 30rem;
+        height: 30rem;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .login-shell::after {
+        bottom: -16rem;
+        left: -12rem;
+        width: 34rem;
+        height: 34rem;
+        background: rgba(255, 255, 255, 0.035);
+    }
+
+    .auth-shell-card {
+        background: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        box-shadow: 0 32px 90px rgba(17, 3, 26, 0.38);
+    }
+
+    .auth-visual {
+        position: relative;
+        isolation: isolate;
+        overflow: hidden;
+        background:
+            radial-gradient(circle at 78% 14%, rgba(196, 126, 220, 0.36), transparent 17rem),
+            radial-gradient(circle at 8% 92%, rgba(126, 62, 153, 0.32), transparent 18rem),
+            linear-gradient(155deg, #5a1c70 0%, #3d144c 52%, #271032 100%);
+    }
+
+    .auth-visual::before,
+    .auth-visual::after {
+        content: '';
+        position: absolute;
+        z-index: -1;
+        border-radius: 999px;
+    }
+
+    .auth-visual::before {
+        top: -7rem;
+        right: -8rem;
+        width: 24rem;
+        height: 24rem;
+        border: 1px solid rgba(255, 255, 255, 0.11);
+    }
+
+    .auth-visual::after {
+        bottom: -9rem;
+        left: -8rem;
+        width: 23rem;
+        height: 23rem;
+        background: rgba(255, 255, 255, 0.035);
+    }
+
+    .auth-brand-mark {
+        background: #fff;
+        color: var(--lesgo-plum-700);
+        box-shadow: 0 12px 30px rgba(16, 2, 24, 0.22);
+    }
+
+    .auth-feature {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.065);
+        backdrop-filter: blur(8px);
+    }
+
+    .auth-form-panel {
+        box-shadow: -18px 0 50px rgba(28, 6, 38, 0.08);
+    }
+
+    .auth-form-control {
+        display: flex;
+        align-items: center;
+        min-height: 3.25rem;
+        overflow: hidden;
+        border: 1px solid #d8d1dc;
+        border-radius: 0.75rem;
+        background: #fff;
+        transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+    }
+
+    .auth-form-control:hover {
+        border-color: #bdaac6;
+    }
+
+    .auth-form-control:focus-within {
+        border-color: var(--lesgo-violet);
+        box-shadow: 0 0 0 3px rgba(151, 78, 184, 0.13);
+    }
+
+    .auth-form-control.has-error {
+        border-color: #ef4444;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08);
+    }
+
+    .auth-field-icon {
+        display: inline-flex;
+        width: 3rem;
+        flex: 0 0 3rem;
+        align-items: center;
+        justify-content: center;
+        color: var(--lesgo-violet);
+        font-size: 0.85rem;
+    }
+
+    .auth-input {
+        width: 100%;
+        min-width: 0;
+        height: 3.15rem;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        padding-right: 1rem;
+        color: #1f2937;
+        font-size: 0.9rem;
+    }
+
+    .auth-input::placeholder {
+        color: #9ca3af;
+    }
+
+    .auth-input-password {
+        padding-right: 0.25rem;
+    }
+
+    .auth-password-toggle {
+        display: inline-flex;
+        width: 3rem;
+        height: 3.15rem;
+        flex: 0 0 3rem;
+        align-items: center;
+        justify-content: center;
+        color: #8b7c91;
+        transition: color 160ms ease, background-color 160ms ease;
+    }
+
+    .auth-password-toggle:hover {
+        background: #fbf7ff;
+        color: var(--lesgo-plum-700);
+    }
+
+    .auth-password-toggle:focus-visible {
+        outline: 2px solid var(--lesgo-violet);
+        outline-offset: -4px;
+        border-radius: 0.5rem;
+    }
+
+    .auth-checkbox {
+        width: 1rem;
+        height: 1rem;
+        accent-color: var(--lesgo-plum-700);
+    }
+
+    .login-brand-mark,
+    .brand-button {
+        background: linear-gradient(135deg, var(--lesgo-violet), var(--lesgo-plum-700) 55%, var(--lesgo-plum-900));
+    }
+
+    .login-brand-mark {
+        box-shadow: 0 12px 28px rgba(96, 39, 119, 0.28);
+    }
+
+    .brand-button {
+        color: #fff;
+        box-shadow: 0 10px 24px rgba(96, 39, 119, 0.24);
+        transition: transform 160ms ease, box-shadow 160ms ease, filter 160ms ease;
+    }
+
+    .brand-button:hover {
+        filter: brightness(1.08);
+        transform: translateY(-1px);
+        box-shadow: 0 14px 28px rgba(96, 39, 119, 0.3);
+    }
+
+    .brand-button:focus-visible {
+        outline: 3px solid rgba(184, 120, 213, 0.35);
+        outline-offset: 3px;
+    }
+
+    .brand-button:disabled {
+        cursor: wait;
+        opacity: 0.78;
+        transform: none;
+        filter: none;
+    }
+}
