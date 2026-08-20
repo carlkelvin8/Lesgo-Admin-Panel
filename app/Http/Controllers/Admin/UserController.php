@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AdminRole;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -47,7 +48,7 @@ class UserController extends Controller
 
     public function create()
     {
-        return view('admin.users.create');
+        return view('admin.users.create', ['adminRoles' => $this->orderedAdminRoles()]);
     }
 
     public function store(Request $request)
@@ -57,7 +58,7 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email',
             'phone_number' => 'nullable|string|max:20',
             'role' => 'required|in:customer,driver,partner,admin',
-            'admin_role' => ['nullable', 'required_if:role,admin', Rule::in(array_keys(config('admin.roles')))],
+            'admin_role' => ['nullable', 'required_if:role,admin', Rule::exists('admin_roles', 'key')],
             'password' => 'required|string|min:8|confirmed',
         ]);
 
@@ -76,7 +77,10 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        return view('admin.users.edit', compact('user'));
+        return view('admin.users.edit', [
+            'user' => $user,
+            'adminRoles' => $this->orderedAdminRoles(),
+        ]);
     }
 
     public function update(Request $request, User $user)
@@ -86,7 +90,7 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email,'.$user->id,
             'phone_number' => 'nullable|string|max:20',
             'role' => 'required|in:customer,driver,partner,admin',
-            'admin_role' => ['nullable', 'required_if:role,admin', Rule::in(array_keys(config('admin.roles')))],
+            'admin_role' => ['nullable', 'required_if:role,admin', Rule::exists('admin_roles', 'key')],
             'is_active' => 'boolean',
         ]);
 
@@ -162,5 +166,15 @@ class UserController extends Controller
                 $query->where('admin_role', 'super_admin')->orWhereNull('admin_role');
             })
             ->count() <= 1;
+    }
+
+    private function orderedAdminRoles()
+    {
+        $order = array_flip(array_keys(config('admin.roles', [])));
+
+        return AdminRole::query()
+            ->get()
+            ->sortBy(fn (AdminRole $role) => $order[$role->getKey()] ?? PHP_INT_MAX)
+            ->values();
     }
 }

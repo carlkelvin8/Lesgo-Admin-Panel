@@ -20,13 +20,21 @@
                 </a>
             </div>
             <nav class="flex-1 overflow-y-auto py-4">
-                <a href="{{ route('admin.dashboard') }}"
-                   class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
-                    <i class="fas fa-tachometer-alt w-5"></i> Dashboard
-                </a>
+                @if(auth()->user()->hasAdminPermission('dashboard.view'))
+                    <a href="{{ route('admin.dashboard') }}"
+                       class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+                        <i class="fas fa-tachometer-alt w-5"></i> Dashboard
+                    </a>
+                @endif
 
-                @if(auth()->user()->hasAdminPermission('users.view') || auth()->user()->hasAdminPermission('drivers.manage') || auth()->user()->hasAdminPermission('partners.manage') || auth()->user()->hasAdminPermission('orders.view') || auth()->user()->hasAdminPermission('services.manage') || auth()->user()->hasAdminPermission('ratings.manage'))
+                @if(auth()->user()->hasAdminPermission('users.view') || auth()->user()->hasAdminPermission('roles.manage') || auth()->user()->hasAdminPermission('drivers.manage') || auth()->user()->hasAdminPermission('partners.manage') || auth()->user()->hasAdminPermission('orders.view') || auth()->user()->hasAdminPermission('services.manage') || auth()->user()->hasAdminPermission('ratings.manage'))
                 <div class="sidebar-section-label px-4 py-2 text-xs uppercase tracking-wider mt-4">Management</div>
+                @endif
+                @if(auth()->user()->hasAdminPermission('roles.manage'))
+                <a href="{{ route('admin.roles.index') }}"
+                   class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
+                    <i class="fas fa-user-shield w-5"></i> Roles & Permissions
+                </a>
                 @endif
 
                 @if(auth()->user()->hasAdminPermission('users.view'))

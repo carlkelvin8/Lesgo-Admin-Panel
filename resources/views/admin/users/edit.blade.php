@@ -40,8 +40,8 @@
                 <label class="block text-sm font-medium text-gray-700 mb-1">Admin Access Level</label>
                 <select name="admin_role" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">
                     <option value="">Not applicable</option>
-                    @foreach(config('admin.roles') as $key => $definition)
-                        <option value="{{ $key }}" @selected(old('admin_role', $user->effectiveAdminRole()) === $key)>{{ $definition['label'] }}</option>
+                    @foreach($adminRoles as $adminRole)
+                        <option value="{{ $adminRole->key }}" @selected(old('admin_role', $user->effectiveAdminRole()) === $adminRole->key)>{{ $adminRole->label }}</option>
                     @endforeach
                 </select>
                 <p class="mt-1 text-xs text-gray-500">Required only when the user role is Admin.</p>

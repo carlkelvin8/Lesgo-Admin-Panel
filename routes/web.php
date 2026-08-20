@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\RatingReviewController;
 use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\RolePermissionController;
 use App\Http\Controllers\Admin\SecurityEventController;
 use App\Http\Controllers\Admin\SecuritySettingsController;
 use App\Http\Controllers\Admin\ServiceController;
@@ -42,7 +43,15 @@ Route::prefix('admin')->name('admin.')->middleware(['admin', 'admin.audit'])->gr
     Route::delete('/profile/sessions/{sessionId}', [ProfileController::class, 'destroySession'])->name('profile.sessions.destroy');
 
     // Dashboard
-    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/', [DashboardController::class, 'index'])
+        ->middleware('admin.permission:dashboard.view')->name('dashboard');
+
+    // Roles and permissions
+    Route::middleware('admin.permission:roles.manage')->group(function () {
+        Route::get('/roles-permissions', [RolePermissionController::class, 'index'])->name('roles.index');
+        Route::get('/roles-permissions/{adminRole}/edit', [RolePermissionController::class, 'edit'])->name('roles.edit');
+        Route::put('/roles-permissions/{adminRole}', [RolePermissionController::class, 'update'])->name('roles.update');
+    });
 
     // Users
     Route::middleware('admin.permission:users.manage')->group(function () {

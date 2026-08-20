@@ -3,13 +3,24 @@
 @section('header', 'User Details')
 
 @section('actions')
+@if(auth()->user()->hasAdminPermission('users.manage'))
 <a href="{{ route('admin.users.edit', $user) }}" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm"><i class="fas fa-edit mr-1"></i> Edit</a>
+@unless($user->is(auth()->user()))
 <form action="{{ route('admin.users.toggle', $user) }}" method="POST" class="inline">
     @csrf
     <button type="submit" class="bg-{{ $user->is_active ? 'red' : 'green' }}-500 hover:bg-{{ $user->is_active ? 'red' : 'green' }}-600 text-white px-4 py-2 rounded-lg text-sm">
         <i class="fas fa-{{ $user->is_active ? 'ban' : 'check' }} mr-1"></i> {{ $user->is_active ? 'Deactivate' : 'Activate' }}
     </button>
 </form>
+<form action="{{ route('admin.users.destroy', $user) }}" method="POST" class="inline" onsubmit="return confirm('Delete {{ addslashes($user->name) }}? This user will no longer be able to access their account.')">
+    @csrf
+    @method('DELETE')
+    <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm">
+        <i class="fas fa-trash mr-1"></i> Delete
+    </button>
+</form>
+@endunless
+@endif
 @endsection
 
 @section('content')

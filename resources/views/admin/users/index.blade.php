@@ -3,7 +3,9 @@
 @section('header', 'Users Management')
 
 @section('actions')
+@if(auth()->user()->hasAdminPermission('users.manage'))
 <a href="{{ route('admin.users.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"><i class="fas fa-plus mr-1"></i> Add User</a>
+@endif
 @endsection
 
 @section('content')
@@ -83,7 +85,18 @@
                         <td class="px-6 py-4 text-gray-500 text-xs">{{ $user->created_at->diffForHumans() }}</td>
                         <td class="px-6 py-4 text-right">
                             <a href="{{ route('admin.users.show', $user) }}" class="text-blue-600 hover:text-blue-800 mr-2" title="View"><i class="fas fa-eye"></i></a>
-                            <a href="{{ route('admin.users.edit', $user) }}" class="text-yellow-600 hover:text-yellow-800 mr-2" title="Edit"><i class="fas fa-edit"></i></a>
+                            @if(auth()->user()->hasAdminPermission('users.manage'))
+                                <a href="{{ route('admin.users.edit', $user) }}" class="text-yellow-600 hover:text-yellow-800 mr-2" title="Edit"><i class="fas fa-edit"></i></a>
+                                @unless($user->is(auth()->user()))
+                                    <form action="{{ route('admin.users.destroy', $user) }}" method="POST" class="inline" onsubmit="return confirm('Delete {{ addslashes($user->name) }}? This user will no longer be able to access their account.')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="text-red-600 hover:text-red-800" title="Delete" aria-label="Delete {{ $user->name }}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                @endunless
+                            @endif
                         </td>
                     </tr>
                 @empty

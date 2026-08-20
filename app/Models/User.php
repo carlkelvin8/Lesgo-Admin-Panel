@@ -75,7 +75,8 @@ class User extends Authenticatable
     {
         $role = $this->effectiveAdminRole();
 
-        return config("admin.roles.{$role}.label", 'Administrator');
+        return AdminRole::definition($role)?->label
+            ?? config("admin.roles.{$role}.label", 'Administrator');
     }
 
     public function isSuperAdmin(): bool
@@ -89,7 +90,9 @@ class User extends Authenticatable
             return false;
         }
 
-        $rolePermissions = config('admin.roles.'.$this->effectiveAdminRole().'.permissions', []);
+        $role = $this->effectiveAdminRole();
+        $rolePermissions = AdminRole::definition($role)?->permissions
+            ?? config("admin.roles.{$role}.permissions", []);
         $permissions = array_unique([...$rolePermissions, ...($this->admin_permissions ?? [])]);
 
         return in_array('*', $permissions, true) || in_array($permission, $permissions, true);
