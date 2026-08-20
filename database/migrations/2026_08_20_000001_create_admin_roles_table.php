@@ -9,13 +9,15 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('admin_roles', function (Blueprint $table) {
-            $table->string('key', 40)->primary();
-            $table->string('label', 100);
-            $table->json('permissions');
-            $table->boolean('is_protected')->default(false);
-            $table->timestamps();
-        });
+        if (! Schema::hasTable('admin_roles')) {
+            Schema::create('admin_roles', function (Blueprint $table) {
+                $table->string('key', 40)->primary();
+                $table->string('label', 100);
+                $table->json('permissions');
+                $table->boolean('is_protected')->default(false);
+                $table->timestamps();
+            });
+        }
 
         $now = now();
         $roles = collect(config('admin.roles', []))
@@ -31,7 +33,7 @@ return new class extends Migration
             ->all();
 
         if ($roles !== []) {
-            DB::table('admin_roles')->insert($roles);
+            DB::table('admin_roles')->insertOrIgnore($roles);
         }
     }
 

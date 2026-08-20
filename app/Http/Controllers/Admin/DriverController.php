@@ -18,8 +18,8 @@ class DriverController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('license_number', 'like', "%{$search}%")
-                  ->orWhereHas('user', fn($uq) => $uq->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%"));
+                    ->orWhereHas('user', fn ($uq) => $uq->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%"));
             });
         }
 
@@ -47,6 +47,7 @@ class DriverController extends Controller
     {
         $users = User::where('role', 'driver')->whereDoesntHave('driverProfile')->get();
         $partners = Partner::all();
+
         return view('admin.drivers.create', compact('users', 'partners'));
     }
 
@@ -98,6 +99,8 @@ class DriverController extends Controller
         $newStatus = $driver->status === 'active' ? 'inactive' : 'active';
         $driver->update(['status' => $newStatus]);
 
-        return redirect()->back()->with('success', "Driver {$newStatus} successfully.");
+        return redirect()
+            ->route('admin.drivers.show', $driver)
+            ->with('success', "Driver {$newStatus} successfully.");
     }
 }

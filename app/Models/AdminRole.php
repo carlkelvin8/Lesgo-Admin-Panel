@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
+use Throwable;
 
 class AdminRole extends Model
 {
@@ -39,7 +41,21 @@ class AdminRole extends Model
     {
         return Cache::rememberForever(
             self::CACHE_KEY,
-            fn () => static::query()->get()->keyBy('key'),
+            function () {
+                try {
+                    if (Schema::hasTable('admin_roles')) {
+                        $roles = static::query()->get()->keyBy('key');
+
+                        if ($roles->isNotEmpty()) {
+                            return $roles;
+                        }
+                    }
+                } catch (Throwable $exception) {
+                    report($exception);
+                }
+
+                return static::configuredDefinitions();
+            },
         );
     }
 
@@ -56,5 +72,17 @@ class AdminRole extends Model
     public function getRouteKeyName(): string
     {
         return 'key';
+    }
+
+    private static function configuredDefinitions(): Collection
+    {
+        return collect(config('admin.roles', []))->map(
+            fn (array $definition, string $key) => (new static)->forceFill([
+                'key' => $key,
+                'label' => $definition['label'],
+                'permissions' => $definition['permissions'],
+                'is_protected' => $key === 'super_admin',
+            ]),
+        );
     }
 }

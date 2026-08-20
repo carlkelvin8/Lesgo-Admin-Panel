@@ -75,8 +75,7 @@ class RolePermissionController extends Controller
     {
         $order = array_flip(array_keys(config('admin.roles', [])));
 
-        return AdminRole::query()
-            ->get()
+        return AdminRole::definitions()
             ->sortBy(fn (AdminRole $role) => $order[$role->getKey()] ?? PHP_INT_MAX)
             ->values();
     }

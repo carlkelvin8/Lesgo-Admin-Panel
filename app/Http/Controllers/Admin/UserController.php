@@ -58,7 +58,7 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email',
             'phone_number' => 'nullable|string|max:20',
             'role' => 'required|in:customer,driver,partner,admin',
-            'admin_role' => ['nullable', 'required_if:role,admin', Rule::exists('admin_roles', 'key')],
+            'admin_role' => ['nullable', 'required_if:role,admin', Rule::in(AdminRole::definitions()->keys()->all())],
             'password' => 'required|string|min:8|confirmed',
         ]);
 
@@ -90,7 +90,7 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email,'.$user->id,
             'phone_number' => 'nullable|string|max:20',
             'role' => 'required|in:customer,driver,partner,admin',
-            'admin_role' => ['nullable', 'required_if:role,admin', Rule::exists('admin_roles', 'key')],
+            'admin_role' => ['nullable', 'required_if:role,admin', Rule::in(AdminRole::definitions()->keys()->all())],
             'is_active' => 'boolean',
         ]);
 
@@ -172,8 +172,7 @@ class UserController extends Controller
     {
         $order = array_flip(array_keys(config('admin.roles', [])));
 
-        return AdminRole::query()
-            ->get()
+        return AdminRole::definitions()
             ->sortBy(fn (AdminRole $role) => $order[$role->getKey()] ?? PHP_INT_MAX)
             ->values();
     }

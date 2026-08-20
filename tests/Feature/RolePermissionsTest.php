@@ -86,4 +86,17 @@ class RolePermissionsTest extends TestCase
 
         $this->assertSame(['*'], $superAdminRole->fresh()->permissions);
     }
+
+    public function test_admin_role_migration_can_reconcile_an_existing_table(): void
+    {
+        $migration = require database_path('migrations/2026_08_20_000001_create_admin_roles_table.php');
+
+        $migration->up();
+
+        $this->assertDatabaseCount('admin_roles', 4);
+        $this->assertDatabaseHas('admin_roles', [
+            'key' => 'super_admin',
+            'is_protected' => true,
+        ]);
+    }
 }
