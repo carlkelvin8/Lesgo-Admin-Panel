@@ -10,7 +10,9 @@ use Throwable;
 
 class AdminRole extends Model
 {
-    private const CACHE_KEY = 'admin_roles.definitions';
+    private const CACHE_KEY = 'admin_access_roles.definitions';
+
+    protected $table = 'admin_access_roles';
 
     protected $primaryKey = 'key';
 
@@ -43,7 +45,7 @@ class AdminRole extends Model
             self::CACHE_KEY,
             function () {
                 try {
-                    if (Schema::hasTable('admin_roles')) {
+                    if (Schema::hasTable('admin_access_roles')) {
                         $roles = static::query()->get()->keyBy('key');
 
                         if ($roles->isNotEmpty()) {

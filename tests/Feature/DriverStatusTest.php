@@ -56,7 +56,7 @@ class DriverStatusTest extends TestCase
         ]);
 
         AdminRole::forgetDefinitionCache();
-        Schema::drop('admin_roles');
+        Schema::drop('admin_access_roles');
 
         $this->actingAs($admin)
             ->followingRedirects()
