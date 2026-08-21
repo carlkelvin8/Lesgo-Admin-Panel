@@ -36,12 +36,9 @@
     <div class="lg:col-span-2 space-y-6">
         <div class="bg-white rounded-xl shadow-sm p-6">
             <h3 class="font-semibold text-gray-800 mb-4">Vehicle Information</h3>
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+            <div class="grid grid-cols-2 gap-4 text-sm">
                 <div><p class="text-gray-500">Type</p><p class="font-medium">{{ $driver->vehicle_type ?? '-' }}</p></div>
-                <div><p class="text-gray-500">Make</p><p class="font-medium">{{ $driver->vehicle_make ?? '-' }}</p></div>
-                <div><p class="text-gray-500">Model</p><p class="font-medium">{{ $driver->vehicle_model ?? '-' }}</p></div>
-                <div><p class="text-gray-500">Color</p><p class="font-medium">{{ $driver->vehicle_color ?? '-' }}</p></div>
-                <div><p class="text-gray-500">Plate #</p><p class="font-medium">{{ $driver->vehicle_plate_number ?? '-' }}</p></div>
+                <div><p class="text-gray-500">Plate #</p><p class="font-medium">{{ $driver->plate_number ?? '-' }}</p></div>
                 <div><p class="text-gray-500">Last Location</p><p class="font-medium text-xs">{{ $driver->last_latitude ? $driver->last_latitude . ', ' . $driver->last_longitude : '-' }}</p></div>
             </div>
         </div>

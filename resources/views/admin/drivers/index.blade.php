@@ -53,7 +53,12 @@
                             </div>
                         </td>
                         <td class="px-6 py-4 text-gray-600 text-xs">{{ $driver->license_number ?? '-' }}</td>
-                        <td class="px-6 py-4 text-gray-600 text-xs">{{ $driver->vehicle_type ? $driver->vehicle_type . ' ' . $driver->vehicle_color : '-' }}</td>
+                        <td class="px-6 py-4 text-gray-600 text-xs">
+                            {{ $driver->vehicle_type ?? '-' }}
+                            @if($driver->plate_number)
+                                <span class="block text-gray-400">{{ $driver->plate_number }}</span>
+                            @endif
+                        </td>
                         <td class="px-6 py-4">
                             @php $sc = ['pending'=>'bg-yellow-100 text-yellow-800','active'=>'bg-green-100 text-green-800','inactive'=>'bg-gray-100 text-gray-800','suspended'=>'bg-red-100 text-red-800']; @endphp
                             <span class="px-2 py-1 rounded-full text-xs font-medium {{ $sc[$driver->status] ?? 'bg-gray-100' }}">{{ ucfirst($driver->status) }}</span>

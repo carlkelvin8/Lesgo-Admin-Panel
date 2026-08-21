@@ -58,7 +58,7 @@ class DriverController extends Controller
             'partner_id' => 'nullable|exists:partners,id',
             'license_number' => 'nullable|string|max:255',
             'vehicle_type' => 'nullable|string|max:255',
-            'vehicle_plate_number' => 'nullable|string|max:50',
+            'plate_number' => 'nullable|string|max:50',
             'package_tier' => 'nullable|string|max:100',
         ]);
 
@@ -81,10 +81,7 @@ class DriverController extends Controller
             'status' => 'required|in:pending,active,inactive,suspended',
             'license_number' => 'nullable|string|max:255',
             'vehicle_type' => 'nullable|string|max:255',
-            'vehicle_make' => 'nullable|string|max:255',
-            'vehicle_model' => 'nullable|string|max:255',
-            'vehicle_color' => 'nullable|string|max:100',
-            'vehicle_plate_number' => 'nullable|string|max:50',
+            'plate_number' => 'nullable|string|max:50',
             'package_tier' => 'nullable|string|max:100',
         ]);
 

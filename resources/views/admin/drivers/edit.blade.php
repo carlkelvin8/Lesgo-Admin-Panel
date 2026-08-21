@@ -35,25 +35,9 @@
                     <input type="text" name="vehicle_type" value="{{ old('vehicle_type', $driver->vehicle_type) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Vehicle Make</label>
-                    <input type="text" name="vehicle_make" value="{{ old('vehicle_make', $driver->vehicle_make) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Plate Number</label>
+                    <input type="text" name="plate_number" value="{{ old('plate_number', $driver->plate_number) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
                 </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Vehicle Model</label>
-                    <input type="text" name="vehicle_model" value="{{ old('vehicle_model', $driver->vehicle_model) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Vehicle Color</label>
-                    <input type="text" name="vehicle_color" value="{{ old('vehicle_color', $driver->vehicle_color) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
-                </div>
-            </div>
-
-            <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Plate Number</label>
-                <input type="text" name="vehicle_plate_number" value="{{ old('vehicle_plate_number', $driver->vehicle_plate_number) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
             </div>
 
             <div class="flex items-center gap-3">
