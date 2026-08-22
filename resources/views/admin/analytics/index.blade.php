@@ -141,7 +141,7 @@
 <div class="bg-white rounded-xl shadow-sm p-6">
     <h3 class="font-semibold text-gray-800 mb-4"><i class="fas fa-mouse-pointer mr-2 text-gray-400"></i>Top Events (7d)</h3>
     <div class="overflow-x-auto">
-        <table class="w-full text-sm">
+        <table class="responsive-table w-full text-sm">
             <thead class="bg-gray-50 border-b">
                 <tr>
                     <th class="text-left px-6 py-3 text-gray-500 font-medium">Event Type</th>
