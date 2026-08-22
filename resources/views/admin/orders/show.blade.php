@@ -9,10 +9,10 @@
         <h3 class="font-semibold text-gray-800 mb-4">Order Information</h3>
         <div class="space-y-3 text-sm">
             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Status</span><x-status-badge status="{{ $order->status }}" /></div>
-            <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Customer</span><span>{{ $order->customer->name ?? 'N/A' }}</span></div>
-            <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Partner</span><span>{{ $order->partner->name ?? 'N/A' }}</span></div>
-            <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Driver</span><span>{{ $order->driver->user->name ?? 'Unassigned' }}</span></div>
-            <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Service</span><span>{{ $order->service->name ?? 'N/A' }}</span></div>
+            <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Customer</span><span>{{ $order->customer?->name ?? 'N/A' }}</span></div>
+            <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Partner</span><span>{{ $order->partner?->name ?? 'N/A' }}</span></div>
+            <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Driver</span><span>{{ $order->driver?->user?->name ?? 'Unassigned' }}</span></div>
+            <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Service</span><span>{{ $order->service?->name ?? 'N/A' }}</span></div>
             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Payment</span><span>{{ ucfirst($order->payment_status) }} ({{ ucfirst($order->payment_method ?? 'N/A') }})</span></div>
             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Created</span><span>{{ $order->created_at->format('M d, Y H:i') }}</span></div>
         </div>
