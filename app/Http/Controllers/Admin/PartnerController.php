@@ -104,6 +104,13 @@ class PartnerController extends Controller
 
     public function destroy(Partner $partner)
     {
+        $hasOrders = $partner->orders()->exists();
+        $hasDrivers = \App\Models\DriverProfile::where('partner_id', $partner->id)->exists();
+
+        if ($hasOrders || $hasDrivers) {
+            return redirect()->back()->with('error', 'Cannot delete partner with existing orders or drivers. Remove them first.');
+        }
+
         $partner->delete();
 
         return redirect()->route('admin.partners.index')

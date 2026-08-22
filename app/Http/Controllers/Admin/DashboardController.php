@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\DailyReport;
+
 use App\Models\DocumentVerification;
 use App\Models\DriverProfile;
 use App\Models\Order;

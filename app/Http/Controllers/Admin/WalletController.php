@@ -16,7 +16,7 @@ class WalletController extends Controller
     use SearchEscaping;
     public function index(Request $request)
     {
-        $query = Wallet::with(['user']);
+        $query = Wallet::with(['user', 'transactions' => fn ($q) => $q->latest()->limit(1)]);
 
         if ($request->filled('search')) {
             $search = $this->escapeLikePattern($request->string('search'));

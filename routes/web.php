@@ -29,13 +29,13 @@ use Illuminate\Support\Facades\Route;
 Route::get('/admin/login', [AuthController::class, 'showLogin'])->name('admin.login');
 Route::post('/admin/login', [AuthController::class, 'login'])->name('admin.login.post');
 Route::get('/admin/forgot-password', [AuthController::class, 'showForgotPassword'])->name('admin.password.request');
-Route::post('/admin/forgot-password', [AuthController::class, 'sendResetLink'])->name('admin.password.email');
+Route::post('/admin/forgot-password', [AuthController::class, 'sendResetLink'])->name('admin.password.email')->middleware('throttle:5,1');
 Route::get('/admin/reset-password/{token}', [AuthController::class, 'showResetPassword'])->name('admin.password.reset');
-Route::post('/admin/reset-password', [AuthController::class, 'resetPassword'])->name('admin.password.update');
+Route::post('/admin/reset-password', [AuthController::class, 'resetPassword'])->name('admin.password.update')->middleware('throttle:5,1');
 
 // Two-Factor Authentication verification (public during login flow)
 Route::get('/admin/2fa/verify', [TwoFactorAuthController::class, 'showVerifyForm'])->name('admin.2fa.verify');
-Route::post('/admin/2fa/verify', [TwoFactorAuthController::class, 'verify'])->name('admin.2fa.verify.post');
+Route::post('/admin/2fa/verify', [TwoFactorAuthController::class, 'verify'])->name('admin.2fa.verify.post')->middleware('throttle:5,1');
 
 // Admin protected routes
 Route::prefix('admin')->name('admin.')->middleware(['admin', 'admin.audit'])->group(function () {

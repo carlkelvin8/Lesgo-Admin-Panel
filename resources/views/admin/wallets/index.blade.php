@@ -35,7 +35,7 @@
                         <td class="px-6 py-4 font-semibold text-gray-800">₱{{ number_format($wallet->balance, 2) }}</td>
                         <td class="px-6 py-4 text-gray-700">{{ $wallet->currency }}</td>
                         <td class="px-6 py-4 text-gray-500 text-xs">
-                            @php $lastTx = $wallet->transactions()->latest()->first(); @endphp
+                            @php $lastTx = $wallet->transactions->first(); @endphp
                             {{ $lastTx ? $lastTx->created_at->format('M d, Y H:i') : '—' }}
                         </td>
                         <td class="px-6 py-4 text-right">

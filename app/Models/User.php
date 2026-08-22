@@ -24,6 +24,8 @@ class User extends Authenticatable
         'profile_picture',
         'fcm_token',
         'google_id',
+        'deactivated_at',
+        'password_changed_at',
     ];
 
     protected $hidden = [
