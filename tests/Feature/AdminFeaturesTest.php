@@ -20,7 +20,7 @@ use App\Models\WalletTopUp;
 use App\Models\WalletTransaction;
 use App\Services\AdminNetworkAccess;
 use Database\Seeders\SecuritySettingsSeeder;
-use Illuminate\Auth\Notifications\ResetPassword as ResetPasswordNotification;
+use App\Notifications\AdminResetPasswordNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification as NotificationFacade;
@@ -130,7 +130,7 @@ class AdminFeaturesTest extends TestCase
         $this->post(route('admin.password.email'), ['email' => $this->admin->email])
             ->assertSessionHas('status');
 
-        NotificationFacade::assertSentTo($this->admin, ResetPasswordNotification::class);
+        NotificationFacade::assertSentTo($this->admin, AdminResetPasswordNotification::class);
 
         $token = Password::broker()->createToken($this->admin);
         $this->post(route('admin.password.update'), [

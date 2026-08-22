@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\DailyReport;
 use App\Models\DocumentVerification;
 use App\Models\DriverProfile;
 use App\Models\Order;
@@ -12,6 +13,8 @@ use App\Models\RatingReview;
 use App\Models\SecurityEvent;
 use App\Models\SupportTicket;
 use App\Models\User;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -40,6 +43,47 @@ class DashboardController extends Controller
 
         $recent_users = User::latest()->take(10)->get();
 
-        return view('admin.dashboard', compact('stats', 'recent_orders', 'recent_users'));
+        // Chart data: last 7 days revenue and orders
+        $sevenDaysAgo = Carbon::now()->subDays(7)->startOfDay();
+        $dailyRevenue = Payment::where('status', 'paid')
+            ->where('created_at', '>=', $sevenDaysAgo)
+            ->select(
+                DB::raw('DATE(created_at) as date'),
+                DB::raw('SUM(amount) as total'),
+                DB::raw('COUNT(*) as count')
+            )
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get();
+
+        // Order status distribution
+        $orderStatusDistribution = Order::select('status', DB::raw('count(*) as total'))
+            ->whereIn('status', ['pending', 'accepted', 'in_progress', 'completed', 'cancelled'])
+            ->groupBy('status')
+            ->get();
+
+        // New users per day (last 7 days)
+        $dailyUsers = User::where('created_at', '>=', $sevenDaysAgo)
+            ->select(
+                DB::raw('DATE(created_at) as date'),
+                DB::raw('COUNT(*) as total')
+            )
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get();
+
+        // Top partners by order count
+        $topPartners = Order::with('partner')
+            ->where('created_at', '>=', $sevenDaysAgo)
+            ->select('partner_id', DB::raw('COUNT(*) as order_count'), DB::raw('SUM(actual_fare) as revenue'))
+            ->groupBy('partner_id')
+            ->orderByDesc('order_count')
+            ->take(5)
+            ->get();
+
+        return view('admin.dashboard', compact(
+            'stats', 'recent_orders', 'recent_users',
+            'dailyRevenue', 'orderStatusDistribution', 'dailyUsers', 'topPartners'
+        ));
     }
 }

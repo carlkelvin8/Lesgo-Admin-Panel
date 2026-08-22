@@ -6,16 +6,18 @@ use App\Http\Controllers\Controller;
 use App\Models\DriverProfile;
 use App\Models\Partner;
 use App\Models\User;
+use App\Traits\SearchEscaping;
 use Illuminate\Http\Request;
 
 class DriverController extends Controller
 {
+    use SearchEscaping;
     public function index(Request $request)
     {
         $query = DriverProfile::with('user');
 
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = $this->escapeLikePattern($request->search);
             $query->where(function ($q) use ($search) {
                 $q->where('license_number', 'like', "%{$search}%")
                     ->orWhereHas('user', fn ($uq) => $uq->where('name', 'like', "%{$search}%")

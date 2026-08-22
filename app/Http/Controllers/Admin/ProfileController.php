@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\PasswordHistory;
+use App\Services\SessionAnomalyDetector;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -58,11 +60,18 @@ class ProfileController extends Controller
         ]);
 
         $admin = $request->user();
+
+        if (PasswordHistory::isPasswordReused($admin->id, $validated['password'])) {
+            return back()->withErrors(['password' => 'You cannot reuse a recent password. Please choose a different one.'])->withInput();
+        }
+
         $admin->forceFill([
             'password' => Hash::make($validated['password']),
             'password_changed_at' => now(),
             'remember_token' => null,
         ])->save();
+
+        PasswordHistory::recordPassword($admin->id, $validated['password']);
 
         if (Schema::hasTable('sessions')) {
             DB::table('sessions')

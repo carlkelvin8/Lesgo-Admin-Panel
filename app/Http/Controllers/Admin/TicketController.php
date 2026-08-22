@@ -6,16 +6,18 @@ use App\Http\Controllers\Controller;
 use App\Models\SupportTicket;
 use App\Models\SupportTicketMessage;
 use App\Models\User;
+use App\Traits\SearchEscaping;
 use Illuminate\Http\Request;
 
 class TicketController extends Controller
 {
+    use SearchEscaping;
     public function index(Request $request)
     {
         $query = SupportTicket::with(['user', 'assignee']);
 
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = $this->escapeLikePattern($request->search);
             $query->where(function ($q) use ($search) {
                 $q->where('ticket_number', 'like', "%{$search}%")
                     ->orWhere('subject', 'like', "%{$search}%");

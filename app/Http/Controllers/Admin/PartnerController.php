@@ -5,17 +5,19 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
 use App\Models\User;
+use App\Traits\SearchEscaping;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class PartnerController extends Controller
 {
+    use SearchEscaping;
     public function index(Request $request)
     {
         $query = Partner::with('user');
 
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = $this->escapeLikePattern($request->search);
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('category', 'like', "%{$search}%");

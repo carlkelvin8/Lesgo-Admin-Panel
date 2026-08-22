@@ -4,16 +4,18 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
+use App\Traits\SearchEscaping;
 use Illuminate\Http\Request;
 
 class AuditLogController extends Controller
 {
+    use SearchEscaping;
     public function index(Request $request)
     {
         $query = AuditLog::with('user');
 
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = $this->escapeLikePattern($request->search);
             $query->where(function ($q) use ($search) {
                 $q->where('action', 'like', "%{$search}%")
                   ->orWhere('resource_type', 'like', "%{$search}%")

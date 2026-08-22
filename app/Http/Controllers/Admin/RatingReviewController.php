@@ -4,16 +4,18 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\RatingReview;
+use App\Traits\SearchEscaping;
 use Illuminate\Http\Request;
 
 class RatingReviewController extends Controller
 {
+    use SearchEscaping;
     public function index(Request $request)
     {
         $query = RatingReview::with(['user', 'order']);
 
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = $this->escapeLikePattern($request->search);
             $query->whereHas('user', function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%");
             });

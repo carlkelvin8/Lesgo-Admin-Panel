@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Notifications\AdminResetPasswordNotification;
 
 class User extends Authenticatable
 {
@@ -57,6 +58,11 @@ class User extends Authenticatable
         return $this->hasOne(Partner::class);
     }
 
+    public function twoFactorAuth()
+    {
+        return $this->hasOne(TwoFactorAuth::class);
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === 'admin';
@@ -96,5 +102,10 @@ class User extends Authenticatable
         $permissions = array_unique([...$rolePermissions, ...($this->admin_permissions ?? [])]);
 
         return in_array('*', $permissions, true) || in_array($permission, $permissions, true);
+    }
+
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new AdminResetPasswordNotification($token));
     }
 }

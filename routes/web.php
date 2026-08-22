@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\SecurityEventController;
 use App\Http\Controllers\Admin\SecuritySettingsController;
 use App\Http\Controllers\Admin\ServiceController;
 use App\Http\Controllers\Admin\TicketController;
+use App\Http\Controllers\Admin\TwoFactorAuthController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\WalletController;
 use Illuminate\Support\Facades\Route;
@@ -32,6 +33,10 @@ Route::post('/admin/forgot-password', [AuthController::class, 'sendResetLink'])-
 Route::get('/admin/reset-password/{token}', [AuthController::class, 'showResetPassword'])->name('admin.password.reset');
 Route::post('/admin/reset-password', [AuthController::class, 'resetPassword'])->name('admin.password.update');
 
+// Two-Factor Authentication verification (public during login flow)
+Route::get('/admin/2fa/verify', [TwoFactorAuthController::class, 'showVerifyForm'])->name('admin.2fa.verify');
+Route::post('/admin/2fa/verify', [TwoFactorAuthController::class, 'verify'])->name('admin.2fa.verify.post');
+
 // Admin protected routes
 Route::prefix('admin')->name('admin.')->middleware(['admin', 'admin.audit'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
@@ -41,6 +46,12 @@ Route::prefix('admin')->name('admin.')->middleware(['admin', 'admin.audit'])->gr
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
     Route::delete('/profile/sessions/{sessionId}', [ProfileController::class, 'destroySession'])->name('profile.sessions.destroy');
+
+    // Two-Factor Authentication setup
+    Route::get('/profile/2fa/setup', [TwoFactorAuthController::class, 'showSetup'])->name('2fa.setup');
+    Route::post('/profile/2fa/enable', [TwoFactorAuthController::class, 'enable'])->name('2fa.enable');
+    Route::post('/profile/2fa/disable', [TwoFactorAuthController::class, 'disable'])->name('2fa.disable');
+    Route::post('/profile/2fa/regenerate', [TwoFactorAuthController::class, 'regenerateCodes'])->name('2fa.regenerate');
 
     // Dashboard
     Route::get('/', [DashboardController::class, 'index'])

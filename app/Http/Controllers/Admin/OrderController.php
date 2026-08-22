@@ -5,17 +5,19 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderTrackingEvent;
+use App\Traits\SearchEscaping;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
+    use SearchEscaping;
     public function index(Request $request)
     {
         $query = Order::with(['customer', 'partner', 'driver']);
 
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = $this->escapeLikePattern($request->search);
             $query->where(function ($q) use ($search) {
                 $q->where('id', $search)
                     ->orWhereHas('customer', fn ($cq) => $cq->where('name', 'like', "%{$search}%"))

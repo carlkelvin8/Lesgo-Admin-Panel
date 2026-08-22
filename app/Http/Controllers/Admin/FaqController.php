@@ -5,11 +5,13 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\FaqArticle;
 use App\Models\FaqCategory;
+use App\Traits\SearchEscaping;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class FaqController extends Controller
 {
+    use SearchEscaping;
     public function categoryIndex()
     {
         $categories = FaqCategory::withCount('articles')->latest()->paginate(20);

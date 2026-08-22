@@ -6,18 +6,20 @@ use App\Http\Controllers\Controller;
 use App\Models\Wallet;
 use App\Models\WalletTopUp;
 use App\Models\WalletTransaction;
+use App\Traits\SearchEscaping;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class WalletController extends Controller
 {
+    use SearchEscaping;
     public function index(Request $request)
     {
         $query = Wallet::with(['user']);
 
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = $this->escapeLikePattern($request->string('search'));
             $query->whereHas('user', fn ($q) => $q->where('name', 'like', "%{$search}%")
                 ->orWhere('email', 'like', "%{$search}%"));
         }
@@ -41,7 +43,7 @@ class WalletController extends Controller
         $query = WalletTopUp::with(['user', 'wallet', 'reviewer']);
 
         if ($request->filled('search')) {
-            $search = $request->string('search');
+            $search = $this->escapeLikePattern($request->string('search'));
             $query->where(function ($builder) use ($search) {
                 $builder->where('external_id', 'like', "%{$search}%")
                     ->orWhere('gateway_reference', 'like', "%{$search}%")

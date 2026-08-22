@@ -6,17 +6,19 @@ use App\Http\Controllers\Controller;
 use App\Jobs\DeliverAdminNotification;
 use App\Models\Notification;
 use App\Models\User;
+use App\Traits\SearchEscaping;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class NotificationController extends Controller
 {
+    use SearchEscaping;
     public function index(Request $request)
     {
         $query = Notification::with('user');
 
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = $this->escapeLikePattern($request->search);
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
                     ->orWhere('body', 'like', "%{$search}%");

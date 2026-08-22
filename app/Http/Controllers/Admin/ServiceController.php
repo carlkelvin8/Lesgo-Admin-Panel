@@ -5,16 +5,18 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
 use App\Models\Service;
+use App\Traits\SearchEscaping;
 use Illuminate\Http\Request;
 
 class ServiceController extends Controller
 {
+    use SearchEscaping;
     public function index(Request $request)
     {
         $query = Service::with('partner');
 
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = $this->escapeLikePattern($request->search);
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('code', 'like', "%{$search}%");

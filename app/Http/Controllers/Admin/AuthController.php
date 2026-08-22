@@ -5,11 +5,14 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\SecurityEvent;
 use App\Models\SecuritySetting;
+use App\Models\TwoFactorAuth;
 use App\Models\User;
 use App\Services\AdminNetworkAccess;
+use App\Services\SessionAnomalyDetector;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
@@ -21,7 +24,10 @@ use Throwable;
 
 class AuthController extends Controller
 {
-    public function __construct(private readonly AdminNetworkAccess $networkAccess) {}
+    public function __construct(
+        private readonly AdminNetworkAccess $networkAccess,
+        private readonly SessionAnomalyDetector $anomalyDetector,
+    ) {}
 
     public function showLogin()
     {
@@ -63,7 +69,46 @@ class AuthController extends Controller
                 return back()->withErrors(['email' => 'You do not have admin access.']);
             }
 
+            $twoFactor = TwoFactorAuth::where('user_id', $user->id)
+                ->where('method', 'totp')
+                ->where('is_enabled', true)
+                ->first();
+
+            if ($twoFactor) {
+                Auth::logout();
+                $request->session()->put('2fa_pending_user_id', $user->id);
+                $request->session()->regenerate();
+
+                return redirect()->route('admin.2fa.verify');
+            }
+
             RateLimiter::clear($throttleKey);
+
+            $currentLogin = [
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'user_id' => $user->id,
+            ];
+            $previousLogin = null;
+            $cacheKey = "last_login_user_{$user->id}";
+            if (Cache::has($cacheKey)) {
+                $previousLogin = Cache::get($cacheKey);
+            }
+            $anomalies = $this->anomalyDetector->detect($currentLogin, $previousLogin);
+            Cache::put($cacheKey, $currentLogin, now()->addDays(30));
+            foreach ($anomalies as $anomaly) {
+                SecurityEvent::create([
+                    'event_type' => 'session_anomaly',
+                    'severity' => $anomaly['severity'],
+                    'source' => 'admin_login',
+                    'ip_address' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                    'description' => $anomaly['message'],
+                    'event_data' => ['user_id' => $user->id, 'anomaly_type' => $anomaly['type']],
+                    'detected_at' => now(),
+                ]);
+            }
+
             $request->session()->regenerate();
             $request->session()->put('admin_last_activity', now()->timestamp);
 
@@ -112,7 +157,7 @@ class AuthController extends Controller
         $validated = $request->validate([
             'token' => ['required'],
             'email' => ['required', 'email'],
-            'password' => ['required', 'confirmed', PasswordRule::min(8)->letters()->numbers()],
+            'password' => ['required', 'confirmed', PasswordRule::min(10)->letters()->mixedCase()->numbers()],
         ]);
 
         $isActiveAdmin = User::query()

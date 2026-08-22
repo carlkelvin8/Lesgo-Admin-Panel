@@ -7,16 +7,19 @@ use App\Models\AdminRole;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use App\Traits\SearchEscaping;
 use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
+    use SearchEscaping;
+
     public function index(Request $request)
     {
         $query = User::query();
 
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = $this->escapeLikePattern($request->search);
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%")

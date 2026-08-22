@@ -4,16 +4,18 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\SecurityEvent;
+use App\Traits\SearchEscaping;
 use Illuminate\Http\Request;
 
 class SecurityEventController extends Controller
 {
+    use SearchEscaping;
     public function index(Request $request)
     {
         $query = SecurityEvent::with('user');
 
         if ($request->filled('search')) {
-            $search = $request->string('search');
+            $search = $this->escapeLikePattern($request->string('search'));
             $query->where(function ($builder) use ($search) {
                 $builder->where('event_type', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%")

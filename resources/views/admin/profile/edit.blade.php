@@ -31,6 +31,52 @@
     </section>
 </div>
 
+<!-- Two-Factor Authentication -->
+<section class="mt-6 rounded-xl bg-white p-6 shadow-sm">
+    <div class="flex items-center justify-between">
+        <div>
+            <h3 class="font-semibold text-gray-900 flex items-center gap-2">
+                <i class="fas fa-shield-halved text-purple-600"></i> Two-Factor Authentication
+            </h3>
+            <p class="mt-1 text-sm text-gray-500">Add an extra layer of security to your admin account with TOTP-based two-factor authentication.</p>
+        </div>
+        @php
+            $twoFactor = $admin->twoFactorAuth;
+            $isEnabled = $twoFactor && $twoFactor->is_enabled;
+        @endphp
+        @if($isEnabled)
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                <i class="fas fa-check-circle"></i> Enabled
+            </span>
+        @else
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                <i class="fas fa-circle-xmark"></i> Disabled
+            </span>
+        @endif
+    </div>
+    <div class="mt-4">
+        @if($isEnabled)
+            <div class="flex items-center gap-3">
+                <form method="POST" action="{{ route('admin.2fa.disable') }}" x-data onsubmit="return confirm('Are you sure you want to disable two-factor authentication?')">
+                    @csrf
+                    <input type="hidden" name="password" value="">
+                    <button type="button" @click="$el.closest('form').querySelector('input[name=password]').value = prompt('Enter your current password to confirm:') || ''; if($el.closest('form').querySelector('input[name=password]').value) $el.closest('form').submit()"
+                        class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm transition">
+                        <i class="fas fa-ban mr-1"></i> Disable 2FA
+                    </button>
+                </form>
+                <a href="{{ route('admin.2fa.setup') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm transition">
+                    <i class="fas fa-rotate mr-1"></i> Regenerate Codes
+                </a>
+            </div>
+        @else
+            <a href="{{ route('admin.2fa.setup') }}" class="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition">
+                <i class="fas fa-shield-halved"></i> Set Up Two-Factor Authentication
+            </a>
+        @endif
+    </div>
+</section>
+
 <section class="mt-6 overflow-hidden rounded-xl bg-white shadow-sm">
     <div class="border-b px-6 py-4"><h3 class="font-semibold text-gray-900">Active administrator sessions</h3><p class="mt-1 text-sm text-gray-500">Review and revoke database-backed browser sessions.</p></div>
     <div class="divide-y">
