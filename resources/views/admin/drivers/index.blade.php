@@ -8,26 +8,15 @@
 
 @section('content')
 <div class="bg-white rounded-xl shadow-sm p-4 mb-6">
-    <form method="GET" class="flex flex-wrap gap-3 items-end">
-        <div class="flex-1 min-w-[200px]">
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search by name, license..."
-                   class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none">
-        </div>
-        <div>
-            <select name="status" class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                <option value="">All Status</option>
-                @foreach(['pending','active','inactive','suspended'] as $s)
-                    <option value="{{ $s }}" {{ request('status') === $s ? 'selected' : '' }}>{{ ucfirst($s) }}</option>
-                @endforeach
-            </select>
-        </div>
-        <button type="submit" class="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-700"><i class="fas fa-filter mr-1"></i> Filter</button>
-    </form>
+    <x-filter-panel action="{{ request()->url() }}">
+        <x-filter-input name="search" label="Search" placeholder="Search by name, license..." value="{{ request('search') }}" />
+        <x-filter-input name="status" label="Status" type="select" :options="['pending' => 'Pending', 'active' => 'Active', 'inactive' => 'Inactive', 'suspended' => 'Suspended']" />
+    </x-filter-panel>
 </div>
 
 <div class="bg-white rounded-xl shadow-sm overflow-hidden">
     <div class="overflow-x-auto">
-        <table class="w-full text-sm">
+        <table class="responsive-table w-full text-sm">
             <thead class="bg-gray-50 border-b">
                 <tr>
                     <th class="text-left px-6 py-3 text-gray-500 font-medium">Driver</th>
@@ -60,8 +49,7 @@
                             @endif
                         </td>
                         <td class="px-6 py-4">
-                            @php $sc = ['pending'=>'bg-yellow-100 text-yellow-800','active'=>'bg-green-100 text-green-800','inactive'=>'bg-gray-100 text-gray-800','suspended'=>'bg-red-100 text-red-800']; @endphp
-                            <span class="px-2 py-1 rounded-full text-xs font-medium {{ $sc[$driver->status] ?? 'bg-gray-100' }}">{{ ucfirst($driver->status) }}</span>
+                            <x-status-badge status="{{ $driver->status }}" />
                         </td>
                         <td class="px-6 py-4">{{ $driver->rating }} <i class="fas fa-star text-yellow-400 text-xs"></i></td>
                         <td class="px-6 py-4">{{ $driver->total_trips }}</td>
@@ -72,7 +60,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="8" class="px-6 py-12 text-center text-gray-400">No drivers found.</td></tr>
+                    <tr><td colspan="8"><x-empty-state icon="fa-motorcycle" title="No drivers found" description="There are no drivers matching your criteria." /></td></tr>
                 @endforelse
             </tbody>
         </table>

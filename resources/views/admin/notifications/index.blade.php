@@ -8,45 +8,17 @@
 
 @section('content')
 <div class="bg-white rounded-xl shadow-sm p-4 mb-6">
-    <form method="GET" class="flex flex-wrap gap-3 items-end">
-        <div class="flex-1 min-w-[220px]">
-            <label class="block text-xs text-gray-500 mb-1">Search</label>
-            <input name="search" value="{{ request('search') }}" placeholder="Title or message" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-        </div>
-        <div>
-            <label class="block text-xs text-gray-500 mb-1">Channel</label>
-            <select name="channel" class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                <option value="">All channels</option>
-                @foreach(['in_app','push','sms','email'] as $channel)
-                    <option value="{{ $channel }}" @selected(request('channel') === $channel)>{{ strtoupper(str_replace('_', ' ', $channel)) }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div>
-            <label class="block text-xs text-gray-500 mb-1">Read status</label>
-            <select name="read_status" class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                <option value="">All</option>
-                <option value="unread" @selected(request('read_status') === 'unread')>Unread</option>
-                <option value="read" @selected(request('read_status') === 'read')>Read</option>
-            </select>
-        </div>
-        <div>
-            <label class="block text-xs text-gray-500 mb-1">Delivery</label>
-            <select name="delivery_status" class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                <option value="">All</option>
-                @foreach(['pending','processing','retrying','delivered','failed'] as $status)
-                    <option value="{{ $status }}" @selected(request('delivery_status') === $status)>{{ ucfirst($status) }}</option>
-                @endforeach
-            </select>
-        </div>
-        <button class="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm">Filter</button>
-        <a href="{{ route('admin.notifications.index') }}" class="text-gray-500 px-3 py-2 text-sm">Clear</a>
-    </form>
+    <x-filter-panel action="{{ request()->url() }}">
+        <x-filter-input name="search" label="Search" placeholder="Title or message" />
+        <x-filter-input name="channel" label="Channel" type="select" :options="['' => 'All channels', 'in_app' => 'In App', 'push' => 'Push', 'sms' => 'SMS', 'email' => 'Email']" />
+        <x-filter-input name="read_status" label="Read status" type="select" :options="['' => 'All', 'unread' => 'Unread', 'read' => 'Read']" />
+        <x-filter-input name="delivery_status" label="Delivery" type="select" :options="['' => 'All', 'pending' => 'Pending', 'processing' => 'Processing', 'retrying' => 'Retrying', 'delivered' => 'Delivered', 'failed' => 'Failed']" />
+    </x-filter-panel>
 </div>
 
 <div class="bg-white rounded-xl shadow-sm overflow-hidden">
     <div class="overflow-x-auto">
-        <table class="w-full text-sm">
+        <table class="responsive-table w-full text-sm">
             <thead class="bg-gray-50 border-b"><tr>
                 <th class="text-left px-6 py-3 text-gray-500 font-medium">Recipient</th>
                 <th class="text-left px-6 py-3 text-gray-500 font-medium">Notification</th>
@@ -62,15 +34,14 @@
                         <td class="px-6 py-4 max-w-md"><p class="font-medium text-gray-800">{{ $notification->title }}</p><p class="text-xs text-gray-500 truncate">{{ $notification->body }}</p></td>
                         <td class="px-6 py-4"><p>{{ $notification->type }}</p><p class="text-xs text-gray-500">{{ strtoupper(str_replace('_', ' ', $notification->channel)) }}</p></td>
                         <td class="px-6 py-4">
-                            @php $deliveryColors = ['delivered'=>'bg-green-100 text-green-700','failed'=>'bg-red-100 text-red-700','retrying'=>'bg-orange-100 text-orange-700','processing'=>'bg-blue-100 text-blue-700','pending'=>'bg-yellow-100 text-yellow-700']; @endphp
-                            <span class="px-2 py-1 rounded-full text-xs {{ $deliveryColors[$notification->delivery_status] ?? 'bg-gray-100 text-gray-700' }}">{{ ucfirst($notification->delivery_status ?? 'pending') }}</span>
+                            <x-status-badge :status="$notification->delivery_status ?? 'pending'" />
                             <p class="mt-1 text-[11px] text-gray-400">{{ $notification->read_at ? 'Read' : 'Unread' }}</p>
                         </td>
                         <td class="px-6 py-4 text-xs text-gray-500">{{ $notification->created_at->format('M d, Y H:i') }}</td>
                         <td class="px-6 py-4 text-right"><a href="{{ route('admin.notifications.show', $notification) }}" class="text-blue-600 hover:underline">View</a></td>
                     </tr>
                 @empty
-                    <tr><td colspan="6" class="px-6 py-10 text-center text-gray-400">No notifications found.</td></tr>
+                    <tr><td colspan="6"><x-empty-state icon="fa-bell" title="No notifications found" description="There are no notifications to display." /></td></tr>
                 @endforelse
             </tbody>
         </table>

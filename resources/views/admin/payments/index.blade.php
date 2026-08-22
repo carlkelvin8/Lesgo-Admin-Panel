@@ -4,36 +4,18 @@
 
 @section('content')
 <div class="bg-white rounded-xl shadow-sm p-4 mb-6">
-    <form method="GET" class="flex flex-wrap gap-3 items-end">
-        <div class="flex-1 min-w-[200px]">
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search by customer name, email..."
-                   class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none">
-        </div>
-        <div>
-            <select name="status" class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                <option value="">All Status</option>
-                @foreach(['pending','paid','failed','refunded'] as $s)
-                    <option value="{{ $s }}" {{ request('status') === $s ? 'selected' : '' }}>{{ ucfirst($s) }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div>
-            <select name="method" class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                <option value="">All Methods</option>
-                @foreach(['cash','card','ewallet'] as $m)
-                    <option value="{{ $m }}" {{ request('method') === $m ? 'selected' : '' }}>{{ ucfirst($m) }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div><input type="date" name="date_from" value="{{ request('date_from') }}" class="border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="From"></div>
-        <div><input type="date" name="date_to" value="{{ request('date_to') }}" class="border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="To"></div>
-        <button type="submit" class="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-700"><i class="fas fa-filter mr-1"></i> Filter</button>
-    </form>
+    <x-filter-panel action="{{ request()->url() }}">
+        <x-filter-input name="search" label="Search" placeholder="Search by customer name, email..." value="{{ request('search') }}" />
+        <x-filter-input name="status" label="Status" type="select" :options="['pending' => 'Pending', 'paid' => 'Paid', 'failed' => 'Failed', 'refunded' => 'Refunded']" />
+        <x-filter-input name="method" label="Method" type="select" :options="['cash' => 'Cash', 'card' => 'Card', 'ewallet' => 'E-Wallet']" />
+        <x-filter-input name="date_from" label="From" type="date" />
+        <x-filter-input name="date_to" label="To" type="date" />
+    </x-filter-panel>
 </div>
 
 <div class="bg-white rounded-xl shadow-sm overflow-hidden">
     <div class="overflow-x-auto">
-        <table class="w-full text-sm">
+        <table class="responsive-table w-full text-sm">
             <thead class="bg-gray-50 border-b">
                 <tr>
                     <th class="text-left px-6 py-3 text-gray-500 font-medium">ID</th>
@@ -55,15 +37,7 @@
                         <td class="px-6 py-4 font-medium">₱{{ number_format($payment->amount, 2) }}</td>
                         <td class="px-6 py-4 text-gray-700">{{ ucfirst($payment->method ?? 'N/A') }}</td>
                         <td class="px-6 py-4">
-                            @php
-                                $sc = [
-                                    'pending' => 'bg-yellow-100 text-yellow-800',
-                                    'paid' => 'bg-green-100 text-green-800',
-                                    'failed' => 'bg-red-100 text-red-800',
-                                    'refunded' => 'bg-blue-100 text-blue-800',
-                                ];
-                            @endphp
-                            <span class="px-2 py-1 rounded-full text-xs font-medium {{ $sc[$payment->status] ?? 'bg-gray-100 text-gray-800' }}">{{ ucfirst($payment->status) }}</span>
+                            <x-status-badge status="{{ $payment->status }}" />
                         </td>
                         <td class="px-6 py-4 text-gray-500 text-xs">{{ $payment->paid_at ? $payment->paid_at->format('M d, Y H:i') : '—' }}</td>
                         <td class="px-6 py-4 text-right">
@@ -71,7 +45,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="8" class="px-6 py-12 text-center text-gray-400">No payments found.</td></tr>
+                    <tr><td colspan="8"><x-empty-state icon="fa-credit-card" title="No payments found" description="There are no payments matching your criteria." /></td></tr>
                 @endforelse
             </tbody>
         </table>

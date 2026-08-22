@@ -46,10 +46,7 @@
                         </td>
                         <td class="px-6 py-4 text-gray-600" data-label="Phone">{{ $user->phone_number ?? '-' }}</td>
                         <td class="px-6 py-4" data-label="Role">
-                            @php
-                                $roleColors = ['admin' => 'bg-red-100 text-red-700', 'driver' => 'bg-green-100 text-green-700', 'partner' => 'bg-purple-100 text-purple-700', 'customer' => 'bg-blue-100 text-blue-700'];
-                            @endphp
-                            <span class="px-2 py-1 rounded-full text-xs font-medium {{ $roleColors[$user->role] ?? 'bg-gray-100 text-gray-700' }}">{{ ucfirst($user->role) }}</span>
+                            <x-status-badge :status="$user->role" />
                         </td>
                         <td class="px-6 py-4" data-label="Status">
                             @if($user->is_active)

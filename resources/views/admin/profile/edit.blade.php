@@ -88,7 +88,7 @@
                 @endunless
             </div>
         @empty
-            <p class="px-6 py-8 text-center text-sm text-gray-500">No database-backed sessions were found.</p>
+            <x-empty-state icon="fa-users" title="No sessions found" description="No database-backed sessions were found." />
         @endforelse
     </div>
 </section>

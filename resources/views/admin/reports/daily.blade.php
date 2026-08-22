@@ -124,16 +124,7 @@
             @forelse($revenueDetails as $detail)
                 <div class="flex items-center justify-between py-3 border-b border-gray-50 last:border-0">
                     <div class="flex items-center gap-3">
-                        @php
-                            $typeColors = [
-                                'ride' => 'bg-blue-100 text-blue-600',
-                                'delivery' => 'bg-green-100 text-green-600',
-                                'food' => 'bg-orange-100 text-orange-600',
-                                'commission' => 'bg-purple-100 text-purple-600',
-                            ];
-                            $tc = $typeColors[$detail->revenue_type] ?? 'bg-gray-100 text-gray-600';
-                        @endphp
-                        <span class="px-2 py-1 rounded-full text-xs font-medium {{ $tc }}">{{ ucfirst(str_replace('_', ' ', $detail->revenue_type)) }}</span>
+                        <x-status-badge :status="$detail->revenue_type" />
                     </div>
                     <div class="text-right">
                         <p class="text-sm font-semibold text-gray-800">₱{{ number_format($detail->total_amount, 2) }}</p>
@@ -166,7 +157,7 @@
             <div class="mb-6 last:mb-0">
                 <h4 class="text-xs uppercase tracking-wider text-gray-500 mb-3">{{ str_replace('_', ' ', $type) }}</h4>
                 <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
+                    <table class="responsive-table w-full text-sm">
                         <thead class="bg-gray-50 border-b">
                             <tr>
                                 <th class="text-left px-4 py-2 text-gray-500 font-medium">Category</th>

@@ -3,16 +3,6 @@
 @section('header', 'Document Verification Details')
 
 @section('content')
-@php
-    $statusColors = [
-        'pending' => 'bg-yellow-100 text-yellow-800',
-        'under_review' => 'bg-blue-100 text-blue-800',
-        'approved' => 'bg-green-100 text-green-800',
-        'rejected' => 'bg-red-100 text-red-800',
-        'expired' => 'bg-gray-100 text-gray-800',
-    ];
-@endphp
-
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <!-- User Info -->
     <div class="bg-white rounded-xl shadow-sm p-6">
@@ -46,7 +36,7 @@
         <div class="bg-white rounded-xl shadow-sm p-6">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="font-semibold text-gray-800"><i class="fas fa-id-card mr-2 text-purple-600"></i>Document Information</h3>
-                <span class="px-2 py-1 rounded-full text-xs font-medium {{ $statusColors[$documentVerification->status] ?? 'bg-gray-100 text-gray-700' }}">{{ ucfirst(str_replace('_', ' ', $documentVerification->status)) }}</span>
+                <x-status-badge :status="$documentVerification->status" />
             </div>
             <div class="space-y-3 text-sm">
                 <div class="flex justify-between border-b pb-2">

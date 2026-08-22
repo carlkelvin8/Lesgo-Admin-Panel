@@ -7,11 +7,8 @@
     <!-- Order Info -->
     <div class="bg-white rounded-xl shadow-sm p-6">
         <h3 class="font-semibold text-gray-800 mb-4">Order Information</h3>
-        @php
-            $sc = ['pending'=>'bg-yellow-100 text-yellow-800','accepted'=>'bg-blue-100 text-blue-800','picked_up'=>'bg-indigo-100 text-indigo-800','completed'=>'bg-green-100 text-green-800','cancelled'=>'bg-red-100 text-red-800','in_progress'=>'bg-purple-100 text-purple-800','driver_arrived'=>'bg-cyan-100 text-cyan-800'];
-        @endphp
         <div class="space-y-3 text-sm">
-            <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Status</span><span class="px-2 py-1 rounded-full text-xs font-medium {{ $sc[$order->status] ?? 'bg-gray-100' }}">{{ ucfirst(str_replace('_', ' ', $order->status)) }}</span></div>
+            <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Status</span><x-status-badge status="{{ $order->status }}" /></div>
             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Customer</span><span>{{ $order->customer->name ?? 'N/A' }}</span></div>
             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Partner</span><span>{{ $order->partner->name ?? 'N/A' }}</span></div>
             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Driver</span><span>{{ $order->driver->user->name ?? 'Unassigned' }}</span></div>
@@ -78,7 +75,7 @@
         @if($order->lesbuyItems->isNotEmpty())
         <div class="bg-white rounded-xl shadow-sm overflow-hidden">
             <div class="px-6 py-4 border-b"><h3 class="font-semibold text-gray-800">Order Items</h3></div>
-            <table class="w-full text-sm">
+            <table class="responsive-table w-full text-sm">
                 <thead class="bg-gray-50"><tr><th class="text-left px-6 py-3">Item</th><th class="text-left px-6 py-3">Qty</th><th class="text-left px-6 py-3">Price</th><th class="text-left px-6 py-3">Status</th></tr></thead>
                 <tbody class="divide-y">
                     @foreach($order->lesbuyItems as $item)

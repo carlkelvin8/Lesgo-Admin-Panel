@@ -33,10 +33,7 @@
             </div>
             <h3 class="text-xl font-bold text-gray-800">{{ $user->name }}</h3>
             <p class="text-gray-500">{{ $user->email }}</p>
-            @php
-                $roleColors = ['admin' => 'bg-red-100 text-red-700', 'driver' => 'bg-green-100 text-green-700', 'partner' => 'bg-purple-100 text-purple-700', 'customer' => 'bg-blue-100 text-blue-700'];
-            @endphp
-            <span class="inline-block mt-2 px-3 py-1 rounded-full text-xs font-medium {{ $roleColors[$user->role] ?? 'bg-gray-100 text-gray-700' }}">{{ ucfirst($user->role) }}</span>
+            <x-status-badge :status="$user->role" />
         </div>
         <div class="mt-6 space-y-3 text-sm">
             <div class="flex justify-between border-b pb-2">
@@ -79,7 +76,7 @@
                 <h3 class="font-semibold text-gray-800"><i class="fas fa-shopping-cart mr-2 text-blue-600"></i>Recent Orders</h3>
             </div>
             <div class="overflow-x-auto">
-                <table class="w-full text-sm">
+                <table class="responsive-table w-full text-sm">
                     <thead class="bg-gray-50">
                         <tr>
                             <th class="text-left px-6 py-3 text-gray-500 font-medium">ID</th>

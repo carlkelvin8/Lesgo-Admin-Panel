@@ -4,54 +4,19 @@
 
 @section('content')
 <div class="bg-white rounded-xl shadow-sm p-4 mb-6">
-    <form method="GET" class="flex flex-wrap gap-3 items-end">
-        <div class="flex-1 min-w-[200px]">
-            <label class="block text-xs text-gray-500 mb-1">Search</label>
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="User, action, resource..."
-                   class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none">
-        </div>
-        <div>
-            <label class="block text-xs text-gray-500 mb-1">Category</label>
-            <select name="event_category" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none">
-                <option value="">All Categories</option>
-                @foreach(['authentication','authorization','data_modification','system','security','user_activity'] as $cat)
-                    <option value="{{ $cat }}" {{ request('event_category') === $cat ? 'selected' : '' }}>{{ ucfirst(str_replace('_', ' ', $cat)) }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div>
-            <label class="block text-xs text-gray-500 mb-1">Risk Level</label>
-            <select name="risk_level" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none">
-                <option value="">All Levels</option>
-                @foreach(['low','medium','high','critical'] as $r)
-                    <option value="{{ $r }}" {{ request('risk_level') === $r ? 'selected' : '' }}>{{ ucfirst($r) }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div>
-            <label class="block text-xs text-gray-500 mb-1">Suspicious</label>
-            <select name="is_suspicious" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none">
-                <option value="">All</option>
-                <option value="yes" {{ request('is_suspicious') === 'yes' ? 'selected' : '' }}>Yes</option>
-                <option value="no" {{ request('is_suspicious') === 'no' ? 'selected' : '' }}>No</option>
-            </select>
-        </div>
-        <div>
-            <label class="block text-xs text-gray-500 mb-1">From</label>
-            <input type="date" name="date_from" value="{{ request('date_from') }}" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none">
-        </div>
-        <div>
-            <label class="block text-xs text-gray-500 mb-1">To</label>
-            <input type="date" name="date_to" value="{{ request('date_to') }}" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none">
-        </div>
-        <button type="submit" class="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-700"><i class="fas fa-filter mr-1"></i> Filter</button>
-        <a href="{{ route('admin.audit-logs.index') }}" class="text-gray-500 hover:text-gray-700 text-sm px-3 py-2">Clear</a>
-    </form>
+    <x-filter-panel action="{{ request()->url() }}">
+        <x-filter-input name="search" label="Search" placeholder="User, action, resource..." value="{{ request('search') }}" />
+        <x-filter-input name="event_category" label="Category" type="select" :options="['' => 'All Categories', 'authentication' => 'Authentication', 'authorization' => 'Authorization', 'data_modification' => 'Data Modification', 'system' => 'System', 'security' => 'Security', 'user_activity' => 'User Activity']" value="{{ request('event_category') }}" />
+        <x-filter-input name="risk_level" label="Risk Level" type="select" :options="['' => 'All Levels', 'low' => 'Low', 'medium' => 'Medium', 'high' => 'High', 'critical' => 'Critical']" value="{{ request('risk_level') }}" />
+        <x-filter-input name="is_suspicious" label="Suspicious" type="select" :options="['' => 'All', 'yes' => 'Yes', 'no' => 'No']" value="{{ request('is_suspicious') }}" />
+        <x-filter-input name="date_from" label="From" type="date" value="{{ request('date_from') }}" />
+        <x-filter-input name="date_to" label="To" type="date" value="{{ request('date_to') }}" />
+    </x-filter-panel>
 </div>
 
 <div class="bg-white rounded-xl shadow-sm overflow-hidden">
     <div class="overflow-x-auto">
-        <table class="w-full text-sm">
+        <table class="responsive-table w-full text-sm">
             <thead class="bg-gray-50 border-b">
                 <tr>
                     <th class="text-left px-6 py-3 text-gray-500 font-medium">Timestamp</th>
@@ -65,14 +30,6 @@
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
-                @php
-                    $riskColors = [
-                        'low' => 'bg-green-100 text-green-800',
-                        'medium' => 'bg-yellow-100 text-yellow-800',
-                        'high' => 'bg-orange-100 text-orange-800',
-                        'critical' => 'bg-red-100 text-red-800',
-                    ];
-                @endphp
                 @forelse($logs as $log)
                     <tr class="hover:bg-gray-50">
                         <td class="px-6 py-4 text-gray-500 text-xs">{{ $log->occurred_at?->format('M d, Y H:i:s') ?? '-' }}</td>
@@ -89,7 +46,7 @@
                         <td class="px-6 py-4 text-gray-800 max-w-[200px] truncate">{{ $log->action }}</td>
                         <td class="px-6 py-4 text-gray-600 text-xs">{{ $log->resource_type }} #{{ $log->resource_id ?? '-' }}</td>
                         <td class="px-6 py-4">
-                            <span class="px-2 py-1 rounded-full text-xs font-medium {{ $riskColors[$log->risk_level] ?? 'bg-gray-100 text-gray-700' }}">{{ ucfirst($log->risk_level) }}</span>
+                            <x-status-badge :status="$log->risk_level" />
                         </td>
                         <td class="px-6 py-4 text-gray-500 text-xs font-mono">{{ $log->ip_address ?? '-' }}</td>
                         <td class="px-6 py-4 text-center">
@@ -104,7 +61,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="8" class="px-6 py-12 text-center text-gray-400">No audit logs found.</td></tr>
+                    <tr><td colspan="8"><x-empty-state icon="fa-clock-rotate-left" title="No audit logs found" description="There are no audit logs matching your filters." /></td></tr>
                 @endforelse
             </tbody>
         </table>

@@ -4,18 +4,10 @@
 
 @section('content')
 <div class="bg-white rounded-xl shadow-sm p-4 mb-6">
-    <form method="GET" class="flex flex-wrap gap-3 items-end">
-        <div>
-            <label class="block text-xs text-gray-500 mb-1">Date From</label>
-            <input type="date" name="date_from" value="{{ request('date_from') }}" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none">
-        </div>
-        <div>
-            <label class="block text-xs text-gray-500 mb-1">Date To</label>
-            <input type="date" name="date_to" value="{{ request('date_to') }}" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none">
-        </div>
-        <button type="submit" class="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-700"><i class="fas fa-filter mr-1"></i> Filter</button>
-        <a href="{{ route('admin.reports.revenue') }}" class="text-gray-500 hover:text-gray-700 text-sm px-3 py-2">Clear</a>
-    </form>
+    <x-filter-panel action="{{ request()->url() }}">
+        <x-filter-input name="date_from" label="Date From" type="date" value="{{ request('date_from') }}" />
+        <x-filter-input name="date_to" label="Date To" type="date" value="{{ request('date_to') }}" />
+    </x-filter-panel>
 </div>
 
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -77,17 +69,7 @@
             @forelse($byType as $type)
                 <div class="flex items-center justify-between px-6 py-4 border-b border-gray-50 last:border-0">
                     <div class="flex items-center gap-3">
-                        @php
-                            $typeColors = [
-                                'ride' => 'bg-blue-100 text-blue-600',
-                                'delivery' => 'bg-green-100 text-green-600',
-                                'food' => 'bg-orange-100 text-orange-600',
-                                'commission' => 'bg-purple-100 text-purple-600',
-                                'subscription' => 'bg-yellow-100 text-yellow-600',
-                            ];
-                            $tc = $typeColors[$type->revenue_type] ?? 'bg-gray-100 text-gray-600';
-                        @endphp
-                        <span class="px-2 py-1 rounded-full text-xs font-medium {{ $tc }}">{{ ucfirst(str_replace('_', ' ', $type->revenue_type)) }}</span>
+                        <x-status-badge :status="$type->revenue_type" />
                     </div>
                     <div class="text-right">
                         <p class="text-sm font-semibold text-gray-800">₱{{ number_format($type->total_amount, 2) }}</p>
@@ -128,7 +110,7 @@
         <h3 class="font-semibold text-gray-800"><i class="fas fa-calendar-alt mr-2 text-gray-400"></i>Daily Revenue Breakdown</h3>
     </div>
     <div class="overflow-x-auto">
-        <table class="w-full text-sm">
+        <table class="responsive-table w-full text-sm">
             <thead class="bg-gray-50 border-b">
                 <tr>
                     <th class="text-left px-6 py-3 text-gray-500 font-medium">Date</th>
@@ -146,7 +128,7 @@
                         <td class="px-6 py-4 text-right text-gray-600">₱{{ $day->total_transactions > 0 ? number_format($day->total_amount / $day->total_transactions, 2) : '0.00' }}</td>
                     </tr>
                 @empty
-                    <tr><td colspan="4" class="px-6 py-12 text-center text-gray-400">No revenue data for the selected period.</td></tr>
+                    <tr><td colspan="4"><x-empty-state icon="fa-file-lines" title="No revenue data" description="No revenue data for the selected period." /></td></tr>
                 @endforelse
             </tbody>
         </table>

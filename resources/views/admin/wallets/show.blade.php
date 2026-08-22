@@ -49,7 +49,7 @@
             <h3 class="font-semibold text-gray-800">Recent Transactions</h3>
         </div>
         <div class="overflow-x-auto">
-            <table class="w-full text-sm">
+            <table class="responsive-table w-full text-sm">
                 <thead class="bg-gray-50 border-b">
                     <tr>
                         <th class="text-left px-6 py-3 text-gray-500 font-medium">Type</th>
@@ -64,13 +64,7 @@
                     @forelse($recentTransactions as $tx)
                         <tr class="hover:bg-gray-50">
                             <td class="px-6 py-3">
-                                @php
-                                    $tc = [
-                                        'credit' => 'bg-green-100 text-green-800',
-                                        'debit' => 'bg-red-100 text-red-800',
-                                    ];
-                                @endphp
-                                <span class="px-2 py-1 rounded-full text-xs font-medium {{ $tc[$tx->type] ?? 'bg-gray-100 text-gray-800' }}">{{ ucfirst($tx->type) }}</span>
+                                <x-status-badge :status="$tx->type" />
                             </td>
                             <td class="px-6 py-3 font-medium {{ $tx->type === 'credit' ? 'text-green-600' : 'text-red-600' }}">
                                 {{ $tx->type === 'credit' ? '+' : '-' }}₱{{ number_format($tx->amount, 2) }}
@@ -81,7 +75,7 @@
                             <td class="px-6 py-3 text-gray-500 text-xs">{{ $tx->created_at->format('M d, Y H:i') }}</td>
                         </tr>
                     @empty
-                        <tr><td colspan="6" class="px-6 py-8 text-center text-gray-400">No transactions yet.</td></tr>
+                        <tr><td colspan="6"><x-empty-state icon="fa-wallet" title="No transactions yet" description="Transaction history will appear here." /></td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -93,7 +87,7 @@
             <h3 class="font-semibold text-gray-800">Recent Top-ups</h3>
         </div>
         <div class="overflow-x-auto">
-            <table class="w-full text-sm">
+            <table class="responsive-table w-full text-sm">
                 <thead class="bg-gray-50 border-b">
                     <tr>
                         <th class="text-left px-6 py-3 text-gray-500 font-medium">Amount</th>
@@ -109,20 +103,13 @@
                             <td class="px-6 py-3 font-medium">₱{{ number_format($topUp->amount, 2) }}</td>
                             <td class="px-6 py-3 text-gray-500">₱{{ number_format($topUp->fee, 2) }}</td>
                             <td class="px-6 py-3">
-                                @php
-                                    $tsc = [
-                                        'pending' => 'bg-yellow-100 text-yellow-800',
-                                        'paid' => 'bg-green-100 text-green-800',
-                                        'failed' => 'bg-red-100 text-red-800',
-                                    ];
-                                @endphp
-                                <span class="px-2 py-1 rounded-full text-xs font-medium {{ $tsc[$topUp->status] ?? 'bg-gray-100 text-gray-800' }}">{{ ucfirst($topUp->status) }}</span>
+                                <x-status-badge :status="$topUp->status" />
                             </td>
                             <td class="px-6 py-3 text-gray-700">{{ ucfirst($topUp->payment_method ?? 'N/A') }}</td>
                             <td class="px-6 py-3 text-gray-500 text-xs">{{ $topUp->created_at->format('M d, Y H:i') }}</td>
                         </tr>
                     @empty
-                        <tr><td colspan="5" class="px-6 py-8 text-center text-gray-400">No top-ups yet.</td></tr>
+                        <tr><td colspan="5"><x-empty-state icon="fa-wallet" title="No top-ups yet" description="Top-up history will appear here." /></td></tr>
                     @endforelse
                 </tbody>
             </table>

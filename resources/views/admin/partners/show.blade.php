@@ -25,8 +25,7 @@
         <div class="space-y-3 text-sm">
             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Category</span><span>{{ $partner->category ?? '-' }}</span></div>
             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Status</span>
-                @php $sc = ['pending'=>'bg-yellow-100 text-yellow-800','approved'=>'bg-green-100 text-green-800','rejected'=>'bg-red-100 text-red-800']; @endphp
-                <span class="px-2 py-0.5 rounded-full text-xs font-medium {{ $sc[$partner->status] ?? 'bg-gray-100' }}">{{ ucfirst($partner->status) }}</span>
+                <x-status-badge :status="$partner->status" />
             </div>
             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Rating</span><span>{{ $partner->rating }} <i class="fas fa-star text-yellow-400 text-xs"></i> ({{ $partner->total_reviews }} reviews)</span></div>
             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Delivery Fee</span><span>₱{{ number_format($partner->delivery_fee, 2) }}</span></div>
@@ -46,7 +45,7 @@
         <div class="bg-white rounded-xl shadow-sm overflow-hidden">
             <div class="px-6 py-4 border-b"><h3 class="font-semibold text-gray-800">Services</h3></div>
             <div class="overflow-x-auto">
-                <table class="w-full text-sm">
+                <table class="responsive-table w-full text-sm">
                     <thead class="bg-gray-50">
                         <tr><th class="text-left px-6 py-3 text-gray-500 font-medium">Name</th><th class="text-left px-6 py-3 text-gray-500 font-medium">Code</th><th class="text-left px-6 py-3 text-gray-500 font-medium">Base Fare</th><th class="text-left px-6 py-3 text-gray-500 font-medium">Active</th></tr>
                     </thead>
@@ -54,7 +53,7 @@
                         @forelse($partner->services as $service)
                             <tr><td class="px-6 py-3">{{ $service->name }}</td><td class="px-6 py-3 text-gray-500">{{ $service->code }}</td><td class="px-6 py-3">₱{{ number_format($service->base_fare, 2) }}</td><td class="px-6 py-3">{{ $service->is_active ? 'Yes' : 'No' }}</td></tr>
                         @empty
-                            <tr><td colspan="4" class="px-6 py-6 text-center text-gray-400">No services.</td></tr>
+                            <tr><td colspan="4"><x-empty-state icon="fa-inbox" title="No services" description="This partner has no services yet." /></td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -64,15 +63,15 @@
         <div class="bg-white rounded-xl shadow-sm overflow-hidden">
             <div class="px-6 py-4 border-b"><h3 class="font-semibold text-gray-800">Recent Orders</h3></div>
             <div class="overflow-x-auto">
-                <table class="w-full text-sm">
+                <table class="responsive-table w-full text-sm">
                     <thead class="bg-gray-50">
                         <tr><th class="text-left px-6 py-3 text-gray-500 font-medium">ID</th><th class="text-left px-6 py-3 text-gray-500 font-medium">Status</th><th class="text-left px-6 py-3 text-gray-500 font-medium">Fare</th><th class="text-left px-6 py-3 text-gray-500 font-medium">Date</th></tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         @forelse($partner->orders->take(10) as $order)
-                            <tr><td class="px-6 py-3"><a href="{{ route('admin.orders.show', $order) }}" class="text-blue-600 hover:underline">#{{ $order->id }}</a></td><td class="px-6 py-3"><span class="px-2 py-1 rounded-full text-xs font-medium bg-gray-100">{{ ucfirst($order->status) }}</span></td><td class="px-6 py-3">₱{{ number_format($order->actual_fare ?? $order->estimated_fare, 2) }}</td><td class="px-6 py-3 text-gray-500 text-xs">{{ $order->created_at->diffForHumans() }}</td></tr>
+                            <tr><td class="px-6 py-3"><a href="{{ route('admin.orders.show', $order) }}" class="text-blue-600 hover:underline">#{{ $order->id }}</a></td><td class="px-6 py-3"><x-status-badge :status="$order->status" /></td><td class="px-6 py-3">₱{{ number_format($order->actual_fare ?? $order->estimated_fare, 2) }}</td><td class="px-6 py-3 text-gray-500 text-xs">{{ $order->created_at->diffForHumans() }}</td></tr>
                         @empty
-                            <tr><td colspan="4" class="px-6 py-6 text-center text-gray-400">No orders.</td></tr>
+                            <tr><td colspan="4"><x-empty-state icon="fa-inbox" title="No orders" description="This partner has no orders yet." /></td></tr>
                         @endforelse
                     </tbody>
                 </table>

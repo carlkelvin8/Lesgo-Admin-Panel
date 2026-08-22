@@ -7,26 +7,14 @@
 @endsection
 
 @section('content')
-<div class="bg-white rounded-xl shadow-sm p-4 mb-6">
-    <form method="GET" class="flex flex-wrap gap-3 items-end">
-        <div class="flex-1 min-w-[200px]">
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search services..."
-                   class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none">
-        </div>
-        <div>
-            <select name="is_active" class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                <option value="">All</option>
-                <option value="1" {{ request('is_active') === '1' ? 'selected' : '' }}>Active</option>
-                <option value="0" {{ request('is_active') === '0' ? 'selected' : '' }}>Inactive</option>
-            </select>
-        </div>
-        <button type="submit" class="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-700"><i class="fas fa-filter mr-1"></i> Filter</button>
-    </form>
-</div>
+<x-filter-panel action="{{ request()->url() }}">
+    <x-filter-input name="search" label="Search" placeholder="Search services..." />
+    <x-filter-input name="is_active" label="Status" type="select" :options="['' => 'All', '1' => 'Active', '0' => 'Inactive']" />
+</x-filter-panel>
 
 <div class="bg-white rounded-xl shadow-sm overflow-hidden">
     <div class="overflow-x-auto">
-        <table class="w-full text-sm">
+        <table class="responsive-table w-full text-sm">
             <thead class="bg-gray-50 border-b">
                 <tr>
                     <th class="text-left px-6 py-3 text-gray-500 font-medium">Name</th>
@@ -48,20 +36,14 @@
                         <td class="px-6 py-4">₱{{ number_format($service->base_fare, 2) }}</td>
                         <td class="px-6 py-4">₱{{ number_format($service->per_km_rate, 2) }}</td>
                         <td class="px-6 py-4">₱{{ number_format($service->minimum_fare, 2) }}</td>
-                        <td class="px-6 py-4">
-                            @if($service->is_active)
-                                <span class="text-green-600 text-xs"><i class="fas fa-circle text-green-500 mr-1" style="font-size:6px"></i>Active</span>
-                            @else
-                                <span class="text-red-600 text-xs"><i class="fas fa-circle text-red-500 mr-1" style="font-size:6px"></i>Inactive</span>
-                            @endif
-                        </td>
+                        <td class="px-6 py-4"><x-status-badge :status="$service->is_active ? 'active' : 'inactive'" /></td>
                         <td class="px-6 py-4 text-right">
                             <a href="{{ route('admin.services.show', $service) }}" class="text-blue-600 hover:text-blue-800 mr-2"><i class="fas fa-eye"></i></a>
                             <a href="{{ route('admin.services.edit', $service) }}" class="text-yellow-600 hover:text-yellow-800"><i class="fas fa-edit"></i></a>
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="8" class="px-6 py-12 text-center text-gray-400">No services found.</td></tr>
+                    <tr><td colspan="8"><x-empty-state icon="fa-concierge-bell" title="No services found" description="Add a service to start offering rides." /></td></tr>
                 @endforelse
             </tbody>
         </table>

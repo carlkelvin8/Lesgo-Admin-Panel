@@ -17,15 +17,7 @@
                         <p class="text-xs text-gray-500">{{ $review->is_anonymous ? '' : ($review->user->email ?? '') }}</p>
                     </div>
                 </div>
-                @php
-                    $statusColors = [
-                        'pending' => 'bg-yellow-100 text-yellow-800',
-                        'approved' => 'bg-green-100 text-green-800',
-                        'rejected' => 'bg-red-100 text-red-800',
-                        'flagged' => 'bg-orange-100 text-orange-800',
-                    ];
-                @endphp
-                <span class="px-3 py-1 rounded-full text-xs font-medium {{ $statusColors[$review->status] ?? 'bg-gray-100 text-gray-800' }}">{{ ucfirst($review->status) }}</span>
+                <x-status-badge :status="$review->status" />
             </div>
 
             @if($review->order)

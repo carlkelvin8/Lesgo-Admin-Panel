@@ -3,14 +3,6 @@
 @section('header', 'Audit Log Detail')
 
 @section('content')
-@php
-    $riskColors = [
-        'low' => 'bg-green-100 text-green-800',
-        'medium' => 'bg-yellow-100 text-yellow-800',
-        'high' => 'bg-orange-100 text-orange-800',
-        'critical' => 'bg-red-100 text-red-800',
-    ];
-@endphp
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <!-- Event Info -->
@@ -77,7 +69,7 @@
         <div class="space-y-3 text-sm">
             <div class="flex justify-between border-b pb-2">
                 <span class="text-gray-500">Risk Level</span>
-                <span class="px-2 py-1 rounded-full text-xs font-medium {{ $riskColors[$auditLog->risk_level] ?? 'bg-gray-100 text-gray-700' }}">{{ ucfirst($auditLog->risk_level) }}</span>
+                <x-status-badge :status="$auditLog->risk_level" />
             </div>
             <div class="flex justify-between border-b pb-2">
                 <span class="text-gray-500">Suspicious</span>
@@ -112,7 +104,7 @@
             <h4 class="text-xs uppercase tracking-wider text-gray-500 mb-2 font-medium">Old Values</h4>
             <div class="bg-red-50 rounded-lg p-4 border border-red-100">
                 @if(!empty($auditLog->old_values))
-                    <table class="w-full text-sm">
+                    <table class="responsive-table w-full text-sm">
                         <tbody class="divide-y divide-red-100">
                             @foreach($auditLog->old_values as $key => $value)
                                 <tr>
@@ -131,7 +123,7 @@
             <h4 class="text-xs uppercase tracking-wider text-gray-500 mb-2 font-medium">New Values</h4>
             <div class="bg-green-50 rounded-lg p-4 border border-green-100">
                 @if(!empty($auditLog->new_values))
-                    <table class="w-full text-sm">
+                    <table class="responsive-table w-full text-sm">
                         <tbody class="divide-y divide-green-100">
                             @foreach($auditLog->new_values as $key => $value)
                                 <tr>

@@ -9,23 +9,15 @@
 
 @section('content')
 <div class="bg-white rounded-xl shadow-sm p-4 mb-6">
-    <form method="GET" class="flex flex-wrap gap-3 items-end">
-        <div>
-            <label class="block text-xs text-gray-500 mb-1">Date From</label>
-            <input type="date" name="date_from" value="{{ request('date_from') }}" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none">
-        </div>
-        <div>
-            <label class="block text-xs text-gray-500 mb-1">Date To</label>
-            <input type="date" name="date_to" value="{{ request('date_to') }}" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none">
-        </div>
-        <button type="submit" class="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-700"><i class="fas fa-filter mr-1"></i> Filter</button>
-        <a href="{{ route('admin.reports.index') }}" class="text-gray-500 hover:text-gray-700 text-sm px-3 py-2">Clear</a>
-    </form>
+    <x-filter-panel action="{{ request()->url() }}">
+        <x-filter-input name="date_from" label="Date From" type="date" value="{{ request('date_from') }}" />
+        <x-filter-input name="date_to" label="Date To" type="date" value="{{ request('date_to') }}" />
+    </x-filter-panel>
 </div>
 
 <div class="bg-white rounded-xl shadow-sm overflow-hidden">
     <div class="overflow-x-auto">
-        <table class="w-full text-sm">
+        <table class="responsive-table w-full text-sm">
             <thead class="bg-gray-50 border-b">
                 <tr>
                     <th class="text-left px-6 py-3 text-gray-500 font-medium">Date</th>
@@ -59,7 +51,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="9" class="px-6 py-12 text-center text-gray-400">No daily reports found.</td></tr>
+                    <tr><td colspan="9"><x-empty-state icon="fa-file-lines" title="No daily reports found" description="No reports match your current filters." /></td></tr>
                 @endforelse
             </tbody>
         </table>

@@ -21,8 +21,7 @@
             </div>
             <h3 class="text-xl font-bold text-gray-800">{{ $driver->user->name ?? 'N/A' }}</h3>
             <p class="text-gray-500 text-sm">{{ $driver->user->email ?? '' }}</p>
-            @php $sc = ['pending'=>'bg-yellow-100 text-yellow-800','active'=>'bg-green-100 text-green-800','inactive'=>'bg-gray-100 text-gray-800','suspended'=>'bg-red-100 text-red-800']; @endphp
-            <span class="inline-block mt-2 px-3 py-1 rounded-full text-xs font-medium {{ $sc[$driver->status] ?? 'bg-gray-100' }}">{{ ucfirst($driver->status) }}</span>
+            <x-status-badge status="{{ $driver->status }}" />
         </div>
         <div class="space-y-3 text-sm">
             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Rating</span><span>{{ $driver->rating }} <i class="fas fa-star text-yellow-400 text-xs"></i></span></div>
