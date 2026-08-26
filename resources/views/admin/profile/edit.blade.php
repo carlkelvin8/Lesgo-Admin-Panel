@@ -84,7 +84,7 @@
             <div class="flex flex-col gap-3 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
                 <div class="min-w-0"><p class="truncate text-sm font-medium text-gray-800">{{ $session->user_agent ?: 'Unknown browser' }}</p><p class="mt-1 text-xs text-gray-500">{{ $session->ip_address ?: 'Unknown IP' }} · {{ $session->last_activity->diffForHumans() }} @if($session->is_current) · <span class="font-semibold text-green-600">Current session</span>@endif</p></div>
                 @unless($session->is_current)
-                    <form method="POST" action="{{ route('admin.profile.sessions.destroy', $session->id) }}" onsubmit="return confirm('Sign out this administrator session?')">@csrf @method('DELETE')<button class="text-sm font-semibold text-red-600">Sign out</button></form>
+                    <button type="button" class="text-sm font-semibold text-red-600" x-data @click="$dispatch('confirm-modal', { title: 'Sign Out Session', message: 'Sign out this administrator session?', confirmText: 'Sign Out', onConfirm: () => { const f = document.createElement('form'); f.method = 'POST'; f.action = '{{ route('admin.profile.sessions.destroy', $session->id) }}'; f.innerHTML = '<input type=\"hidden\" name=\"_token\" value=\"{{ csrf_token() }}\"><input type=\"hidden\" name=\"_method\" value=\"DELETE\">'; document.body.appendChild(f); f.submit(); } })">Sign out</button>
                 @endunless
             </div>
         @empty

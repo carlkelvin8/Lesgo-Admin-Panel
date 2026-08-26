@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\StoreNotificationRequest;
 use App\Jobs\DeliverAdminNotification;
 use App\Models\Notification;
 use App\Models\User;
@@ -66,18 +67,9 @@ class NotificationController extends Controller
         return view('admin.notifications.create', compact('users'));
     }
 
-    public function store(Request $request)
+    public function store(StoreNotificationRequest $request)
     {
-        $validated = $request->validate([
-            'recipient_type' => 'required|in:user,role',
-            'user_id' => 'required_if:recipient_type,user|nullable|exists:users,id',
-            'recipient_role' => 'required_if:recipient_type,role|nullable|in:all,customer,driver,partner,admin',
-            'type' => 'required|string|max:100',
-            'title' => 'required|string|max:255',
-            'body' => 'required|string|max:5000',
-            'channel' => 'required|in:in_app,push,sms,email',
-            'data' => 'nullable|json',
-        ]);
+        $validated = $request->validated();
 
         $recipients = User::query()
             ->where('is_active', true)

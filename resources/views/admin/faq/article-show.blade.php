@@ -4,7 +4,9 @@
 
 @section('actions')
 <a href="{{ route('admin.faq.articles.edit', $article) }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">Edit</a>
-<form method="POST" action="{{ route('admin.faq.articles.destroy', $article) }}" onsubmit="return confirm('Delete this article?')">@csrf @method('DELETE')<button class="bg-red-600 text-white px-4 py-2 rounded-lg text-sm">Delete</button></form>
+<button type="button" class="bg-red-600 text-white px-4 py-2 rounded-lg text-sm"
+    x-data
+    @click="$dispatch('confirm-modal', { title: 'Delete Article', message: 'Delete this article?', confirmText: 'Delete', onConfirm: () => { const f = document.createElement('form'); f.method = 'POST'; f.action = '{{ route('admin.faq.articles.destroy', $article) }}'; f.innerHTML = '<input type=\"hidden\" name=\"_token\" value=\"{{ csrf_token() }}\"><input type=\"hidden\" name=\"_method\" value=\"DELETE\">'; document.body.appendChild(f); f.submit(); } })">Delete</button>
 @endsection
 
 @section('content')

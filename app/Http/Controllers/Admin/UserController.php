@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\StoreUserRequest;
+use App\Http\Requests\Admin\UpdateUserRequest;
 use App\Models\AdminRole;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -54,16 +56,9 @@ class UserController extends Controller
         return view('admin.users.create', ['adminRoles' => $this->orderedAdminRoles()]);
     }
 
-    public function store(Request $request)
+    public function store(StoreUserRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'phone_number' => 'nullable|string|max:20',
-            'role' => 'required|in:customer,driver,partner,admin',
-            'admin_role' => ['nullable', 'required_if:role,admin', Rule::in(AdminRole::definitions()->keys()->all())],
-            'password' => 'required|string|min:8|confirmed',
-        ]);
+        $validated = $request->validated();
 
         if ($validated['role'] !== 'admin') {
             $validated['admin_role'] = null;
@@ -86,16 +81,9 @@ class UserController extends Controller
         ]);
     }
 
-    public function update(Request $request, User $user)
+    public function update(UpdateUserRequest $request, User $user)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,'.$user->id,
-            'phone_number' => 'nullable|string|max:20',
-            'role' => 'required|in:customer,driver,partner,admin',
-            'admin_role' => ['nullable', 'required_if:role,admin', Rule::in(AdminRole::definitions()->keys()->all())],
-            'is_active' => 'boolean',
-        ]);
+        $validated = $request->validated();
 
         if ($validated['role'] !== 'admin') {
             $validated['admin_role'] = null;
@@ -150,6 +138,58 @@ class UserController extends Controller
 
         return redirect()->route('admin.users.index')
             ->with('success', 'User deleted successfully.');
+    }
+
+    public function export(Request $request)
+    {
+        $query = User::query();
+
+        if ($request->filled('search')) {
+            $search = $this->escapeLikePattern($request->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone_number', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('role')) {
+            $query->where('role', $request->role);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('is_active', $request->status === 'active');
+        }
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="users_export_' . now()->format('Y-m-d_His') . '.csv"',
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+        ];
+
+        $callback = function () use ($query) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['ID', 'Name', 'Email', 'Phone', 'Role', 'Admin Role', 'Status', 'Joined']);
+
+            $query->latest()->chunk(500, function ($users) use ($file) {
+                foreach ($users as $user) {
+                    fputcsv($file, [
+                        $user->id,
+                        $user->name,
+                        $user->email,
+                        $user->phone_number ?? '',
+                        $user->role,
+                        $user->admin_role ?? '',
+                        $user->is_active ? 'Active' : 'Inactive',
+                        $user->created_at->format('Y-m-d H:i:s'),
+                    ]);
+                }
+            });
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 
     private function wouldRemoveLastSuperAdmin(User $user, string $role, ?string $adminRole, bool $isActive): bool

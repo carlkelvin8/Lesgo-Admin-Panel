@@ -8,6 +8,7 @@ use App\Models\IpBlacklist;
 use App\Models\IpWhitelist;
 use App\Models\RateLimitRule;
 use App\Models\SecuritySetting;
+use App\Traits\CidrMatching;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -15,6 +16,7 @@ use Illuminate\Validation\ValidationException;
 
 class SecuritySettingsController extends Controller
 {
+    use CidrMatching;
     public function index()
     {
         return view('admin.security-settings.index', [
@@ -187,62 +189,5 @@ class SecuritySettingsController extends Controller
             ->where($removedRule->getKeyName(), '!=', $removedRule->getKey())
             ->get()
             ->contains(fn (IpWhitelist $rule) => $this->ruleCoversIp($ip, $rule->ip_address, $rule->ip_range));
-    }
-
-    private function isValidCidr(string $cidr): bool
-    {
-        if (! str_contains($cidr, '/')) {
-            return false;
-        }
-
-        [$subnet, $prefix] = explode('/', $cidr, 2);
-        $binary = @inet_pton($subnet);
-
-        if ($binary === false || filter_var($prefix, FILTER_VALIDATE_INT) === false) {
-            return false;
-        }
-
-        $prefix = (int) $prefix;
-
-        return $prefix >= 0 && $prefix <= strlen($binary) * 8;
-    }
-
-    private function ruleCoversIp(?string $ip, string $exactIp, ?string $cidr): bool
-    {
-        if (blank($ip)) {
-            return false;
-        }
-
-        if ($ip === $exactIp) {
-            return true;
-        }
-
-        if (blank($cidr) || ! $this->isValidCidr($cidr)) {
-            return false;
-        }
-
-        [$subnet, $prefix] = explode('/', $cidr, 2);
-        $ipBinary = @inet_pton($ip);
-        $subnetBinary = @inet_pton($subnet);
-
-        if ($ipBinary === false || $subnetBinary === false || strlen($ipBinary) !== strlen($subnetBinary)) {
-            return false;
-        }
-
-        $prefix = (int) $prefix;
-        $fullBytes = intdiv($prefix, 8);
-        $remainingBits = $prefix % 8;
-
-        if ($fullBytes > 0 && substr($ipBinary, 0, $fullBytes) !== substr($subnetBinary, 0, $fullBytes)) {
-            return false;
-        }
-
-        if ($remainingBits === 0) {
-            return true;
-        }
-
-        $mask = (0xFF << (8 - $remainingBits)) & 0xFF;
-
-        return (ord($ipBinary[$fullBytes]) & $mask) === (ord($subnetBinary[$fullBytes]) & $mask);
     }
 }

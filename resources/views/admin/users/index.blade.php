@@ -4,6 +4,7 @@
 
 @section('actions')
 @if(auth()->user()->hasAdminPermission('users.manage'))
+<a href="{{ route('admin.users.export', request()->query()) }}" class="border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg text-sm"><i class="fas fa-download mr-1"></i> Export CSV</a>
 <a href="{{ route('admin.users.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"><i class="fas fa-plus mr-1"></i> Add User</a>
 @endif
 @endsection
@@ -17,7 +18,7 @@
 </x-filter-panel>
 
 <!-- Table -->
-<div class="bg-white rounded-xl shadow-sm overflow-hidden">
+<div class="bg-white rounded-xl shadow-sm overflow-hidden" x-data="{ loading: false }" x-init="loading = false">
     <div class="overflow-x-auto">
         <table class="w-full text-sm responsive-table">
             <thead class="bg-gray-50 border-b">
@@ -61,13 +62,23 @@
                             @if(auth()->user()->hasAdminPermission('users.manage'))
                                 <a href="{{ route('admin.users.edit', $user) }}" class="text-yellow-600 hover:text-yellow-800 mr-2" title="Edit"><i class="fas fa-edit"></i></a>
                                 @unless($user->is(auth()->user()))
-                                    <form action="{{ route('admin.users.destroy', $user) }}" method="POST" class="inline" onsubmit="return confirm('Delete {{ addslashes($user->name) }}? This user will no longer be able to access their account.')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="text-red-600 hover:text-red-800" title="Delete" aria-label="Delete {{ $user->name }}">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
+                                    <button type="button" class="text-red-600 hover:text-red-800" title="Delete"
+                                        x-data
+                                        @click="$dispatch('confirm-modal', {
+                                            title: 'Delete User',
+                                            message: 'Delete {{ addslashes($user->name) }}? This user will no longer be able to access their account.',
+                                            confirmText: 'Delete',
+                                            onConfirm: () => {
+                                                const form = document.createElement('form');
+                                                form.method = 'POST';
+                                                form.action = '{{ route('admin.users.destroy', $user) }}';
+                                                form.innerHTML = '<input type="hidden" name="_token" value="{{ csrf_token() }}"><input type="hidden" name="_method" value="DELETE">';
+                                                document.body.appendChild(form);
+                                                form.submit();
+                                            }
+                                        })">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
                                 @endunless
                             @endif
                         </td>

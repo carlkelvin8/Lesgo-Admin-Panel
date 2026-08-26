@@ -179,6 +179,12 @@ class AuthController extends Controller
                     'remember_token' => Str::random(60),
                 ])->save();
 
+                if (Schema::hasTable('sessions')) {
+                    DB::table('sessions')
+                        ->where('user_id', $user->id)
+                        ->delete();
+                }
+
                 event(new PasswordReset($user));
             }
         );

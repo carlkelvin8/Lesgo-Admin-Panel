@@ -4,12 +4,24 @@
 
 @section('actions')
 <a href="{{ route('admin.services.edit', $service) }}" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm"><i class="fas fa-edit mr-1"></i> Edit</a>
-<form action="{{ route('admin.services.toggle', $service) }}" method="POST" class="inline">
-    @csrf
-    <button type="submit" class="bg-{{ $service->is_active ? 'red' : 'green' }}-500 text-white px-4 py-2 rounded-lg text-sm">
-        {{ $service->is_active ? 'Deactivate' : 'Activate' }}
-    </button>
-</form>
+<button type="button" class="bg-{{ $service->is_active ? 'red' : 'green' }}-500 text-white px-4 py-2 rounded-lg text-sm"
+    x-data
+    @click="$dispatch('confirm-modal', {
+        title: '{{ $service->is_active ? 'Deactivate' : 'Activate' }} Service',
+        message: 'Are you sure you want to {{ $service->is_active ? 'deactivate' : 'activate' }} {{ addslashes($service->name) }}?',
+        confirmText: '{{ $service->is_active ? 'Deactivate' : 'Activate' }}',
+        confirmClass: '{{ $service->is_active ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700' }}',
+        onConfirm: () => {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ route('admin.services.toggle', $service) }}';
+            form.innerHTML = '<input type="hidden" name="_token" value="{{ csrf_token() }}">';
+            document.body.appendChild(form);
+            form.submit();
+        }
+    })">
+    {{ $service->is_active ? 'Deactivate' : 'Activate' }}
+</button>
 @endsection
 
 @section('content')

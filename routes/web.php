@@ -19,6 +19,7 @@ use App\Http\Controllers\Admin\RolePermissionController;
 use App\Http\Controllers\Admin\SecurityEventController;
 use App\Http\Controllers\Admin\SecuritySettingsController;
 use App\Http\Controllers\Admin\ServiceController;
+use App\Http\Controllers\Admin\SystemHealthController;
 use App\Http\Controllers\Admin\TicketController;
 use App\Http\Controllers\Admin\TwoFactorAuthController;
 use App\Http\Controllers\Admin\UserController;
@@ -72,6 +73,7 @@ Route::prefix('admin')->name('admin.')->middleware(['admin', 'admin.audit'])->gr
         Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
         Route::post('/users/{user}/toggle', [UserController::class, 'toggleStatus'])->name('users.toggle');
         Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+        Route::get('/users/export/csv', [UserController::class, 'export'])->name('users.export');
     });
     Route::middleware('admin.permission:users.view')->group(function () {
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
@@ -107,6 +109,7 @@ Route::prefix('admin')->name('admin.')->middleware(['admin', 'admin.audit'])->gr
     Route::middleware('admin.permission:orders.view')->group(function () {
         Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
         Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
+        Route::get('/orders/export/csv', [OrderController::class, 'export'])->name('orders.export');
     });
     Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus'])
         ->middleware('admin.permission:orders.manage')->name('orders.status');
@@ -137,6 +140,7 @@ Route::prefix('admin')->name('admin.')->middleware(['admin', 'admin.audit'])->gr
     Route::middleware('admin.permission:payments.view')->group(function () {
         Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
         Route::get('/payments/{payment}', [PaymentController::class, 'show'])->name('payments.show');
+        Route::get('/payments/export/csv', [PaymentController::class, 'export'])->name('payments.export');
     });
     Route::post('/payments/{payment}/refund', [PaymentController::class, 'recordRefund'])
         ->middleware('admin.permission:payments.manage')->name('payments.refund');
@@ -224,6 +228,10 @@ Route::prefix('admin')->name('admin.')->middleware(['admin', 'admin.audit'])->gr
         Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
         Route::get('/audit-logs/{auditLog}', [AuditLogController::class, 'show'])->name('audit-logs.show');
     });
+
+    // System Health
+    Route::get('/system-health', [SystemHealthController::class, 'index'])
+        ->middleware('admin.permission:security.manage')->name('system-health.index');
 
     // Analytics and reports
     Route::middleware('admin.permission:reports.view')->group(function () {

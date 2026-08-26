@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="en" class="scroll-smooth" x-data="{ darkMode: localStorage.getItem('darkMode') === 'true' }" :class="{ 'dark': darkMode }">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'LesGo Admin')</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer">
     <style>[x-cloak]{display:none!important}</style>
     @stack('head')
 </head>
@@ -22,7 +22,7 @@
     </div>
 
     <!-- Global Confirm Modal -->
-    <div x-data="confirmModal()" x-show="open" x-cloak x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 z-[90] flex items-center justify-center p-4">
+    <div x-data="confirmModal()" x-show="open" x-cloak x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 z-[90] flex items-center justify-center p-4" @confirm-modal.window="show($event.detail.title, $event.detail.message, $event.detail)">
         <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="cancel()"></div>
         <div class="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-6" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
             <div class="flex items-center gap-3 mb-4">
@@ -156,6 +156,11 @@
                     <i class="fas fa-clock-rotate-left w-5"></i> Audit Logs
                 </a>
                 @endif
+                @if(auth()->user()->hasAdminPermission('security.manage'))
+                <a href="{{ route('admin.system-health.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm {{ request()->routeIs('admin.system-health.*') ? 'active' : '' }}">
+                    <i class="fas fa-heart-pulse w-5"></i> System Health
+                </a>
+                @endif
             </nav>
 
             <div class="admin-user-panel p-4 border-t">
@@ -199,6 +204,46 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-4">
+                    @if(auth()->user()->hasAdminPermission('notifications.manage'))
+                    <div x-data="{ open: false }" class="relative">
+                        <button @click="open = !open" class="text-gray-400 hover:text-gray-600 relative" title="Notifications">
+                            <i class="fas fa-bell"></i>
+                            @php
+                                $unreadCount = \Illuminate\Support\Facades\Cache::remember('admin:notification_unread_count', 60, function () {
+                                    return \App\Models\Notification::whereNull('read_at')->count();
+                                });
+                            @endphp
+                            @if($unreadCount > 0)
+                                <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full h-4 min-w-[1rem] flex items-center justify-center px-1">{{ $unreadCount > 99 ? '99+' : $unreadCount }}</span>
+                            @endif
+                        </button>
+                        <div x-show="open" @click.away="open = false" x-cloak x-transition class="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border z-50">
+                            <div class="p-3 border-b flex items-center justify-between">
+                                <h4 class="font-semibold text-sm text-gray-800">Notifications</h4>
+                                <a href="{{ route('admin.notifications.index') }}" class="text-xs text-blue-600 hover:text-blue-500">View all</a>
+                            </div>
+                            <div class="max-h-64 overflow-y-auto">
+                                @php
+                                    $recentNotifications = \Illuminate\Support\Facades\Cache::remember('admin:recent_notifications', 60, function () {
+                                        return \App\Models\Notification::latest()->take(5)->get();
+                                    });
+                                @endphp
+                                @forelse($recentNotifications as $notif)
+                                    <a href="{{ route('admin.notifications.show', $notif) }}" class="block px-3 py-2 hover:bg-gray-50 border-b last:border-0 {{ is_null($notif->read_at) ? 'bg-blue-50' : '' }}">
+                                        <p class="text-sm font-medium text-gray-800 truncate">{{ $notif->title }}</p>
+                                        <p class="text-xs text-gray-500 truncate">{{ $notif->body }}</p>
+                                        <p class="text-[10px] text-gray-400 mt-1">{{ $notif->created_at->diffForHumans() }}</p>
+                                    </a>
+                                @empty
+                                    <p class="px-3 py-4 text-center text-sm text-gray-400">No notifications</p>
+                                @endforelse
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+                    <button @click="darkMode = !darkMode; localStorage.setItem('darkMode', darkMode)" class="text-gray-400 hover:text-yellow-400 transition" title="Toggle dark mode">
+                        <i class="fas" :class="darkMode ? 'fa-sun' : 'fa-moon'"></i>
+                    </button>
                     @yield('actions')
                 </div>
             </header>

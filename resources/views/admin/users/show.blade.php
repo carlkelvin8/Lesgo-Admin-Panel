@@ -6,19 +6,41 @@
 @if(auth()->user()->hasAdminPermission('users.manage'))
 <a href="{{ route('admin.users.edit', $user) }}" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm"><i class="fas fa-edit mr-1"></i> Edit</a>
 @unless($user->is(auth()->user()))
-<form action="{{ route('admin.users.toggle', $user) }}" method="POST" class="inline">
-    @csrf
-    <button type="submit" class="bg-{{ $user->is_active ? 'red' : 'green' }}-500 hover:bg-{{ $user->is_active ? 'red' : 'green' }}-600 text-white px-4 py-2 rounded-lg text-sm">
-        <i class="fas fa-{{ $user->is_active ? 'ban' : 'check' }} mr-1"></i> {{ $user->is_active ? 'Deactivate' : 'Activate' }}
-    </button>
-</form>
-<form action="{{ route('admin.users.destroy', $user) }}" method="POST" class="inline" onsubmit="return confirm('Delete {{ addslashes($user->name) }}? This user will no longer be able to access their account.')">
-    @csrf
-    @method('DELETE')
-    <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm">
-        <i class="fas fa-trash mr-1"></i> Delete
-    </button>
-</form>
+<button type="button" class="bg-{{ $user->is_active ? 'red' : 'green' }}-500 hover:bg-{{ $user->is_active ? 'red' : 'green' }}-600 text-white px-4 py-2 rounded-lg text-sm"
+    x-data
+    @click="$dispatch('confirm-modal', {
+        title: '{{ $user->is_active ? 'Deactivate' : 'Activate' }} User',
+        message: 'Are you sure you want to {{ $user->is_active ? 'deactivate' : 'activate' }} {{ addslashes($user->name) }}?',
+        confirmText: '{{ $user->is_active ? 'Deactivate' : 'Activate' }}',
+        confirmClass: '{{ $user->is_active ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700' }}',
+        onConfirm: () => {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ route('admin.users.toggle', $user) }}';
+            form.innerHTML = '<input type="hidden" name="_token" value="{{ csrf_token() }}">';
+            document.body.appendChild(form);
+            form.submit();
+        }
+    })">
+    <i class="fas fa-{{ $user->is_active ? 'ban' : 'check' }} mr-1"></i> {{ $user->is_active ? 'Deactivate' : 'Activate' }}
+</button>
+<button type="button" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm"
+    x-data
+    @click="$dispatch('confirm-modal', {
+        title: 'Delete User',
+        message: 'Delete {{ addslashes($user->name) }}? This user will no longer be able to access their account.',
+        confirmText: 'Delete',
+        onConfirm: () => {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ route('admin.users.destroy', $user) }}';
+            form.innerHTML = '<input type="hidden" name="_token" value="{{ csrf_token() }}"><input type="hidden" name="_method" value="DELETE">';
+            document.body.appendChild(form);
+            form.submit();
+        }
+    })">
+    <i class="fas fa-trash mr-1"></i> Delete
+</button>
 @endunless
 @endif
 @endsection

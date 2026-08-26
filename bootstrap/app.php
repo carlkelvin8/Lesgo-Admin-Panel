@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\AuditAdminAction;
+use App\Http\Middleware\ContentSecurityPolicy;
 use App\Http\Middleware\EnsureAdminPermission;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -15,6 +16,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->web(append: [
+            ContentSecurityPolicy::class,
+        ]);
+
         $middleware->alias([
             'admin' => AdminMiddleware::class,
             'admin.audit' => AuditAdminAction::class,

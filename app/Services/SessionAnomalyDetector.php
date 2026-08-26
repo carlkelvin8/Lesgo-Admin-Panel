@@ -117,16 +117,14 @@ class SessionAnomalyDetector
 
         return Cache::remember($cacheKey, 86400, function () use ($ip) {
             try {
-                $url = "http://ip-api.com/json/{$ip}?fields=countryCode";
-                $response = file_get_contents($url);
+                $response = \Illuminate\Support\Facades\Http::timeout(5)
+                    ->get("https://ip-api.com/json/{$ip}", ['fields' => 'countryCode']);
 
-                if ($response === false) {
+                if ($response->failed()) {
                     return null;
                 }
 
-                $data = json_decode($response, true);
-
-                return $data['countryCode'] ?? null;
+                return $response->json('countryCode');
             } catch (\Throwable $e) {
                 return null;
             }

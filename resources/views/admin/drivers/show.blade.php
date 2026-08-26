@@ -4,12 +4,24 @@
 
 @section('actions')
 <a href="{{ route('admin.drivers.edit', $driver) }}" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm"><i class="fas fa-edit mr-1"></i> Edit</a>
-<form action="{{ route('admin.drivers.toggle', $driver) }}" method="POST" class="inline">
-    @csrf
-    <button type="submit" class="bg-{{ $driver->status === 'active' ? 'red' : 'green' }}-500 text-white px-4 py-2 rounded-lg text-sm">
-        <i class="fas fa-{{ $driver->status === 'active' ? 'ban' : 'check' }} mr-1"></i> {{ $driver->status === 'active' ? 'Deactivate' : 'Activate' }}
-    </button>
-</form>
+<button type="button" class="bg-{{ $driver->status === 'active' ? 'red' : 'green' }}-500 text-white px-4 py-2 rounded-lg text-sm"
+    x-data
+    @click="$dispatch('confirm-modal', {
+        title: '{{ $driver->status === 'active' ? 'Deactivate' : 'Activate' }} Driver',
+        message: 'Are you sure you want to {{ $driver->status === 'active' ? 'deactivate' : 'activate' }} this driver?',
+        confirmText: '{{ $driver->status === 'active' ? 'Deactivate' : 'Activate' }}',
+        confirmClass: '{{ $driver->status === 'active' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700' }}',
+        onConfirm: () => {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ route('admin.drivers.toggle', $driver) }}';
+            form.innerHTML = '<input type="hidden" name="_token" value="{{ csrf_token() }}">';
+            document.body.appendChild(form);
+            form.submit();
+        }
+    })">
+    <i class="fas fa-{{ $driver->status === 'active' ? 'ban' : 'check' }} mr-1"></i> {{ $driver->status === 'active' ? 'Deactivate' : 'Activate' }}
+</button>
 @endsection
 
 @section('content')

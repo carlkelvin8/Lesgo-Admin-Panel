@@ -9,7 +9,9 @@
 @if($notification->delivery_status !== 'delivered')
 <form method="POST" action="{{ route('admin.notifications.retry', $notification) }}">@csrf<button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm">Retry Delivery</button></form>
 @endif
-<form method="POST" action="{{ route('admin.notifications.destroy', $notification) }}" onsubmit="return confirm('Delete this notification?')">@csrf @method('DELETE')<button class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm">Delete</button></form>
+<button type="button" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm"
+    x-data
+    @click="$dispatch('confirm-modal', { title: 'Delete Notification', message: 'Delete this notification?', confirmText: 'Delete', onConfirm: () => { const f = document.createElement('form'); f.method = 'POST'; f.action = '{{ route('admin.notifications.destroy', $notification) }}'; f.innerHTML = '<input type=\"hidden\" name=\"_token\" value=\"{{ csrf_token() }}\"><input type=\"hidden\" name=\"_method\" value=\"DELETE\">'; document.body.appendChild(f); f.submit(); } })">Delete</button>
 @endsection
 
 @section('content')
