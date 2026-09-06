@@ -276,5 +276,5 @@ window.dashboardData = {
     dailyUsers: @json($dailyUsers)
 };
 </script>
-<script src="{{ asset('js/dashboard-charts.js') }}"></script>
+@vite('resources/js/dashboard-charts.js')
 @endsection
