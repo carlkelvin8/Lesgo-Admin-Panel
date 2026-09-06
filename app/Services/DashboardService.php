@@ -120,10 +120,17 @@ class DashboardService
     public function getTopPartners(int $days = 7, int $limit = 5)
     {
         $startDate = Carbon::now()->subDays($days)->startOfDay();
-        $fetcher = fn () => Order::with('partner')
-            ->where('created_at', '>=', $startDate)
-            ->select('partner_id', DB::raw('COUNT(*) as order_count'), DB::raw('SUM(actual_fare) as revenue'))
-            ->groupBy('partner_id')->orderByDesc('order_count')->take($limit)->get();
+        $fetcher = function () use ($startDate, $limit) {
+            return Order::with(['partner.user'])
+                ->where('created_at', '>=', $startDate)
+                ->whereNotNull('partner_id')
+                ->select('partner_id', DB::raw('COUNT(*) as order_count'), DB::raw('SUM(actual_fare) as revenue'))
+                ->groupBy('partner_id')
+                ->orderByDesc('order_count')
+                ->take($limit)
+                ->get()
+                ->filter(fn ($row) => ! is_string($row) && ! empty($row->partner_id));
+        };
         try {
             return Cache::remember("dashboard:top_partners:{$days}", 300, $fetcher);
         } catch (Throwable $e) {

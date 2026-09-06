@@ -122,27 +122,36 @@
                 </thead>
                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                     @forelse($topPartners as $entry)
+                        @php
+                            $partner = data_get($entry, 'partner');
+                            if (is_string($partner)) $partner = null;
+                            $partnerName = data_get($partner, 'name', 'N/A');
+                            $partnerEmail = data_get($partner, 'email', data_get($partner, 'user.email', ''));
+                            $partnerAvatar = data_get($partner, 'avatar', data_get($partner, 'logo_url'));
+                            $orderCount = data_get($entry, 'order_count', 0);
+                            $revenue = data_get($entry, 'revenue', 0);
+                        @endphp
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-800">
                             <td class="px-4 py-4" data-label="Partner">
                                 <div class="flex items-center gap-3">
                                     <div class="flex-shrink-0 w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                                        @if($entry->partner && $entry->partner->avatar)
-                                            <img src="{{ $entry->partner->avatar }}" alt="{{ $entry->partner->name ?? '' }}" class="w-8 h-8 rounded-full object-cover">
+                                        @if($partnerAvatar)
+                                            <img src="{{ $partnerAvatar }}" alt="{{ $partnerName }}" class="w-8 h-8 rounded-full object-cover">
                                         @else
-                                            <span class="text-sm font-medium text-gray-600 dark:text-gray-300">{{ substr($entry->partner->name ?? 'P', 0, 2) }}</span>
+                                            <span class="text-sm font-medium text-gray-600 dark:text-gray-300">{{ substr($partnerName, 0, 2) }}</span>
                                         @endif
                                     </div>
                                     <div>
-                                        <p class="font-medium text-gray-900 dark:text-white">{{ $entry->partner->name ?? 'N/A' }}</p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ $entry->partner->email ?? '' }}</p>
+                                        <p class="font-medium text-gray-900 dark:text-white">{{ $partnerName }}</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ $partnerEmail }}</p>
                                     </div>
                                 </div>
                             </td>
                             <td class="px-4 py-4" data-label="Orders">
-                                <span class="font-medium text-gray-900 dark:text-white">{{ $entry->order_count ?? 0 }}</span>
+                                <span class="font-medium text-gray-900 dark:text-white">{{ $orderCount }}</span>
                             </td>
                             <td class="px-4 py-4" data-label="Revenue">
-                                <span class="font-medium text-gray-900 dark:text-white">${{ number_format($entry->revenue ?? 0, 2) }}</span>
+                                <span class="font-medium text-gray-900 dark:text-white">${{ number_format((float) $revenue, 2) }}</span>
                             </td>
                         </tr>
                     @empty
