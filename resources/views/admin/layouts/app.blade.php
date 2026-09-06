@@ -209,10 +209,17 @@
                         <button @click="open = !open" class="text-gray-400 hover:text-gray-600 relative" title="Notifications">
                             <i class="fas fa-bell"></i>
                             @php
+                                $unreadCount = 0;
                                 try {
-                                    $unreadCount = \Illuminate\Support\Facades\Cache::remember('admin:notification_unread_count', 60, function () {
-                                        return \App\Models\Notification::whereNull('read_at')->count();
-                                    });
+                                    $cachedCount = \Illuminate\Support\Facades\Cache::get('admin:notification_unread_count:v2');
+                                    if ($cachedCount !== null && ! is_string($cachedCount) && is_numeric($cachedCount)) {
+                                        $unreadCount = (int) $cachedCount;
+                                    } else {
+                                        if (is_string($cachedCount)) \Illuminate\Support\Facades\Cache::forget('admin:notification_unread_count:v2');
+                                        \Illuminate\Support\Facades\Cache::forget('admin:notification_unread_count');
+                                        $unreadCount = \App\Models\Notification::whereNull('read_at')->count();
+                                        \Illuminate\Support\Facades\Cache::put('admin:notification_unread_count:v2', $unreadCount, 60);
+                                    }
                                 } catch (Throwable $e) {
                                     report($e);
                                     $unreadCount = \App\Models\Notification::whereNull('read_at')->count();
@@ -229,20 +236,30 @@
                             </div>
                             <div class="max-h-64 overflow-y-auto">
                                 @php
+                                    $recentNotifications = collect();
                                     try {
-                                        $recentNotifications = \Illuminate\Support\Facades\Cache::remember('admin:recent_notifications', 60, function () {
-                                            return \App\Models\Notification::latest()->take(5)->get();
-                                        });
+                                        $cachedNotifs = \Illuminate\Support\Facades\Cache::get('admin:recent_notifications:v2');
+                                        if ($cachedNotifs !== null && ! is_string($cachedNotifs) && $cachedNotifs instanceof \Illuminate\Support\Collection) {
+                                            $recentNotifications = $cachedNotifs;
+                                        } else {
+                                            if (is_string($cachedNotifs)) \Illuminate\Support\Facades\Cache::forget('admin:recent_notifications:v2');
+                                            \Illuminate\Support\Facades\Cache::forget('admin:recent_notifications');
+                                            $recentNotifications = \App\Models\Notification::latest()->take(5)->get();
+                                            \Illuminate\Support\Facades\Cache::put('admin:recent_notifications:v2', $recentNotifications, 60);
+                                        }
+                                        // guard poisoned string collection (iterating string yields char)
+                                        if (is_string($recentNotifications)) $recentNotifications = collect();
                                     } catch (Throwable $e) {
                                         report($e);
                                         $recentNotifications = \App\Models\Notification::latest()->take(5)->get();
                                     }
                                 @endphp
                                 @forelse($recentNotifications as $notif)
-                                    <a href="{{ route('admin.notifications.show', $notif) }}" class="block px-3 py-2 hover:bg-gray-50 border-b last:border-0 {{ is_null($notif->read_at) ? 'bg-blue-50' : '' }}">
-                                        <p class="text-sm font-medium text-gray-800 truncate">{{ $notif->title }}</p>
-                                        <p class="text-xs text-gray-500 truncate">{{ $notif->body }}</p>
-                                        <p class="text-[10px] text-gray-400 mt-1">{{ $notif->created_at->diffForHumans() }}</p>
+                                    @if(is_string($notif) || ! is_object($notif)) @continue @endif
+                                    <a href="{{ $notif->getKey() ? route('admin.notifications.show', $notif) : '#' }}" class="block px-3 py-2 hover:bg-gray-50 border-b last:border-0 {{ is_null(data_get($notif, 'read_at')) ? 'bg-blue-50' : '' }}">
+                                        <p class="text-sm font-medium text-gray-800 truncate">{{ data_get($notif, 'title', '') }}</p>
+                                        <p class="text-xs text-gray-500 truncate">{{ data_get($notif, 'body', '') }}</p>
+                                        <p class="text-[10px] text-gray-400 mt-1">{{ data_get($notif, 'created_at') ? \Illuminate\Support\Carbon::parse(data_get($notif, 'created_at'))->diffForHumans() : '' }}</p>
                                     </a>
                                 @empty
                                     <p class="px-3 py-4 text-center text-sm text-gray-400">No notifications</p>
