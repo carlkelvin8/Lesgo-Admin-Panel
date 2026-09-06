@@ -121,6 +121,10 @@ class DashboardService
     {
         $startDate = Carbon::now()->subDays($days)->startOfDay();
         $fetcher = function () use ($startDate, $limit) {
+            try {
+                Cache::forget("dashboard:top_partners:{$days}");
+            } catch (Throwable $e) {
+            }
             return Order::with(['partner.user'])
                 ->where('created_at', '>=', $startDate)
                 ->whereNotNull('partner_id')
@@ -129,10 +133,20 @@ class DashboardService
                 ->orderByDesc('order_count')
                 ->take($limit)
                 ->get()
-                ->filter(fn ($row) => ! is_string($row) && ! empty($row->partner_id));
+                ->filter(fn ($row) => is_object($row) && ! empty($row->partner_id))
+                ->values();
         };
+        // bust stale string-cached value from 911089f deploy
         try {
-            return Cache::remember("dashboard:top_partners:{$days}", 300, $fetcher);
+            $cached = Cache::get("dashboard:top_partners:{$days}:v2");
+            if ($cached !== null && ! is_string($cached)) {
+                return $cached;
+            }
+            $result = $fetcher();
+            Cache::put("dashboard:top_partners:{$days}:v2", $result, 300);
+            // also clear old key
+            Cache::forget("dashboard:top_partners:{$days}");
+            return $result;
         } catch (Throwable $e) {
             report($e);
             return $fetcher();
