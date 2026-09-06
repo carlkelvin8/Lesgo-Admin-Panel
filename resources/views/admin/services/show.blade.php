@@ -15,7 +15,7 @@
             const form = document.createElement('form');
             form.method = 'POST';
             form.action = '{{ route('admin.services.toggle', $service) }}';
-            form.innerHTML = '<input type="hidden" name="_token" value="{{ csrf_token() }}">';
+            const i1=document.createElement('input');i1.type='hidden';i1.name='_token';i1.value='{{ csrf_token() }}';form.appendChild(i1);
             document.body.appendChild(form);
             form.submit();
         }

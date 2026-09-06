@@ -6,7 +6,7 @@
 <a href="{{ route('admin.faq.articles.edit', $article) }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">Edit</a>
 <button type="button" class="bg-red-600 text-white px-4 py-2 rounded-lg text-sm"
     x-data
-    @click="$dispatch('confirm-modal', { title: 'Delete Article', message: 'Delete this article?', confirmText: 'Delete', onConfirm: () => { const f = document.createElement('form'); f.method = 'POST'; f.action = '{{ route('admin.faq.articles.destroy', $article) }}'; f.innerHTML = '<input type=\"hidden\" name=\"_token\" value=\"{{ csrf_token() }}\"><input type=\"hidden\" name=\"_method\" value=\"DELETE\">'; document.body.appendChild(f); f.submit(); } })">Delete</button>
+    @click="$dispatch('confirm-modal', { title: 'Delete Article', message: 'Delete this article?', confirmText: 'Delete', onConfirm: () => { const f = document.createElement('form'); f.method = 'POST'; f.action = '{{ route('admin.faq.articles.destroy', $article) }}'; const i1=document.createElement('input');i1.type='hidden';i1.name='_token';i1.value='{{ csrf_token() }}';f.appendChild(i1);const i2=document.createElement('input');i2.type='hidden';i2.name='_method';i2.value='DELETE';f.appendChild(i2); document.body.appendChild(f); f.submit(); } })">Delete</button>
 @endsection
 
 @section('content')
