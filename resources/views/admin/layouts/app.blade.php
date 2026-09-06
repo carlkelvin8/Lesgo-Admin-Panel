@@ -209,9 +209,14 @@
                         <button @click="open = !open" class="text-gray-400 hover:text-gray-600 relative" title="Notifications">
                             <i class="fas fa-bell"></i>
                             @php
-                                $unreadCount = \Illuminate\Support\Facades\Cache::remember('admin:notification_unread_count', 60, function () {
-                                    return \App\Models\Notification::whereNull('read_at')->count();
-                                });
+                                try {
+                                    $unreadCount = \Illuminate\Support\Facades\Cache::remember('admin:notification_unread_count', 60, function () {
+                                        return \App\Models\Notification::whereNull('read_at')->count();
+                                    });
+                                } catch (Throwable $e) {
+                                    report($e);
+                                    $unreadCount = \App\Models\Notification::whereNull('read_at')->count();
+                                }
                             @endphp
                             @if($unreadCount > 0)
                                 <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full h-4 min-w-[1rem] flex items-center justify-center px-1">{{ $unreadCount > 99 ? '99+' : $unreadCount }}</span>
@@ -224,9 +229,14 @@
                             </div>
                             <div class="max-h-64 overflow-y-auto">
                                 @php
-                                    $recentNotifications = \Illuminate\Support\Facades\Cache::remember('admin:recent_notifications', 60, function () {
-                                        return \App\Models\Notification::latest()->take(5)->get();
-                                    });
+                                    try {
+                                        $recentNotifications = \Illuminate\Support\Facades\Cache::remember('admin:recent_notifications', 60, function () {
+                                            return \App\Models\Notification::latest()->take(5)->get();
+                                        });
+                                    } catch (Throwable $e) {
+                                        report($e);
+                                        $recentNotifications = \App\Models\Notification::latest()->take(5)->get();
+                                    }
                                 @endphp
                                 @forelse($recentNotifications as $notif)
                                     <a href="{{ route('admin.notifications.show', $notif) }}" class="block px-3 py-2 hover:bg-gray-50 border-b last:border-0 {{ is_null($notif->read_at) ? 'bg-blue-50' : '' }}">
