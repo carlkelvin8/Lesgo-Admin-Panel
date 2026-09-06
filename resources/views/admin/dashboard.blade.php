@@ -281,7 +281,7 @@
 @endsection
 
 @section('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" integrity="sha512-S2dV4aV2+dTR6bKH1kGO0fH9NfT3kF7H9M8pDMt0PqMqR9I0O0JbRS+GCOh5Z8MKKE1lQ8GqBSF+OGOe1rTQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script>
 window.dashboardData = {
     dailyRevenue: @json($dailyRevenue),
