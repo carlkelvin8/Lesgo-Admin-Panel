@@ -20,16 +20,35 @@ use Throwable;
 
 class DashboardService
 {
-    public function getStats(): array
+    private function safeRemember(string $key, int $ttl, callable $fetcher): mixed
     {
+        $v2 = $key.':v2';
         try {
-            return Cache::remember('dashboard:stats', 300, function () {
-                return $this->fetchStats();
-            });
+            $cached = Cache::get($v2);
+            if ($cached !== null && ! is_string($cached)) {
+                return $cached;
+            }
+            if (is_string($cached)) {
+                Cache::forget($v2);
+            }
+            // bust poisoned v1
+            try { Cache::forget($key); } catch (Throwable $e) {}
+            $result = $fetcher();
+            // guard: never cache a string
+            if (is_string($result)) {
+                return $result;
+            }
+            try { Cache::put($v2, $result, $ttl); } catch (Throwable $e) { report($e); }
+            return $result;
         } catch (Throwable $e) {
             report($e);
-            return $this->fetchStats();
+            return $fetcher();
         }
+    }
+
+    public function getStats(): array
+    {
+        return $this->safeRemember('dashboard:stats', 300, fn () => $this->fetchStats());
     }
 
     private function fetchStats(): array
@@ -53,103 +72,50 @@ class DashboardService
 
     public function getRecentOrders(int $limit = 10)
     {
-        try {
-            return Cache::remember("dashboard:recent_orders:{$limit}", 60, function () use ($limit) {
-                return Order::with(['customer', 'partner'])->latest()->take($limit)->get();
-            });
-        } catch (Throwable $e) {
-            report($e);
-            return Order::with(['customer', 'partner'])->latest()->take($limit)->get();
-        }
+        return $this->safeRemember("dashboard:recent_orders:{$limit}", 60, fn () => Order::with(['customer', 'partner'])->latest()->take($limit)->get());
     }
 
     public function getRecentUsers(int $limit = 10)
     {
-        try {
-            return Cache::remember("dashboard:recent_users:{$limit}", 60, function () use ($limit) {
-                return User::latest()->take($limit)->get();
-            });
-        } catch (Throwable $e) {
-            report($e);
-            return User::latest()->take($limit)->get();
-        }
+        return $this->safeRemember("dashboard:recent_users:{$limit}", 60, fn () => User::latest()->take($limit)->get());
     }
 
     public function getDailyRevenue(int $days = 7)
     {
         $startDate = Carbon::now()->subDays($days)->startOfDay();
-        $fetcher = fn () => Payment::where('status', 'paid')
+        return $this->safeRemember("dashboard:daily_revenue:{$days}", 300, fn () => Payment::where('status', 'paid')
             ->where('created_at', '>=', $startDate)
             ->select(DB::raw('DATE(created_at) as date'), DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as count'))
-            ->groupBy('date')->orderBy('date')->get();
-        try {
-            return Cache::remember("dashboard:daily_revenue:{$days}", 300, $fetcher);
-        } catch (Throwable $e) {
-            report($e);
-            return $fetcher();
-        }
+            ->groupBy('date')->orderBy('date')->get());
     }
 
     public function getOrderStatusDistribution()
     {
-        $fetcher = fn () => Order::select('status', DB::raw('count(*) as total'))
+        return $this->safeRemember('dashboard:order_status_dist', 300, fn () => Order::select('status', DB::raw('count(*) as total'))
             ->whereIn('status', ['pending', 'accepted', 'in_progress', 'completed', 'cancelled'])
-            ->groupBy('status')->get();
-        try {
-            return Cache::remember('dashboard:order_status_dist', 300, $fetcher);
-        } catch (Throwable $e) {
-            report($e);
-            return $fetcher();
-        }
+            ->groupBy('status')->get());
     }
 
     public function getDailyUsers(int $days = 7)
     {
         $startDate = Carbon::now()->subDays($days)->startOfDay();
-        $fetcher = fn () => User::where('created_at', '>=', $startDate)
+        return $this->safeRemember("dashboard:daily_users:{$days}", 300, fn () => User::where('created_at', '>=', $startDate)
             ->select(DB::raw('DATE(created_at) as date'), DB::raw('COUNT(*) as total'))
-            ->groupBy('date')->orderBy('date')->get();
-        try {
-            return Cache::remember("dashboard:daily_users:{$days}", 300, $fetcher);
-        } catch (Throwable $e) {
-            report($e);
-            return $fetcher();
-        }
+            ->groupBy('date')->orderBy('date')->get());
     }
 
     public function getTopPartners(int $days = 7, int $limit = 5)
     {
         $startDate = Carbon::now()->subDays($days)->startOfDay();
-        $fetcher = function () use ($startDate, $limit) {
-            try {
-                Cache::forget("dashboard:top_partners:{$days}");
-            } catch (Throwable $e) {
-            }
-            return Order::with(['partner.user'])
-                ->where('created_at', '>=', $startDate)
-                ->whereNotNull('partner_id')
-                ->select('partner_id', DB::raw('COUNT(*) as order_count'), DB::raw('SUM(actual_fare) as revenue'))
-                ->groupBy('partner_id')
-                ->orderByDesc('order_count')
-                ->take($limit)
-                ->get()
-                ->filter(fn ($row) => is_object($row) && ! empty($row->partner_id))
-                ->values();
-        };
-        // bust stale string-cached value from 911089f deploy
-        try {
-            $cached = Cache::get("dashboard:top_partners:{$days}:v2");
-            if ($cached !== null && ! is_string($cached)) {
-                return $cached;
-            }
-            $result = $fetcher();
-            Cache::put("dashboard:top_partners:{$days}:v2", $result, 300);
-            // also clear old key
-            Cache::forget("dashboard:top_partners:{$days}");
-            return $result;
-        } catch (Throwable $e) {
-            report($e);
-            return $fetcher();
-        }
+        return $this->safeRemember("dashboard:top_partners:{$days}", 300, fn () => Order::with(['partner.user'])
+            ->where('created_at', '>=', $startDate)
+            ->whereNotNull('partner_id')
+            ->select('partner_id', DB::raw('COUNT(*) as order_count'), DB::raw('SUM(actual_fare) as revenue'))
+            ->groupBy('partner_id')
+            ->orderByDesc('order_count')
+            ->take($limit)
+            ->get()
+            ->filter(fn ($row) => is_object($row) && ! empty($row->partner_id))
+            ->values());
     }
 }

@@ -186,21 +186,23 @@
                     </thead>
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                         @forelse($recent_orders as $order)
+                            @if(is_string($order) || ! is_object($order)) @continue @endif
+                            @php $orderId = data_get($order, 'id'); $orderCustomer = data_get($order, 'customer'); @endphp
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-800">
                                 <td class="px-4 py-4" data-label="Order ID">
-                                    <a href="{{ route('admin.orders.show', $order) }}" class="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">#{{ $order->id }}</a>
+                                    <a href="{{ $orderId ? route('admin.orders.show', $order) : '#' }}" class="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">#{{ $orderId }}</a>
                                 </td>
                                 <td class="px-4 py-4" data-label="Customer">
                                     <div>
-                                        <p class="font-medium text-gray-900 dark:text-white">{{ $order->customer->name ?? 'N/A' }}</p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ $order->customer->email ?? '' }}</p>
+                                        <p class="font-medium text-gray-900 dark:text-white">{{ data_get($orderCustomer, 'name', 'N/A') }}</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ data_get($orderCustomer, 'email', '') }}</p>
                                     </div>
                                 </td>
                                 <td class="px-4 py-4" data-label="Total">
-                                    <span class="font-medium text-gray-900 dark:text-white">${{ number_format($order->total ?? 0, 2) }}</span>
+                                    <span class="font-medium text-gray-900 dark:text-white">${{ number_format((float) data_get($order, 'total', 0), 2) }}</span>
                                 </td>
                                 <td class="px-4 py-4" data-label="Status">
-                                    <x-status-badge :status="$order->status" />
+                                    <x-status-badge :status="data_get($order, 'status', 'unknown')" />
                                 </td>
                             </tr>
                         @empty
@@ -234,30 +236,32 @@
                     </thead>
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                         @forelse($recent_users as $user)
+                            @if(is_string($user) || ! is_object($user)) @continue @endif
+                            @php $userName = data_get($user, 'name', 'N/A'); $userEmail = data_get($user, 'email', ''); @endphp
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-800">
                                 <td class="px-4 py-4" data-label="User">
                                     <div class="flex items-center gap-3">
                                         <div class="flex-shrink-0 w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                                            @if($user->avatar)
-                                                <img src="{{ $user->avatar }}" alt="{{ $user->name }}" class="w-8 h-8 rounded-full object-cover">
+                                            @if(data_get($user, 'avatar'))
+                                                <img src="{{ data_get($user, 'avatar') }}" alt="{{ $userName }}" class="w-8 h-8 rounded-full object-cover">
                                             @else
-                                                <span class="text-sm font-medium text-gray-600 dark:text-gray-300">{{ substr($user->name, 0, 2) }}</span>
+                                                <span class="text-sm font-medium text-gray-600 dark:text-gray-300">{{ substr($userName, 0, 2) }}</span>
                                             @endif
                                         </div>
                                         <div>
-                                            <p class="font-medium text-gray-900 dark:text-white">{{ $user->name }}</p>
-                                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ $user->email }}</p>
+                                            <p class="font-medium text-gray-900 dark:text-white">{{ $userName }}</p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ $userEmail }}</p>
                                         </div>
                                     </div>
                                 </td>
                                 <td class="px-4 py-4" data-label="Role">
-                                    <x-status-badge :status="$user->role ?? 'customer'" />
+                                    <x-status-badge :status="data_get($user, 'role', 'customer')" />
                                 </td>
                                 <td class="px-4 py-4" data-label="Joined">
-                                    <span class="text-sm text-gray-500 dark:text-gray-400">{{ $user->created_at->diffForHumans() }}</span>
+                                    <span class="text-sm text-gray-500 dark:text-gray-400">{{ data_get($user, 'created_at') ? \Illuminate\Support\Carbon::parse(data_get($user, 'created_at'))->diffForHumans() : '' }}</span>
                                 </td>
                                 <td class="px-4 py-4" data-label="Status">
-                                    <x-status-badge :status="$user->status ?? 'active'" />
+                                    <x-status-badge :status="data_get($user, 'status', 'active')" />
                                 </td>
                             </tr>
                         @empty
