@@ -34,10 +34,10 @@
                     <tr class="hover:bg-gray-50">
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 bg-green-100 text-green-600 rounded-full flex items-center justify-center font-bold text-sm">{{ substr($driver->user->name ?? '?', 0, 1) }}</div>
+                                <div class="w-8 h-8 bg-green-100 text-green-600 rounded-full flex items-center justify-center font-bold text-sm">{{ substr($driver->user?->name ?? '?', 0, 1) }}</div>
                                 <div>
-                                    <p class="font-medium text-gray-800">{{ $driver->user->name ?? 'N/A' }}</p>
-                                    <p class="text-xs text-gray-500">{{ $driver->user->email ?? '' }}</p>
+                                    <p class="font-medium text-gray-800">{{ $driver->user?->name ?? 'N/A' }}</p>
+                                    <p class="text-xs text-gray-500">{{ $driver->user?->email ?? '' }}</p>
                                 </div>
                             </div>
                         </td>

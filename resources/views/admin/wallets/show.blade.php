@@ -3,7 +3,7 @@
 @section('header', 'Wallet Details')
 
 @section('actions')
-<a href="{{ route('admin.wallets.top-ups.index', ['search' => $wallet->user->email ?? '']) }}" class="rounded-lg border bg-white px-4 py-2 text-sm text-gray-700"><i class="fas fa-arrow-up-right-dots mr-1"></i> Review Top-ups</a>
+<a href="{{ route('admin.wallets.top-ups.index', ['search' => $wallet->user?->email ?? '']) }}" class="rounded-lg border bg-white px-4 py-2 text-sm text-gray-700"><i class="fas fa-arrow-up-right-dots mr-1"></i> Review Top-ups</a>
 @endsection
 
 @section('content')
@@ -11,8 +11,8 @@
     <div class="bg-white rounded-xl shadow-sm p-6">
         <h3 class="font-semibold text-gray-800 mb-4">User Information</h3>
         <div class="space-y-3 text-sm">
-            <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Name</span><span>{{ $wallet->user->name ?? 'N/A' }}</span></div>
-            <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Email</span><span>{{ $wallet->user->email ?? 'N/A' }}</span></div>
+            <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Name</span><span>{{ $wallet->user?->name ?? 'N/A' }}</span></div>
+            <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Email</span><span>{{ $wallet->user?->email ?? 'N/A' }}</span></div>
             <div class="flex justify-between"><span class="text-gray-500">Wallet ID</span><span>#{{ $wallet->id }}</span></div>
         </div>
     </div>

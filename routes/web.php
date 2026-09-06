@@ -68,12 +68,12 @@ Route::prefix('admin')->name('admin.')->middleware(['admin', 'admin.audit'])->gr
     // Users
     Route::middleware('admin.permission:users.manage')->group(function () {
         Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
+        Route::get('/users/export/csv', [UserController::class, 'export'])->name('users.export');
         Route::post('/users', [UserController::class, 'store'])->name('users.store');
         Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
         Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
         Route::post('/users/{user}/toggle', [UserController::class, 'toggleStatus'])->name('users.toggle');
         Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
-        Route::get('/users/export/csv', [UserController::class, 'export'])->name('users.export');
     });
     Route::middleware('admin.permission:users.view')->group(function () {
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
@@ -84,8 +84,6 @@ Route::prefix('admin')->name('admin.')->middleware(['admin', 'admin.audit'])->gr
     Route::middleware('admin.permission:partners.manage')->group(function () {
         Route::get('/partners/create', [PartnerController::class, 'create'])->name('partners.create');
         Route::post('/partners', [PartnerController::class, 'store'])->name('partners.store');
-        Route::get('/partners', [PartnerController::class, 'index'])->name('partners.index');
-        Route::get('/partners/{partner}', [PartnerController::class, 'show'])->name('partners.show');
         Route::get('/partners/{partner}/edit', [PartnerController::class, 'edit'])->name('partners.edit');
         Route::put('/partners/{partner}', [PartnerController::class, 'update'])->name('partners.update');
         Route::post('/partners/{partner}/toggle', [PartnerController::class, 'toggleStatus'])->name('partners.toggle');
@@ -104,12 +102,16 @@ Route::prefix('admin')->name('admin.')->middleware(['admin', 'admin.audit'])->gr
         Route::put('/partners/{partner}/staff/{staff}', [PartnerOperationsController::class, 'updateStaff'])->name('partners.staff.update');
         Route::delete('/partners/{partner}/staff/{staff}', [PartnerOperationsController::class, 'destroyStaff'])->name('partners.staff.destroy');
     });
+    Route::middleware('admin.permission:partners.view')->group(function () {
+        Route::get('/partners', [PartnerController::class, 'index'])->name('partners.index');
+        Route::get('/partners/{partner}', [PartnerController::class, 'show'])->name('partners.show');
+    });
 
     // Orders
     Route::middleware('admin.permission:orders.view')->group(function () {
         Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
-        Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
         Route::get('/orders/export/csv', [OrderController::class, 'export'])->name('orders.export');
+        Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
     });
     Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus'])
         ->middleware('admin.permission:orders.manage')->name('orders.status');
@@ -139,8 +141,8 @@ Route::prefix('admin')->name('admin.')->middleware(['admin', 'admin.audit'])->gr
     // Payments
     Route::middleware('admin.permission:payments.view')->group(function () {
         Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
-        Route::get('/payments/{payment}', [PaymentController::class, 'show'])->name('payments.show');
         Route::get('/payments/export/csv', [PaymentController::class, 'export'])->name('payments.export');
+        Route::get('/payments/{payment}', [PaymentController::class, 'show'])->name('payments.show');
     });
     Route::post('/payments/{payment}/refund', [PaymentController::class, 'recordRefund'])
         ->middleware('admin.permission:payments.manage')->name('payments.refund');

@@ -30,7 +30,7 @@
             <tbody class="divide-y divide-gray-100">
                 @forelse($notifications as $notification)
                     <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4"><p class="font-medium">{{ $notification->user->name ?? 'Deleted user' }}</p><p class="text-xs text-gray-500">{{ $notification->user->email ?? '—' }}</p></td>
+                        <td class="px-6 py-4"><p class="font-medium">{{ $notification->user?->name ?? 'Deleted user' }}</p><p class="text-xs text-gray-500">{{ $notification->user?->email ?? '—' }}</p></td>
                         <td class="px-6 py-4 max-w-md"><p class="font-medium text-gray-800">{{ $notification->title }}</p><p class="text-xs text-gray-500 truncate">{{ $notification->body }}</p></td>
                         <td class="px-6 py-4"><p>{{ $notification->type }}</p><p class="text-xs text-gray-500">{{ strtoupper(str_replace('_', ' ', $notification->channel)) }}</p></td>
                         <td class="px-6 py-4">

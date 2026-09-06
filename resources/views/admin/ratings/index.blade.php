@@ -34,11 +34,11 @@
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-3">
                                 <div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-sm">
-                                    {{ $review->is_anonymous ? '?' : substr($review->user->name ?? 'U', 0, 1) }}
+                                    {{ $review->is_anonymous ? '?' : substr($review->user?->name ?? 'U', 0, 1) }}
                                 </div>
                                 <div>
-                                    <p class="font-medium text-gray-800">{{ $review->is_anonymous ? 'Anonymous' : ($review->user->name ?? '-') }}</p>
-                                    <p class="text-xs text-gray-500">{{ $review->is_anonymous ? '' : ($review->user->email ?? '') }}</p>
+                                    <p class="font-medium text-gray-800">{{ $review->is_anonymous ? 'Anonymous' : ($review->user?->name ?? '-') }}</p>
+                                    <p class="text-xs text-gray-500">{{ $review->is_anonymous ? '' : ($review->user?->email ?? '') }}</p>
                                 </div>
                             </div>
                         </td>

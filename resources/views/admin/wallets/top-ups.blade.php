@@ -22,11 +22,11 @@
             <tbody class="divide-y">
                 @forelse($topUps as $topUp)
                     <tr class="align-top hover:bg-gray-50">
-                        <td class="px-5 py-4"><a href="{{ route('admin.wallets.show', $topUp->wallet_id) }}" class="font-medium text-blue-700">{{ $topUp->user->name ?? 'Deleted user' }}</a><p class="text-xs text-gray-500">{{ $topUp->user->email ?? '—' }}</p></td>
+                        <td class="px-5 py-4"><a href="{{ route('admin.wallets.show', $topUp->wallet_id) }}" class="font-medium text-blue-700">{{ $topUp->user?->name ?? 'Deleted user' }}</a><p class="text-xs text-gray-500">{{ $topUp->user?->email ?? '—' }}</p></td>
                         <td class="px-5 py-4"><p class="font-mono text-xs">{{ $topUp->external_id }}</p><p class="mt-1 text-xs text-gray-400">{{ $topUp->gateway_reference ?: 'No gateway reference' }}</p></td>
                         <td class="px-5 py-4 font-semibold">₱{{ number_format($topUp->amount, 2) }}<p class="text-xs font-normal text-gray-400">Fee ₱{{ number_format($topUp->fee, 2) }}</p></td>
                         <td class="px-5 py-4">{{ strtoupper($topUp->provider ?: $topUp->payment_method) }}</td>
-                        <td class="px-5 py-4"><x-status-badge :status="$topUp->status" />@if($topUp->reviewed_at)<p class="mt-2 text-xs text-gray-400">{{ $topUp->reviewer->name ?? 'Admin' }} · {{ $topUp->reviewed_at->format('M d, H:i') }}</p>@endif</td>
+                        <td class="px-5 py-4"><x-status-badge :status="$topUp->status" />@if($topUp->reviewed_at)<p class="mt-2 text-xs text-gray-400">{{ $topUp->reviewer?->name ?? 'Admin' }} · {{ $topUp->reviewed_at->format('M d, H:i') }}</p>@endif</td>
                         <td class="px-5 py-4">
                             @if($topUp->status === 'pending' && auth()->user()->hasAdminPermission('wallets.manage'))
                                 <div class="flex flex-wrap gap-2">

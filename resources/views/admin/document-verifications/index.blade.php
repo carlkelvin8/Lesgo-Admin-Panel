@@ -31,11 +31,11 @@
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-3">
                                 <div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-sm">
-                                    {{ $v->user ? substr($v->user->name, 0, 1) : '?' }}
+                                    {{ $v->user ? substr($v->user?->name, 0, 1) : '?' }}
                                 </div>
                                 <div>
-                                    <p class="font-medium text-gray-800">{{ $v->user->name ?? 'Deleted User' }}</p>
-                                    <p class="text-xs text-gray-500">{{ $v->user->email ?? '-' }}</p>
+                                    <p class="font-medium text-gray-800">{{ $v->user?->name ?? 'Deleted User' }}</p>
+                                    <p class="text-xs text-gray-500">{{ $v->user?->email ?? '-' }}</p>
                                 </div>
                             </div>
                         </td>
@@ -45,7 +45,7 @@
                             <x-status-badge :status="$v->status" />
                         </td>
                         <td class="px-6 py-4 text-gray-500 text-xs">{{ $v->submitted_at?->diffForHumans() ?? '-' }}</td>
-                        <td class="px-6 py-4 text-gray-500 text-xs">{{ $v->verifier->name ?? '-' }}</td>
+                        <td class="px-6 py-4 text-gray-500 text-xs">{{ $v->verifier?->name ?? '-' }}</td>
                         <td class="px-6 py-4 text-right">
                             <a href="{{ route('admin.document-verifications.show', $v) }}" class="text-blue-600 hover:text-blue-800" title="View"><i class="fas fa-eye"></i></a>
                         </td>

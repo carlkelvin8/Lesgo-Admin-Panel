@@ -17,8 +17,8 @@
             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Category</span><span>{{ ucfirst(str_replace('_', ' ', $ticket->category)) }}</span></div>
             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Priority</span><span class="px-2 py-0.5 rounded-full text-xs font-medium {{ $pc[$ticket->priority] ?? '' }}">{{ ucfirst($ticket->priority) }}</span></div>
             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Status</span><span class="px-2 py-0.5 rounded-full text-xs font-medium {{ $sc[$ticket->status] ?? '' }}">{{ ucfirst(str_replace('_', ' ', $ticket->status)) }}</span></div>
-            <div class="flex justify-between border-b pb-2"><span class="text-gray-500">User</span><span>{{ $ticket->user->name ?? 'N/A' }}</span></div>
-            <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Assigned To</span><span>{{ $ticket->assignee->name ?? 'Unassigned' }}</span></div>
+            <div class="flex justify-between border-b pb-2"><span class="text-gray-500">User</span><span>{{ $ticket->user?->name ?? 'N/A' }}</span></div>
+            <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Assigned To</span><span>{{ $ticket->assignee?->name ?? 'Unassigned' }}</span></div>
             <div class="flex justify-between"><span class="text-gray-500">Created</span><span>{{ $ticket->created_at->format('M d, Y H:i') }}</span></div>
         </div>
     </div>
@@ -36,7 +36,7 @@
                 @forelse($ticket->messages as $message)
                     <div class="rounded-lg p-4 {{ $message->is_internal ? 'bg-yellow-50 border border-yellow-200' : 'bg-gray-50' }}">
                         <div class="flex justify-between gap-3 mb-2">
-                            <p class="text-sm font-medium">{{ $message->user->name ?? 'Deleted user' }} @if($message->is_internal)<span class="ml-2 text-xs text-yellow-700">Internal note</span>@endif</p>
+                            <p class="text-sm font-medium">{{ $message->user?->name ?? 'Deleted user' }} @if($message->is_internal)<span class="ml-2 text-xs text-yellow-700">Internal note</span>@endif</p>
                             <p class="text-xs text-gray-500">{{ $message->created_at->format('M d, Y H:i') }}</p>
                         </div>
                         <p class="text-sm text-gray-700 whitespace-pre-wrap">{{ $message->message }}</p>

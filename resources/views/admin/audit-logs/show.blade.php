@@ -15,7 +15,7 @@
             </div>
             <div class="flex justify-between border-b pb-2">
                 <span class="text-gray-500">User</span>
-                <span class="text-gray-800">{{ $auditLog->user->name ?? 'System' }}</span>
+                <span class="text-gray-800">{{ $auditLog->user?->name ?? 'System' }}</span>
             </div>
             <div class="flex justify-between border-b pb-2">
                 <span class="text-gray-500">Event Type</span>

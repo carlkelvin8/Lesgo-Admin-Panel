@@ -31,7 +31,7 @@
                     <tr class="hover:bg-gray-50">
                         <td class="px-6 py-4 font-medium text-blue-600">{{ $ticket->ticket_number }}</td>
                         <td class="px-6 py-4 text-gray-800 max-w-[200px] truncate">{{ $ticket->subject }}</td>
-                        <td class="px-6 py-4 text-gray-600">{{ $ticket->user->name ?? 'N/A' }}</td>
+                        <td class="px-6 py-4 text-gray-600">{{ $ticket->user?->name ?? 'N/A' }}</td>
                         <td class="px-6 py-4 text-xs text-gray-500">{{ ucfirst(str_replace('_', ' ', $ticket->category)) }}</td>
                         <td class="px-6 py-4">
                             <x-status-badge :status="$ticket->priority" />
@@ -39,7 +39,7 @@
                         <td class="px-6 py-4">
                             <x-status-badge :status="$ticket->status" />
                         </td>
-                        <td class="px-6 py-4 text-gray-500 text-xs">{{ $ticket->assignee->name ?? 'Unassigned' }}</td>
+                        <td class="px-6 py-4 text-gray-500 text-xs">{{ $ticket->assignee?->name ?? 'Unassigned' }}</td>
                         <td class="px-6 py-4 text-right">
                             <a href="{{ route('admin.tickets.show', $ticket) }}" class="text-blue-600 hover:text-blue-800"><i class="fas fa-eye"></i></a>
                         </td>

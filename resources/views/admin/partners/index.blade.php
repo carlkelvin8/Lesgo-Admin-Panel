@@ -34,7 +34,7 @@
                         <td class="px-6 py-4">
                             <div>
                                 <p class="font-medium text-gray-800">{{ $partner->name }}</p>
-                                <p class="text-xs text-gray-500">{{ $partner->user->email ?? 'N/A' }}</p>
+                                <p class="text-xs text-gray-500">{{ $partner->user?->email ?? 'N/A' }}</p>
                             </div>
                         </td>
                         <td class="px-6 py-4 text-gray-600">{{ $partner->category ?? '-' }}</td>

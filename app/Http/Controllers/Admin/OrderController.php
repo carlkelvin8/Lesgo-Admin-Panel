@@ -141,8 +141,8 @@ class OrderController extends Controller
                 foreach ($orders as $order) {
                     fputcsv($file, [
                         $order->id,
-                        $order->customer->name ?? 'N/A',
-                        $order->partner->name ?? 'N/A',
+                        $order->customer?->name ?? 'N/A',
+                        $order->partner?->name ?? 'N/A',
                         $order->driver?->user?->name ?? 'N/A',
                         $order->status,
                         $order->payment_status,

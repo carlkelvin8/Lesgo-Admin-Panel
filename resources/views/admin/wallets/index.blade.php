@@ -25,8 +25,8 @@
                 @forelse($wallets as $wallet)
                     <tr class="hover:bg-gray-50">
                         <td class="px-6 py-4">
-                            <div class="font-medium text-gray-800">{{ $wallet->user->name ?? 'N/A' }}</div>
-                            <div class="text-xs text-gray-500">{{ $wallet->user->email ?? '' }}</div>
+                            <div class="font-medium text-gray-800">{{ $wallet->user?->name ?? 'N/A' }}</div>
+                            <div class="text-xs text-gray-500">{{ $wallet->user?->email ?? '' }}</div>
                         </td>
                         <td class="px-6 py-4 font-semibold text-gray-800">₱{{ number_format($wallet->balance, 2) }}</td>
                         <td class="px-6 py-4 text-gray-700">{{ $wallet->currency }}</td>

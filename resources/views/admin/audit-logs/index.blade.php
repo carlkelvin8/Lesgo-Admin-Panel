@@ -36,8 +36,8 @@
                         <td class="px-6 py-4">
                             @if($log->user)
                                 <div>
-                                    <p class="font-medium text-gray-800">{{ $log->user->name }}</p>
-                                    <p class="text-xs text-gray-500">{{ $log->user->email }}</p>
+                                    <p class="font-medium text-gray-800">{{ $log->user?->name }}</p>
+                                    <p class="text-xs text-gray-500">{{ $log->user?->email }}</p>
                                 </div>
                             @else
                                 <span class="text-gray-400 text-xs">System</span>

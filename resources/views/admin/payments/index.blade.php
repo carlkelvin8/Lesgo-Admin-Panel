@@ -36,7 +36,7 @@
                 @forelse($payments as $payment)
                     <tr class="hover:bg-gray-50">
                         <td class="px-6 py-4 font-medium text-blue-600">#{{ $payment->id }}</td>
-                        <td class="px-6 py-4 text-gray-700">{{ $payment->customer->name ?? 'N/A' }}</td>
+                        <td class="px-6 py-4 text-gray-700">{{ $payment->customer?->name ?? 'N/A' }}</td>
                         <td class="px-6 py-4 text-gray-700">#{{ $payment->order_id ?? 'N/A' }}</td>
                         <td class="px-6 py-4 font-medium">₱{{ number_format($payment->amount, 2) }}</td>
                         <td class="px-6 py-4 text-gray-700">{{ ucfirst($payment->method ?? 'N/A') }}</td>

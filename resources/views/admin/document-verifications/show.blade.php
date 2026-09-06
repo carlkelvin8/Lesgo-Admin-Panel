@@ -9,19 +9,19 @@
         <h3 class="font-semibold text-gray-800 mb-4"><i class="fas fa-user mr-2 text-blue-600"></i>User Information</h3>
         <div class="text-center mb-4">
             <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-xl mx-auto mb-3">
-                {{ $documentVerification->user ? substr($documentVerification->user->name, 0, 1) : '?' }}
+                {{ $documentVerification->user ? substr($documentVerification->user?->name, 0, 1) : '?' }}
             </div>
-            <h4 class="font-bold text-gray-800">{{ $documentVerification->user->name ?? 'Deleted User' }}</h4>
-            <p class="text-sm text-gray-500">{{ $documentVerification->user->email ?? '-' }}</p>
+            <h4 class="font-bold text-gray-800">{{ $documentVerification->user?->name ?? 'Deleted User' }}</h4>
+            <p class="text-sm text-gray-500">{{ $documentVerification->user?->email ?? '-' }}</p>
         </div>
         <div class="space-y-3 text-sm">
             <div class="flex justify-between border-b pb-2">
                 <span class="text-gray-500">Phone</span>
-                <span class="text-gray-800">{{ $documentVerification->user->phone_number ?? '-' }}</span>
+                <span class="text-gray-800">{{ $documentVerification->user?->phone_number ?? '-' }}</span>
             </div>
             <div class="flex justify-between border-b pb-2">
                 <span class="text-gray-500">Role</span>
-                <span class="text-gray-800">{{ ucfirst($documentVerification->user->role ?? '-') }}</span>
+                <span class="text-gray-800">{{ ucfirst($documentVerification->user?->role ?? '-') }}</span>
             </div>
             <div class="flex justify-between">
                 <span class="text-gray-500">Joined</span>
@@ -123,7 +123,7 @@
             <div class="space-y-3 text-sm">
                 <div class="flex justify-between border-b pb-2">
                     <span class="text-gray-500">Reviewed By</span>
-                    <span class="text-gray-800">{{ $documentVerification->verifier->name ?? 'N/A' }}</span>
+                    <span class="text-gray-800">{{ $documentVerification->verifier?->name ?? 'N/A' }}</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="text-gray-500">Reviewed At</span>

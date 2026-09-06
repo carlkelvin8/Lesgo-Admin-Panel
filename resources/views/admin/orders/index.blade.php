@@ -36,8 +36,8 @@
                 @forelse($orders as $order)
                     <tr class="hover:bg-gray-50">
                         <td class="px-6 py-4 font-medium text-blue-600">#{{ $order->id }}</td>
-                        <td class="px-6 py-4 text-gray-700">{{ $order->customer->name ?? 'N/A' }}</td>
-                        <td class="px-6 py-4 text-gray-700">{{ $order->partner->name ?? 'N/A' }}</td>
+                        <td class="px-6 py-4 text-gray-700">{{ $order->customer?->name ?? 'N/A' }}</td>
+                        <td class="px-6 py-4 text-gray-700">{{ $order->partner?->name ?? 'N/A' }}</td>
                         <td class="px-6 py-4">
                             <x-status-badge status="{{ $order->status }}" />
                         </td>

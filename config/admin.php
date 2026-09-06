@@ -31,6 +31,11 @@ return [
             'group' => 'Service Operations',
             'description' => 'Manage driver profiles, documents, and account status.',
         ],
+        'partners.view' => [
+            'label' => 'View partners',
+            'group' => 'Service Operations',
+            'description' => 'View partner accounts and details.',
+        ],
         'partners.manage' => [
             'label' => 'Manage partners',
             'group' => 'Service Operations',
@@ -121,7 +126,7 @@ return [
         'operations' => [
             'label' => 'Operations',
             'permissions' => [
-                'dashboard.view', 'users.view', 'drivers.manage', 'partners.manage',
+                'dashboard.view', 'users.view', 'drivers.manage', 'partners.view', 'partners.manage',
                 'orders.view', 'orders.manage', 'services.manage', 'verifications.manage',
                 'notifications.manage', 'ratings.manage', 'reports.view',
             ],

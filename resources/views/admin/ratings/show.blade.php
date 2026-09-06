@@ -10,11 +10,11 @@
             <div class="flex items-start justify-between mb-6">
                 <div class="flex items-center gap-3">
                     <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-lg">
-                        {{ $review->is_anonymous ? '?' : substr($review->user->name ?? 'U', 0, 1) }}
+                        {{ $review->is_anonymous ? '?' : substr($review->user?->name ?? 'U', 0, 1) }}
                     </div>
                     <div>
-                        <h3 class="font-semibold text-gray-800">{{ $review->is_anonymous ? 'Anonymous' : ($review->user->name ?? '-') }}</h3>
-                        <p class="text-xs text-gray-500">{{ $review->is_anonymous ? '' : ($review->user->email ?? '') }}</p>
+                        <h3 class="font-semibold text-gray-800">{{ $review->is_anonymous ? 'Anonymous' : ($review->user?->name ?? '-') }}</h3>
+                        <p class="text-xs text-gray-500">{{ $review->is_anonymous ? '' : ($review->user?->email ?? '') }}</p>
                     </div>
                 </div>
                 <x-status-badge :status="$review->status" />

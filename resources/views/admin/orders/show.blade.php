@@ -98,7 +98,7 @@
                             @if($event->event_description)<p class="text-xs text-gray-500">{{ $event->event_description }}</p>@endif
                             @if($event->location_address)<p class="text-xs text-gray-500"><i class="fas fa-location-dot mr-1"></i>{{ $event->location_address }}</p>@endif
                         </div>
-                        <div class="text-right text-xs text-gray-500"><p>{{ $event->event_time?->format('M d, Y H:i') }}</p><p>{{ $event->user->name ?? 'System' }}</p></div>
+                        <div class="text-right text-xs text-gray-500"><p>{{ $event->event_time?->format('M d, Y H:i') }}</p><p>{{ $event->user?->name ?? 'System' }}</p></div>
                     </div>
                 @empty
                     <p class="text-gray-400">No tracking events yet. Future admin status changes will appear here.</p>

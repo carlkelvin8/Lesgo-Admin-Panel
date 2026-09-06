@@ -18,7 +18,7 @@
 <div class="max-w-4xl grid grid-cols-1 lg:grid-cols-3 gap-6">
     <div class="lg:col-span-2 bg-white rounded-xl shadow-sm p-6"><p class="text-xs uppercase tracking-wide text-gray-500 mb-2">{{ $notification->type }}</p><h3 class="text-xl font-bold text-gray-900 mb-4">{{ $notification->title }}</h3><p class="text-gray-700 whitespace-pre-wrap">{{ $notification->body }}</p></div>
     <div class="bg-white rounded-xl shadow-sm p-6 text-sm space-y-3">
-        <div><p class="text-gray-500 text-xs">Recipient</p><p class="font-medium">{{ $notification->user->name ?? 'Deleted user' }}</p><p class="text-gray-500">{{ $notification->user->email ?? '—' }}</p></div>
+        <div><p class="text-gray-500 text-xs">Recipient</p><p class="font-medium">{{ $notification->user?->name ?? 'Deleted user' }}</p><p class="text-gray-500">{{ $notification->user?->email ?? '—' }}</p></div>
         <div><p class="text-gray-500 text-xs">Channel</p><p>{{ strtoupper(str_replace('_', ' ', $notification->channel)) }}</p></div>
         <div><p class="text-gray-500 text-xs">Delivery</p><p class="font-medium">{{ ucfirst($notification->delivery_status ?? 'pending') }}</p><p class="text-xs text-gray-500">{{ $notification->delivery_attempts }} attempt(s) · {{ $notification->delivered_via ?: 'No provider response yet' }}</p>@if($notification->delivery_reference)<p class="mt-1 break-all font-mono text-[10px] text-gray-400">{{ $notification->delivery_reference }}</p>@endif</div>
         @if($notification->sent_at)<div><p class="text-gray-500 text-xs">Sent</p><p>{{ $notification->sent_at->format('M d, Y H:i') }}</p></div>@endif

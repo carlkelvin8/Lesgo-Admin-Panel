@@ -25,8 +25,8 @@
         <div class="bg-white rounded-xl shadow-sm p-6">
             <h3 class="font-semibold text-gray-800 mb-4">Related Info</h3>
             <div class="space-y-3 text-sm">
-                <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Customer</span><span>{{ $payment->customer->name ?? 'N/A' }}</span></div>
-                <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Email</span><span>{{ $payment->customer->email ?? 'N/A' }}</span></div>
+                <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Customer</span><span>{{ $payment->customer?->name ?? 'N/A' }}</span></div>
+                <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Email</span><span>{{ $payment->customer?->email ?? 'N/A' }}</span></div>
                 <div class="flex justify-between"><span class="text-gray-500">Order</span><span class="text-blue-600">#{{ $payment->order_id ?? 'N/A' }}</span></div>
             </div>
         </div>

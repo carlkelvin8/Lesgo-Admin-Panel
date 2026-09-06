@@ -30,7 +30,7 @@
         <div class="space-y-4 text-sm">
             <div class="flex justify-between border-b pb-3"><span class="text-gray-500">Name</span><span class="font-medium text-gray-800">{{ $service->name }}</span></div>
             <div class="flex justify-between border-b pb-3"><span class="text-gray-500">Code</span><span class="font-medium text-gray-800">{{ $service->code }}</span></div>
-            <div class="flex justify-between border-b pb-3"><span class="text-gray-500">Partner</span><span class="font-medium text-gray-800">{{ $service->partner->name ?? 'N/A' }}</span></div>
+            <div class="flex justify-between border-b pb-3"><span class="text-gray-500">Partner</span><span class="font-medium text-gray-800">{{ $service->partner?->name ?? 'N/A' }}</span></div>
             <div class="flex justify-between border-b pb-3"><span class="text-gray-500">Base Fare</span><span class="font-medium text-gray-800">₱{{ number_format($service->base_fare, 2) }}</span></div>
             <div class="flex justify-between border-b pb-3"><span class="text-gray-500">Per KM Rate</span><span class="font-medium text-gray-800">₱{{ number_format($service->per_km_rate, 2) }}</span></div>
             <div class="flex justify-between border-b pb-3"><span class="text-gray-500">Per Minute Rate</span><span class="font-medium text-gray-800">₱{{ number_format($service->per_minute_rate, 2) }}</span></div>

@@ -148,7 +148,7 @@ class PaymentController extends Controller
                 foreach ($payments as $payment) {
                     fputcsv($file, [
                         $payment->id,
-                        $payment->customer->name ?? 'N/A',
+                        $payment->customer?->name ?? 'N/A',
                         $payment->order_id ?? 'N/A',
                         $payment->amount,
                         $payment->method ?? 'N/A',

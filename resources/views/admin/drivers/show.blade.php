@@ -29,10 +29,10 @@
     <div class="bg-white rounded-xl shadow-sm p-6">
         <div class="text-center mb-4">
             <div class="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center font-bold text-2xl mx-auto mb-4">
-                {{ substr($driver->user->name ?? '?', 0, 1) }}
+                {{ substr($driver->user?->name ?? '?', 0, 1) }}
             </div>
-            <h3 class="text-xl font-bold text-gray-800">{{ $driver->user->name ?? 'N/A' }}</h3>
-            <p class="text-gray-500 text-sm">{{ $driver->user->email ?? '' }}</p>
+            <h3 class="text-xl font-bold text-gray-800">{{ $driver->user?->name ?? 'N/A' }}</h3>
+            <p class="text-gray-500 text-sm">{{ $driver->user?->email ?? '' }}</p>
             <x-status-badge status="{{ $driver->status }}" />
         </div>
         <div class="space-y-3 text-sm">

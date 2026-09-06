@@ -32,7 +32,7 @@
                     <tr class="hover:bg-gray-50">
                         <td class="px-6 py-4 font-medium text-gray-800">{{ $service->name }}</td>
                         <td class="px-6 py-4 text-gray-500 text-xs">{{ $service->code }}</td>
-                        <td class="px-6 py-4 text-gray-600">{{ $service->partner->name ?? 'N/A' }}</td>
+                        <td class="px-6 py-4 text-gray-600">{{ $service->partner?->name ?? 'N/A' }}</td>
                         <td class="px-6 py-4">₱{{ number_format($service->base_fare, 2) }}</td>
                         <td class="px-6 py-4">₱{{ number_format($service->per_km_rate, 2) }}</td>
                         <td class="px-6 py-4">₱{{ number_format($service->minimum_fare, 2) }}</td>
