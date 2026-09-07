@@ -7,10 +7,10 @@
 <button type="button" class="bg-{{ $voucher->is_active ? 'red' : 'green' }}-500 text-white px-4 py-2 rounded-lg text-sm"
     x-data
     @click="$dispatch('confirm-modal', {
-        title: '{{ $voucher->is_active ? 'Deactivate' : 'Activate' }} Promo',
-        message: 'Are you sure you want to {{ $voucher->is_active ? 'deactivate' : 'activate' }} {{ addslashes($voucher->code) }}?',
-        confirmText: '{{ $voucher->is_active ? 'Deactivate' : 'Activate' }}',
-        confirmClass: '{{ $voucher->is_active ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700' }}',
+        title: {!! json_encode(($voucher->is_active ? 'Deactivate' : 'Activate').' Promo') !!},
+        message: {!! json_encode('Are you sure you want to '.($voucher->is_active ? 'deactivate' : 'activate').' '.$voucher->code.'?') !!},
+        confirmText: {!! json_encode($voucher->is_active ? 'Deactivate' : 'Activate') !!},
+        confirmClass: {!! json_encode($voucher->is_active ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700') !!},
         onConfirm: () => {
             const f=document.createElement('form');f.method='POST';f.action='{{ route('admin.vouchers.toggle', $voucher) }}';
             const i1=document.createElement('input');i1.type='hidden';i1.name='_token';i1.value='{{ csrf_token() }}';f.appendChild(i1);

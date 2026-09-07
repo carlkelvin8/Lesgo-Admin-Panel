@@ -46,6 +46,9 @@ class MissionTemplateController extends Controller
         return view('admin.mission-templates.create');
     }
 
+    private const ALLOWED_GOAL_TYPES = ['complete_orders','specific_service','get_rating','refer_friend','leseat_order','lesride_orders','friend_referral','app_review','social_follow'];
+    private const ALLOWED_CURRENCIES = ['PHP'];
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -53,13 +56,17 @@ class MissionTemplateController extends Controller
             'description' => 'nullable|string',
             'type' => 'required|in:daily,weekly,monthly,one_time',
             'target_audience' => 'required|in:driver,merchant,customer',
-            'goal_type' => 'required|string|max:50',
+            'goal_type' => ['required','string','max:50','in:'.implode(',', self::ALLOWED_GOAL_TYPES)],
             'goal_target' => 'required|integer|min:1',
             'reward_amount' => 'required|numeric|min:0',
-            'reward_currency' => 'nullable|string|max:10',
-            'service_code' => 'nullable|string|max:50',
+            'reward_currency' => ['nullable','string','max:10','in:'.implode(',', self::ALLOWED_CURRENCIES)],
+            'service_code' => 'nullable|string|max:50|exists:services,code',
             'is_active' => 'boolean',
         ]);
+
+        if ($validated['goal_type'] === 'specific_service' && empty($validated['service_code'])) {
+            return back()->withErrors(['service_code' => 'service_code is required when goal_type is specific_service'])->withInput();
+        }
 
         $validated['reward_currency'] = $validated['reward_currency'] ?? 'PHP';
         $validated['is_active'] = $request->boolean('is_active', true);
@@ -81,13 +88,17 @@ class MissionTemplateController extends Controller
             'description' => 'nullable|string',
             'type' => 'required|in:daily,weekly,monthly,one_time',
             'target_audience' => 'required|in:driver,merchant,customer',
-            'goal_type' => 'required|string|max:50',
+            'goal_type' => ['required','string','max:50','in:'.implode(',', self::ALLOWED_GOAL_TYPES)],
             'goal_target' => 'required|integer|min:1',
             'reward_amount' => 'required|numeric|min:0',
-            'reward_currency' => 'nullable|string|max:10',
-            'service_code' => 'nullable|string|max:50',
+            'reward_currency' => ['nullable','string','max:10','in:'.implode(',', self::ALLOWED_CURRENCIES)],
+            'service_code' => 'nullable|string|max:50|exists:services,code',
             'is_active' => 'boolean',
         ]);
+
+        if ($validated['goal_type'] === 'specific_service' && empty($validated['service_code'])) {
+            return back()->withErrors(['service_code' => 'service_code is required when goal_type is specific_service'])->withInput();
+        }
 
         $validated['is_active'] = $request->boolean('is_active');
 

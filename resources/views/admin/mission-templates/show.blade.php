@@ -7,10 +7,10 @@
 <button type="button" class="bg-{{ $missionTemplate->is_active ? 'red' : 'green' }}-500 text-white px-4 py-2 rounded-lg text-sm"
     x-data
     @click="$dispatch('confirm-modal', {
-        title: '{{ $missionTemplate->is_active ? 'Deactivate' : 'Activate' }} Mission',
-        message: 'Are you sure you want to {{ $missionTemplate->is_active ? 'deactivate' : 'activate' }} {{ addslashes($missionTemplate->title) }}?',
-        confirmText: '{{ $missionTemplate->is_active ? 'Deactivate' : 'Activate' }}',
-        confirmClass: '{{ $missionTemplate->is_active ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700' }}',
+        title: {!! json_encode(($missionTemplate->is_active ? 'Deactivate' : 'Activate').' Mission') !!},
+        message: {!! json_encode('Are you sure you want to '.($missionTemplate->is_active ? 'deactivate' : 'activate').' '.$missionTemplate->title.'?') !!},
+        confirmText: {!! json_encode($missionTemplate->is_active ? 'Deactivate' : 'Activate') !!},
+        confirmClass: {!! json_encode($missionTemplate->is_active ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700') !!},
         onConfirm: () => {
             const f=document.createElement('form');f.method='POST';f.action='{{ route('admin.mission-templates.toggle', $missionTemplate) }}';
             const i1=document.createElement('input');i1.type='hidden';i1.name='_token';i1.value='{{ csrf_token() }}';f.appendChild(i1);

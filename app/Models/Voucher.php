@@ -27,9 +27,16 @@ class Voucher extends Model
         'value' => 'decimal:2',
         'max_discount' => 'decimal:2',
         'min_order_value' => 'decimal:2',
-        'expires_at' => 'date',
+        'expires_at' => 'datetime',
         'user_restrictions' => 'array',
         'applicable_services' => 'array',
         'is_active' => 'boolean',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function ($voucher) {
+            $voucher->code = strtoupper(trim($voucher->code));
+        });
+    }
 }

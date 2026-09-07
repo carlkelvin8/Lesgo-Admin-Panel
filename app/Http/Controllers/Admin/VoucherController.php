@@ -47,6 +47,7 @@ class VoucherController extends Controller
 
     public function store(Request $request)
     {
+        $request->merge(['code' => strtoupper(trim($request->input('code','')))]);
         $validated = $request->validate([
             'code' => 'required|string|max:50|unique:vouchers,code',
             'title' => 'required|string|max:255',
@@ -97,6 +98,7 @@ class VoucherController extends Controller
 
     public function update(Request $request, Voucher $voucher)
     {
+        $request->merge(['code' => strtoupper(trim($request->input('code','')))]);
         $validated = $request->validate([
             'code' => 'required|string|max:50|unique:vouchers,code,' . $voucher->id,
             'title' => 'required|string|max:255',
