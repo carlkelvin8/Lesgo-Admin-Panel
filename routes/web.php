@@ -125,6 +125,8 @@ Route::prefix('admin')->name('admin.')->middleware(['admin', 'admin.audit'])->gr
         Route::get('/drivers/{driver}/edit', [DriverController::class, 'edit'])->name('drivers.edit');
         Route::put('/drivers/{driver}', [DriverController::class, 'update'])->name('drivers.update');
         Route::post('/drivers/{driver}/toggle', [DriverController::class, 'toggleStatus'])->name('drivers.toggle');
+        Route::post('/drivers/{driver}/documents', [DriverController::class, 'storeDocument'])->name('drivers.documents.store');
+        Route::put('/drivers/{driver}/documents', [DriverController::class, 'updateDocuments'])->name('drivers.documents.update');
     });
 
     // Services
