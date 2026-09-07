@@ -23,6 +23,7 @@ class StoreUserRequest extends FormRequest
             'role' => 'required|in:customer,driver,partner,admin',
             'admin_role' => ['nullable', 'required_if:role,admin', Rule::in(['super_admin', 'operations', 'finance', 'support'])],
             'password' => 'required|string|min:8|confirmed',
+            'profile_picture' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ];
     }
 }

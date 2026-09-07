@@ -7,6 +7,7 @@ use App\Models\Partner;
 use App\Models\User;
 use App\Traits\SearchEscaping;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class PartnerController extends Controller
@@ -57,10 +58,25 @@ class PartnerController extends Controller
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
             'name' => 'required|string|max:255',
+            'legal_name' => 'nullable|string|max:255',
+            'business_type' => 'nullable|string|max:255',
             'category' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'delivery_fee' => 'nullable|numeric|min:0',
+            'tax_id' => 'nullable|string|max:100',
+            'support_email' => 'nullable|email|max:255',
+            'support_phone' => 'nullable|string|max:50',
+            'logo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'cover_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
         ]);
+
+        if ($request->hasFile('logo')) {
+            $validated['logo_url'] = $request->file('logo')->store('partners/logos', config('filesystems.default') === 's3' ? 's3' : 'public');
+        }
+        if ($request->hasFile('cover_image')) {
+            $validated['cover_image_url'] = $request->file('cover_image')->store('partners/covers', config('filesystems.default') === 's3' ? 's3' : 'public');
+        }
+        unset($validated['logo'], $validated['cover_image']);
 
         $validated['slug'] = Str::slug($validated['name']) . '-' . Str::random(5);
         $validated['status'] = 'pending';
@@ -80,13 +96,38 @@ class PartnerController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'legal_name' => 'nullable|string|max:255',
+            'business_type' => 'nullable|string|max:255',
             'category' => 'nullable|string|max:255',
             'status' => 'required|in:pending,approved,rejected,suspended',
             'is_open' => 'boolean',
             'is_featured' => 'boolean',
             'delivery_fee' => 'nullable|numeric|min:0',
             'description' => 'nullable|string',
+            'tax_id' => 'nullable|string|max:100',
+            'support_email' => 'nullable|email|max:255',
+            'support_phone' => 'nullable|string|max:50',
+            'logo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'cover_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
+            'remove_logo' => 'nullable|boolean',
+            'remove_cover' => 'nullable|boolean',
         ]);
+
+        if ($request->hasFile('logo')) {
+            if ($partner->logo_url) try { Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->delete($partner->logo_url); } catch (\Throwable $e) {}
+            $validated['logo_url'] = $request->file('logo')->store('partners/logos', config('filesystems.default') === 's3' ? 's3' : 'public');
+        } elseif ($request->boolean('remove_logo')) {
+            if ($partner->logo_url) try { Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->delete($partner->logo_url); } catch (\Throwable $e) {}
+            $validated['logo_url'] = null;
+        }
+        if ($request->hasFile('cover_image')) {
+            if ($partner->cover_image_url) try { Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->delete($partner->cover_image_url); } catch (\Throwable $e) {}
+            $validated['cover_image_url'] = $request->file('cover_image')->store('partners/covers', config('filesystems.default') === 's3' ? 's3' : 'public');
+        } elseif ($request->boolean('remove_cover')) {
+            if ($partner->cover_image_url) try { Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->delete($partner->cover_image_url); } catch (\Throwable $e) {}
+            $validated['cover_image_url'] = null;
+        }
+        unset($validated['logo'], $validated['cover_image'], $validated['remove_logo'], $validated['remove_cover']);
 
         $partner->update($validated);
 

@@ -5,7 +5,7 @@
 @section('content')
 <div class="max-w-2xl">
     <div class="bg-white rounded-xl shadow-sm p-6">
-        <form method="POST" action="{{ route('admin.users.update', $user) }}">
+        <form method="POST" action="{{ route('admin.users.update', $user) }}" enctype="multipart/form-data">
             @csrf
             @method('PUT')
 
@@ -45,6 +45,16 @@
                     @endforeach
                 </select>
                 <p class="mt-1 text-xs text-gray-500">Required only when the user role is Admin.</p>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Profile Picture</label>
+                @if($user->profile_picture)
+                    <img src="{{ \Illuminate\Support\Str::startsWith($user->profile_picture, ['http://','https://']) ? $user->profile_picture : \Illuminate\Support\Facades\Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->url($user->profile_picture) }}" alt="Profile" class="w-16 h-16 rounded-full object-cover mb-2 border">
+                    <label class="inline-flex items-center gap-2 text-xs"><input type="checkbox" name="remove_profile_picture" value="1"> Remove current</label>
+                @endif
+                <input type="file" name="profile_picture" accept=".jpg,.jpeg,.png,.webp" class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 mt-2">
+                <p class="text-xs text-gray-500 mt-1">JPG/PNG/WEBP, max 2MB</p>
             </div>
 
             <div class="mb-6">

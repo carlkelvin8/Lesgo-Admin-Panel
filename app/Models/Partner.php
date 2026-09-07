@@ -31,6 +31,10 @@ class Partner extends Model
         'is_featured',
         'accepts_online_payment',
         'opening_hours',
+        'documents',
+        'tax_id',
+        'support_email',
+        'support_phone',
     ];
 
     protected function casts(): array

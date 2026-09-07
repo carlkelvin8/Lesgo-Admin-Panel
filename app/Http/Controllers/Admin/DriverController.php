@@ -61,10 +61,17 @@ class DriverController extends Controller
             'user_id' => 'required|exists:users,id',
             'partner_id' => 'nullable|exists:partners,id',
             'license_number' => 'nullable|string|max:255',
+            'license_expiry_date' => 'nullable|date',
             'vehicle_type' => 'nullable|string|max:255',
             'plate_number' => 'nullable|string|max:50',
             'package_tier' => 'nullable|string|max:100',
+            'id_document' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
+
+        if ($request->hasFile('id_document')) {
+            $validated['id_document_path'] = $request->file('id_document')->store('driver-documents', config('filesystems.default') === 's3' ? 's3' : 'public');
+        }
+        unset($validated['id_document']);
 
         $validated['status'] = 'pending';
 
@@ -84,6 +91,7 @@ class DriverController extends Controller
         $validated = $request->validate([
             'status' => 'required|in:pending,active,inactive,suspended',
             'license_number' => 'nullable|string|max:255',
+            'license_expiry_date' => 'nullable|date',
             'vehicle_type' => 'nullable|string|max:255',
             'plate_number' => 'nullable|string|max:50',
             'package_tier' => 'nullable|string|max:100',

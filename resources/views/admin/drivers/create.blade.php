@@ -5,7 +5,7 @@
 @section('content')
 <div class="max-w-2xl">
     <div class="bg-white rounded-xl shadow-sm p-6">
-        <form method="POST" action="{{ route('admin.drivers.store') }}">
+        <form method="POST" action="{{ route('admin.drivers.store') }}" enctype="multipart/form-data">
             @csrf
 
             <div class="mb-4">
@@ -34,25 +34,33 @@
                     <input type="text" name="license_number" value="{{ old('license_number') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">
                 </div>
                 <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">License Expiry</label>
+                    <input type="date" name="license_expiry_date" value="{{ old('license_expiry_date') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Vehicle Type</label>
                     <input type="text" name="vehicle_type" value="{{ old('vehicle_type') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">
                 </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4 mb-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Plate Number</label>
                     <input type="text" name="plate_number" value="{{ old('plate_number') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Package Tier</label>
-                    <select name="package_tier" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">
-                        <option value="">None</option>
-                        @foreach(['basic', 'premium', 'elite'] as $tier)
-                            <option value="{{ $tier }}" {{ old('package_tier') === $tier ? 'selected' : '' }}>{{ ucfirst($tier) }}</option>
-                        @endforeach
-                    </select>
-                </div>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">ID Document</label>
+                <input type="file" name="id_document" accept=".jpg,.jpeg,.png,.pdf" class="w-full text-sm border rounded-lg px-3 py-2">
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Package Tier</label>
+                <select name="package_tier" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">
+                    <option value="">None</option>
+                    @foreach(['basic', 'premium', 'elite'] as $tier)
+                        <option value="{{ $tier }}" {{ old('package_tier') === $tier ? 'selected' : '' }}>{{ ucfirst($tier) }}</option>
+                    @endforeach
+                </select>
             </div>
 
             <div class="flex items-center gap-3">

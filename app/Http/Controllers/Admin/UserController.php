@@ -9,6 +9,7 @@ use App\Models\AdminRole;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use App\Traits\SearchEscaping;
 use Illuminate\Validation\Rule;
 
@@ -64,6 +65,13 @@ class UserController extends Controller
             $validated['admin_role'] = null;
         }
 
+        if ($request->hasFile('profile_picture')) {
+            $validated['profile_picture'] = $request->file('profile_picture')->store('profile-pictures', config('filesystems.default') === 's3' ? 's3' : 'public');
+        } else {
+            unset($validated['profile_picture']);
+        }
+        unset($validated['remove_profile_picture']);
+
         $validated['password'] = Hash::make($validated['password']);
         $validated['is_active'] = true;
 
@@ -88,6 +96,21 @@ class UserController extends Controller
         if ($validated['role'] !== 'admin') {
             $validated['admin_role'] = null;
         }
+
+        if ($request->hasFile('profile_picture')) {
+            if ($user->profile_picture) {
+                try { Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->delete($user->profile_picture); } catch (\Throwable $e) {}
+            }
+            $validated['profile_picture'] = $request->file('profile_picture')->store('profile-pictures', config('filesystems.default') === 's3' ? 's3' : 'public');
+        } elseif ($request->boolean('remove_profile_picture')) {
+            if ($user->profile_picture) {
+                try { Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->delete($user->profile_picture); } catch (\Throwable $e) {}
+            }
+            $validated['profile_picture'] = null;
+        } else {
+            unset($validated['profile_picture']);
+        }
+        unset($validated['remove_profile_picture']);
 
         if ($user->is($request->user()) && ($validated['role'] !== 'admin' || ! $request->boolean('is_active'))) {
             return back()->withInput()->withErrors(['role' => 'You cannot remove your own admin access or deactivate your own account.']);

@@ -23,6 +23,8 @@ class UpdateUserRequest extends FormRequest
             'role' => 'required|in:customer,driver,partner,admin',
             'admin_role' => ['nullable', 'required_if:role,admin', Rule::in(['super_admin', 'operations', 'finance', 'support'])],
             'is_active' => 'boolean',
+            'profile_picture' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'remove_profile_picture' => 'nullable|boolean',
         ];
     }
 }

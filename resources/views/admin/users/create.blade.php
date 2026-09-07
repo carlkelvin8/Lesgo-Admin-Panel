@@ -5,7 +5,7 @@
 @section('content')
 <div class="max-w-2xl">
     <div class="bg-white rounded-xl shadow-sm p-6">
-        <form method="POST" action="{{ route('admin.users.store') }}">
+        <form method="POST" action="{{ route('admin.users.store') }}" enctype="multipart/form-data">
             @csrf
 
             <div class="mb-4">
@@ -51,6 +51,12 @@
                 <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
                 <input type="password" name="password" required
                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Profile Picture</label>
+                <input type="file" name="profile_picture" accept=".jpg,.jpeg,.png,.webp" class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2">
+                <p class="text-xs text-gray-500 mt-1">JPG/PNG/WEBP, max 2MB</p>
             </div>
 
             <div class="mb-6">
