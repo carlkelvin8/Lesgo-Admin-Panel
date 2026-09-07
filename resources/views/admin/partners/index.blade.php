@@ -14,11 +14,20 @@
     </x-filter-panel>
 </div>
 
+<form method="POST" action="{{ route('admin.partners.bulk-destroy') }}"
+    x-data="{ selected: [] }"
+    x-on:submit="if (!confirm(`Permanently delete ${selected.length} selected restaurant(s) and ALL linked riders, orders, payments, menus, and accounts?`)) $event.preventDefault()">
+    @csrf @method('DELETE')
 <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+    <div class="px-6 py-3 border-b bg-gray-50 flex items-center justify-between gap-4">
+        <span class="text-sm text-gray-600"><span x-text="selected.length"></span> selected</span>
+        <button type="submit" :disabled="selected.length === 0" class="bg-red-600 hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm"><i class="fas fa-trash mr-1"></i> Delete Selected</button>
+    </div>
     <div class="overflow-x-auto">
         <table class="responsive-table w-full text-sm">
             <thead class="bg-gray-50 border-b">
                 <tr>
+                    <th class="px-4 py-3 w-10"><input type="checkbox" aria-label="Select all partners on this page" @change="selected = $event.target.checked ? @js($partners->pluck('id')->map(fn ($id) => (string) $id)->values()) : []"></th>
                     <th class="text-left px-6 py-3 text-gray-500 font-medium">Partner</th>
                     <th class="text-left px-6 py-3 text-gray-500 font-medium">Category</th>
                     <th class="text-left px-6 py-3 text-gray-500 font-medium">Status</th>
@@ -31,6 +40,7 @@
             <tbody class="divide-y divide-gray-100">
                 @forelse($partners as $partner)
                     <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-4"><input type="checkbox" name="ids[]" value="{{ $partner->id }}" x-model="selected" aria-label="Select {{ $partner->name }}"></td>
                         <td class="px-6 py-4">
                             <div>
                                 <p class="font-medium text-gray-800">{{ $partner->name }}</p>
@@ -63,11 +73,12 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="7"><x-empty-state icon="fa-store" title="No partners found" description="There are no partners to display." /></td></tr>
+                    <tr><td colspan="8"><x-empty-state icon="fa-store" title="No partners found" description="There are no partners to display." /></td></tr>
                 @endforelse
             </tbody>
         </table>
     </div>
     <div class="px-6 py-4 border-t">{{ $partners->links() }}</div>
 </div>
+</form>
 @endsection

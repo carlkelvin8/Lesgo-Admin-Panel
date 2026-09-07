@@ -18,11 +18,20 @@
 </x-filter-panel>
 
 <!-- Table -->
-<div class="bg-white rounded-xl shadow-sm overflow-hidden" x-data="{ loading: false }" x-init="loading = false">
+<form method="POST" action="{{ route('admin.users.bulk-destroy') }}"
+    x-data="{ selected: [] }"
+    x-on:submit="if (!confirm(`Permanently remove ${selected.length} selected user account(s) from the apps? Admin accounts are protected.`)) $event.preventDefault()">
+    @csrf @method('DELETE')
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+    <div class="px-6 py-3 border-b bg-gray-50 flex items-center justify-between gap-4">
+        <span class="text-sm text-gray-600"><span x-text="selected.length"></span> selected</span>
+        <button type="submit" :disabled="selected.length === 0" class="bg-red-600 hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm"><i class="fas fa-trash mr-1"></i> Delete Selected</button>
+    </div>
     <div class="overflow-x-auto">
         <table class="w-full text-sm responsive-table">
             <thead class="bg-gray-50 border-b">
                 <tr>
+                    <th class="px-4 py-3 w-10"><input type="checkbox" aria-label="Select all users on this page" @change="selected = $event.target.checked ? @js($users->pluck('id')->map(fn ($id) => (string) $id)->values()) : []"></th>
                     <th class="text-left px-6 py-3 text-gray-500 font-medium">User</th>
                     <th class="text-left px-6 py-3 text-gray-500 font-medium">Phone</th>
                     <th class="text-left px-6 py-3 text-gray-500 font-medium">Role</th>
@@ -34,6 +43,7 @@
             <tbody class="divide-y divide-gray-100">
                 @forelse($users as $user)
                     <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-4"><input type="checkbox" name="ids[]" value="{{ $user->id }}" x-model="selected" aria-label="Select {{ $user->name }}"></td>
                         <td class="px-6 py-4" data-label="User">
                             <div class="flex items-center gap-3">
                                 @if($user->profile_picture)
@@ -89,7 +99,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6">
+                        <td colspan="7">
                             <x-empty-state icon="fa-users" title="No users found" description="Try adjusting your search or filter criteria." />
                         </td>
                     </tr>
@@ -102,4 +112,5 @@
         {{ $users->links() }}
     </div>
 </div>
+</form>
 @endsection

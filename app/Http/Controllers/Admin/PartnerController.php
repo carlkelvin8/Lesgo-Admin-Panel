@@ -151,4 +151,21 @@ class PartnerController extends Controller
         return redirect()->route('admin.partners.index')
             ->with('success', 'Partner and all linked data deleted successfully.');
     }
+
+    public function bulkDestroy(Request $request, CascadeEntityDeletionService $deletionService)
+    {
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1', 'max:100'],
+            'ids.*' => ['integer', 'distinct', 'exists:partners,id'],
+        ]);
+
+        $partners = Partner::query()->whereIn('id', $validated['ids'])->get();
+        \Illuminate\Support\Facades\DB::transaction(function () use ($partners, $deletionService) {
+            foreach ($partners as $partner) {
+                $deletionService->deletePartner($partner);
+            }
+        });
+
+        return back()->with('success', $partners->count().' partner(s) and all linked data deleted.');
+    }
 }

@@ -58,4 +58,26 @@ class DriverDeletionTest extends TestCase
         $this->assertDatabaseMissing('orders', ['id' => $order->id]);
         $this->assertDatabaseMissing('driver_profiles', ['id' => $driver->id]);
     }
+
+    public function test_admin_can_bulk_delete_riders(): void
+    {
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'admin_role' => 'super_admin',
+            'is_active' => true,
+        ]);
+        $drivers = DriverProfile::factory()->count(2)->create();
+        $userIds = $drivers->pluck('user_id');
+
+        $this->actingAs($admin)
+            ->delete(route('admin.drivers.bulk-destroy'), ['ids' => $drivers->pluck('id')->all()])
+            ->assertSessionHas('success');
+
+        foreach ($drivers as $driver) {
+            $this->assertDatabaseMissing('driver_profiles', ['id' => $driver->id]);
+        }
+        foreach ($userIds as $userId) {
+            $this->assertDatabaseMissing('users', ['id' => $userId]);
+        }
+    }
 }

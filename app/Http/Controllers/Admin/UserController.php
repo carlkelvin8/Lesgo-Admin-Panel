@@ -163,6 +163,38 @@ class UserController extends Controller
             ->with('success', 'User deleted successfully.');
     }
 
+    public function bulkDestroy(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1', 'max:100'],
+            'ids.*' => ['integer', 'distinct', 'exists:users,id'],
+        ]);
+
+        $users = User::query()->whereIn('id', $validated['ids'])->get();
+        $deleted = 0;
+        $skipped = 0;
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($users, &$deleted, &$skipped) {
+            foreach ($users as $user) {
+                // Bulk deletion is intentionally limited to non-admin accounts.
+                if ($user->isAdmin() || $user->is(auth()->user())) {
+                    $skipped++;
+                    continue;
+                }
+
+                $user->delete();
+                $deleted++;
+            }
+        });
+
+        $message = "{$deleted} user(s) deleted.";
+        if ($skipped > 0) {
+            $message .= " {$skipped} protected admin account(s) skipped.";
+        }
+
+        return back()->with('success', $message);
+    }
+
     public function export(Request $request)
     {
         $query = User::query();

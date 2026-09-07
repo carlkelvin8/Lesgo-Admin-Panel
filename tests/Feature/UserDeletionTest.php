@@ -71,4 +71,30 @@ class UserDeletionTest extends TestCase
         $this->delete(route('admin.users.destroy', $customer))->assertForbidden();
         $this->assertNotSoftDeleted('users', ['id' => $customer->id]);
     }
+
+    public function test_bulk_delete_removes_customers_but_skips_admin_accounts(): void
+    {
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'admin_role' => 'super_admin',
+            'is_active' => true,
+        ]);
+        $otherAdmin = User::factory()->create([
+            'role' => 'admin',
+            'admin_role' => 'operations',
+            'is_active' => true,
+        ]);
+        $customers = User::factory()->count(2)->create(['role' => 'customer']);
+
+        $this->actingAs($admin)
+            ->delete(route('admin.users.bulk-destroy'), [
+                'ids' => [$otherAdmin->id, ...$customers->pluck('id')->all()],
+            ])
+            ->assertSessionHas('success');
+
+        foreach ($customers as $customer) {
+            $this->assertSoftDeleted('users', ['id' => $customer->id]);
+        }
+        $this->assertNotSoftDeleted('users', ['id' => $otherAdmin->id]);
+    }
 }

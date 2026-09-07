@@ -14,11 +14,20 @@
     </x-filter-panel>
 </div>
 
+<form method="POST" action="{{ route('admin.drivers.bulk-destroy') }}"
+    x-data="{ selected: [] }"
+    x-on:submit="if (!confirm(`Permanently delete ${selected.length} selected rider(s) and ALL linked orders, payments, wallets, documents, messages, and accounts?`)) $event.preventDefault()">
+    @csrf @method('DELETE')
 <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+    <div class="px-6 py-3 border-b bg-gray-50 flex items-center justify-between gap-4">
+        <span class="text-sm text-gray-600"><span x-text="selected.length"></span> selected</span>
+        <button type="submit" :disabled="selected.length === 0" class="bg-red-600 hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm"><i class="fas fa-trash mr-1"></i> Delete Selected</button>
+    </div>
     <div class="overflow-x-auto">
         <table class="responsive-table w-full text-sm">
             <thead class="bg-gray-50 border-b">
                 <tr>
+                    <th class="px-4 py-3 w-10"><input type="checkbox" aria-label="Select all riders on this page" @change="selected = $event.target.checked ? @js($drivers->pluck('id')->map(fn ($id) => (string) $id)->values()) : []"></th>
                     <th class="text-left px-6 py-3 text-gray-500 font-medium">Driver</th>
                     <th class="text-left px-6 py-3 text-gray-500 font-medium">License</th>
                     <th class="text-left px-6 py-3 text-gray-500 font-medium">Vehicle</th>
@@ -32,6 +41,7 @@
             <tbody class="divide-y divide-gray-100">
                 @forelse($drivers as $driver)
                     <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-4"><input type="checkbox" name="ids[]" value="{{ $driver->id }}" x-model="selected" aria-label="Select {{ $driver->user?->name ?? 'rider' }}"></td>
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-3">
                                 <div class="w-8 h-8 bg-green-100 text-green-600 rounded-full flex items-center justify-center font-bold text-sm">{{ substr($driver->user?->name ?? '?', 0, 1) }}</div>
@@ -73,11 +83,12 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="8"><x-empty-state icon="fa-motorcycle" title="No drivers found" description="There are no drivers matching your criteria." /></td></tr>
+                    <tr><td colspan="9"><x-empty-state icon="fa-motorcycle" title="No drivers found" description="There are no drivers matching your criteria." /></td></tr>
                 @endforelse
             </tbody>
         </table>
     </div>
     <div class="px-6 py-4 border-t">{{ $drivers->links() }}</div>
 </div>
+</form>
 @endsection

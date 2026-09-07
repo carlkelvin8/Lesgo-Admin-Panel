@@ -122,6 +122,23 @@ class DriverController extends Controller
             ->with('success', 'Rider and all linked data deleted successfully.');
     }
 
+    public function bulkDestroy(Request $request, CascadeEntityDeletionService $deletionService)
+    {
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1', 'max:100'],
+            'ids.*' => ['integer', 'distinct', 'exists:driver_profiles,id'],
+        ]);
+
+        $drivers = DriverProfile::query()->whereIn('id', $validated['ids'])->get();
+        \Illuminate\Support\Facades\DB::transaction(function () use ($drivers, $deletionService) {
+            foreach ($drivers as $driver) {
+                $deletionService->deleteDriver($driver);
+            }
+        });
+
+        return back()->with('success', $drivers->count().' rider(s) and all linked data deleted.');
+    }
+
     public function storeDocument(Request $request, DriverProfile $driver)
     {
         $validated = $request->validate([

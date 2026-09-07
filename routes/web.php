@@ -76,6 +76,7 @@ Route::prefix('admin')->name('admin.')->middleware(['admin', 'admin.audit'])->gr
         Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
         Route::post('/users/{user}/toggle', [UserController::class, 'toggleStatus'])->name('users.toggle');
         Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+        Route::delete('/users', [UserController::class, 'bulkDestroy'])->name('users.bulk-destroy');
     });
     Route::middleware('admin.permission:users.view')->group(function () {
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
@@ -90,6 +91,7 @@ Route::prefix('admin')->name('admin.')->middleware(['admin', 'admin.audit'])->gr
         Route::put('/partners/{partner}', [PartnerController::class, 'update'])->name('partners.update');
         Route::post('/partners/{partner}/toggle', [PartnerController::class, 'toggleStatus'])->name('partners.toggle');
         Route::delete('/partners/{partner}', [PartnerController::class, 'destroy'])->name('partners.destroy');
+        Route::delete('/partners', [PartnerController::class, 'bulkDestroy'])->name('partners.bulk-destroy');
 
         // Partner menus and staff
         Route::get('/partners/{partner}/menu', [PartnerOperationsController::class, 'menu'])->name('partners.menu.index');
@@ -130,6 +132,7 @@ Route::prefix('admin')->name('admin.')->middleware(['admin', 'admin.audit'])->gr
         Route::put('/drivers/{driver}', [DriverController::class, 'update'])->name('drivers.update');
         Route::post('/drivers/{driver}/toggle', [DriverController::class, 'toggleStatus'])->name('drivers.toggle');
         Route::delete('/drivers/{driver}', [DriverController::class, 'destroy'])->name('drivers.destroy');
+        Route::delete('/drivers', [DriverController::class, 'bulkDestroy'])->name('drivers.bulk-destroy');
         Route::post('/drivers/{driver}/documents', [DriverController::class, 'storeDocument'])->name('drivers.documents.store');
         Route::put('/drivers/{driver}/documents', [DriverController::class, 'updateDocuments'])->name('drivers.documents.update');
     });
