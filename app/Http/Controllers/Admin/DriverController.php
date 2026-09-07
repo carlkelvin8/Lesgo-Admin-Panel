@@ -7,6 +7,7 @@ use App\Models\DocumentVerification;
 use App\Models\DriverProfile;
 use App\Models\Partner;
 use App\Models\User;
+use App\Services\CascadeEntityDeletionService;
 use App\Traits\SearchEscaping;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -113,6 +114,14 @@ class DriverController extends Controller
             ->with('success', "Driver {$newStatus} successfully.");
     }
 
+    public function destroy(DriverProfile $driver, CascadeEntityDeletionService $deletionService)
+    {
+        $deletionService->deleteDriver($driver);
+
+        return redirect()->route('admin.drivers.index')
+            ->with('success', 'Rider and all linked data deleted successfully.');
+    }
+
     public function storeDocument(Request $request, DriverProfile $driver)
     {
         $validated = $request->validate([
@@ -174,4 +183,5 @@ class DriverController extends Controller
 
         return redirect()->route('admin.drivers.show', $driver)->with('success', 'Driver documents updated.');
     }
+
 }

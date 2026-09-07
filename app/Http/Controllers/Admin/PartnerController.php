@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
 use App\Models\User;
+use App\Services\CascadeEntityDeletionService;
 use App\Traits\SearchEscaping;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -143,18 +144,11 @@ class PartnerController extends Controller
         return redirect()->back()->with('success', "Partner {$status} successfully.");
     }
 
-    public function destroy(Partner $partner)
+    public function destroy(Partner $partner, CascadeEntityDeletionService $deletionService)
     {
-        $hasOrders = $partner->orders()->exists();
-        $hasDrivers = \App\Models\DriverProfile::where('partner_id', $partner->id)->exists();
-
-        if ($hasOrders || $hasDrivers) {
-            return redirect()->back()->with('error', 'Cannot delete partner with existing orders or drivers. Remove them first.');
-        }
-
-        $partner->delete();
+        $deletionService->deletePartner($partner);
 
         return redirect()->route('admin.partners.index')
-            ->with('success', 'Partner deleted successfully.');
+            ->with('success', 'Partner and all linked data deleted successfully.');
     }
 }

@@ -4,6 +4,19 @@
 
 @section('actions')
 <a href="{{ route('admin.drivers.edit', $driver) }}" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm"><i class="fas fa-edit mr-1"></i> Edit</a>
+<button type="button" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm"
+    x-data
+    @click="$dispatch('confirm-modal', {
+        title: 'Delete Rider Profile',
+        message: 'Permanently delete this rider, the linked user account, orders, payments, wallet activity, documents, messages, reviews, and all other linked data? This cannot be undone.',
+        confirmText: 'Delete Rider & Data',
+        onConfirm: () => {
+            const form = document.createElement('form'); form.method = 'POST'; form.action = '{{ route('admin.drivers.destroy', $driver) }}';
+            const token = document.createElement('input'); token.type = 'hidden'; token.name = '_token'; token.value = '{{ csrf_token() }}'; form.appendChild(token);
+            const method = document.createElement('input'); method.type = 'hidden'; method.name = '_method'; method.value = 'DELETE'; form.appendChild(method);
+            document.body.appendChild(form); form.submit();
+        }
+    })"><i class="fas fa-trash mr-1"></i> Delete Rider & Data</button>
 <button type="button" class="bg-{{ $driver->status === 'active' ? 'red' : 'green' }}-500 text-white px-4 py-2 rounded-lg text-sm"
     x-data
     @click="$dispatch('confirm-modal', {

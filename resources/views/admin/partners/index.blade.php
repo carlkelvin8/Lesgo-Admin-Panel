@@ -46,7 +46,20 @@
                         <td class="px-6 py-4">{{ $partner->is_featured ? 'Yes' : 'No' }}</td>
                         <td class="px-6 py-4 text-right">
                             <a href="{{ route('admin.partners.show', $partner) }}" class="text-blue-600 hover:text-blue-800 mr-2"><i class="fas fa-eye"></i></a>
-                            <a href="{{ route('admin.partners.edit', $partner) }}" class="text-yellow-600 hover:text-yellow-800"><i class="fas fa-edit"></i></a>
+                            <a href="{{ route('admin.partners.edit', $partner) }}" class="text-yellow-600 hover:text-yellow-800 mr-2"><i class="fas fa-edit"></i></a>
+                            <button type="button" class="text-red-600 hover:text-red-800" title="Delete partner"
+                                x-data
+                                @click="$dispatch('confirm-modal', {
+                                    title: 'Delete Partner',
+                                    message: 'Permanently delete {{ addslashes($partner->name) }}, its owner account, assigned riders, orders, payments, menu, staff, analytics, and all other linked data? This cannot be undone.',
+                                    confirmText: 'Delete Restaurant & Data',
+                                    onConfirm: () => {
+                                        const form = document.createElement('form'); form.method = 'POST'; form.action = '{{ route('admin.partners.destroy', $partner) }}';
+                                        const token = document.createElement('input'); token.type = 'hidden'; token.name = '_token'; token.value = '{{ csrf_token() }}'; form.appendChild(token);
+                                        const method = document.createElement('input'); method.type = 'hidden'; method.name = '_method'; method.value = 'DELETE'; form.appendChild(method);
+                                        document.body.appendChild(form); form.submit();
+                                    }
+                                })"><i class="fas fa-trash"></i></button>
                         </td>
                     </tr>
                 @empty

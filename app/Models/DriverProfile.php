@@ -44,4 +44,9 @@ class DriverProfile extends Model
     {
         return $this->belongsTo(Partner::class);
     }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class, 'driver_id');
+    }
 }

@@ -56,7 +56,20 @@
                         <td class="px-6 py-4 text-xs">{{ $driver->package_tier ?? '-' }}</td>
                         <td class="px-6 py-4 text-right">
                             <a href="{{ route('admin.drivers.show', $driver) }}" class="text-blue-600 hover:text-blue-800 mr-2"><i class="fas fa-eye"></i></a>
-                            <a href="{{ route('admin.drivers.edit', $driver) }}" class="text-yellow-600 hover:text-yellow-800"><i class="fas fa-edit"></i></a>
+                            <a href="{{ route('admin.drivers.edit', $driver) }}" class="text-yellow-600 hover:text-yellow-800 mr-2"><i class="fas fa-edit"></i></a>
+                            <button type="button" class="text-red-600 hover:text-red-800" title="Delete rider profile"
+                                x-data
+                                @click="$dispatch('confirm-modal', {
+                                    title: 'Delete Rider Profile',
+                                    message: 'Permanently delete {{ addslashes($driver->user?->name ?? 'this rider') }}, the linked user account, orders, payments, wallet activity, documents, messages, reviews, and all other linked data? This cannot be undone.',
+                                    confirmText: 'Delete Rider & Data',
+                                    onConfirm: () => {
+                                        const form = document.createElement('form'); form.method = 'POST'; form.action = '{{ route('admin.drivers.destroy', $driver) }}';
+                                        const token = document.createElement('input'); token.type = 'hidden'; token.name = '_token'; token.value = '{{ csrf_token() }}'; form.appendChild(token);
+                                        const method = document.createElement('input'); method.type = 'hidden'; method.name = '_method'; method.value = 'DELETE'; form.appendChild(method);
+                                        document.body.appendChild(form); form.submit();
+                                    }
+                                })"><i class="fas fa-trash"></i></button>
                         </td>
                     </tr>
                 @empty
