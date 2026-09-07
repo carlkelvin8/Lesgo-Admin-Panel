@@ -53,6 +53,43 @@
                 <div><p class="text-gray-500">Last Location</p><p class="font-medium text-xs">{{ $driver->last_latitude ? $driver->last_latitude . ', ' . $driver->last_longitude : '-' }}</p></div>
             </div>
         </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 class="font-semibold text-gray-800 mb-4">Documents & Requirements</h3>
+            @php $docs = $driver->documents ?? []; @endphp
+            @if($driver->id_document_path)
+                <div class="mb-4"><p class="text-sm text-gray-500 mb-2">ID Document</p><a href="{{ Storage::disk('s3')->url($driver->id_document_path) ?? asset('storage/'.$driver->id_document_path) }}" target="_blank" class="block"><img src="{{ Storage::disk('s3')->url($driver->id_document_path) ?? asset('storage/'.$driver->id_document_path) }}" alt="ID Document" class="max-h-64 rounded-lg border"></a><p class="text-xs text-gray-400 mt-1">{{ $driver->id_document_path }}</p></div>
+            @endif
+            @if(!empty($docs))
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                    @foreach($docs as $key => $url)
+                        @if(is_string($url))
+                            <div class="border rounded-lg p-3"><p class="text-xs font-medium text-gray-500 uppercase">{{ str_replace('_',' ', $key) }}</p><a href="{{ $url }}" target="_blank" class="block mt-2"><img src="{{ $url }}" alt="{{ $key }}" class="h-32 w-full object-cover rounded"></a><p class="text-xs text-blue-600 truncate mt-1">{{ $url }}</p></div>
+                        @endif
+                    @endforeach
+                </div>
+            @elseif(!$driver->id_document_path)
+                <p class="text-sm text-gray-400 mb-6">No driver documents uploaded yet (documents JSON empty).</p>
+            @endif
+
+            <h4 class="font-medium text-gray-700 mb-3">Document Verifications <span class="text-xs text-gray-400">({{ $driver->user?->documentVerifications?->count() ?? 0 }})</span></h4>
+            @forelse($driver->user?->documentVerifications ?? [] as $doc)
+                <div class="flex items-center justify-between gap-3 border rounded-lg px-4 py-3 mb-2">
+                    <div class="min-w-0">
+                        <p class="text-sm font-medium text-gray-800">{{ ucfirst(str_replace('_',' ', $doc->document_type)) }} <span class="text-xs text-gray-400">#{{ $doc->document_number ?? '-' }}</span></p>
+                        <p class="text-xs text-gray-500">Submitted {{ $doc->submitted_at?->diffForHumans() }} @if($doc->expires_at) · Expires {{ $doc->expires_at->format('M d, Y') }} @endif</p>
+                        @if($doc->rejection_reason)<p class="text-xs text-red-600">Reason: {{ $doc->rejection_reason }}</p>@endif
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <x-status-badge :status="$doc->status" />
+                        <a href="{{ route('admin.document-verifications.show', $doc) }}" class="text-blue-600 text-xs">Review</a>
+                    </div>
+                </div>
+            @empty
+                <p class="text-sm text-gray-400">No verification records for this rider.</p>
+            @endforelse
+            <div class="mt-4"><a href="{{ route('admin.document-verifications.index', ['search' => $driver->user?->email]) }}" class="text-sm text-blue-600 hover:underline">View all verifications →</a></div>
+        </div>
     </div>
 </div>
 @endsection

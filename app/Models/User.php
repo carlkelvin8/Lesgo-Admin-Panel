@@ -65,6 +65,11 @@ class User extends Authenticatable
         return $this->hasOne(TwoFactorAuth::class);
     }
 
+    public function documentVerifications()
+    {
+        return $this->hasMany(DocumentVerification::class);
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === 'admin';

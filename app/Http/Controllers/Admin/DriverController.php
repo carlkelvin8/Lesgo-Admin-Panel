@@ -40,7 +40,7 @@ class DriverController extends Controller
 
     public function show(DriverProfile $driver)
     {
-        $driver->load(['user', 'partner']);
+        $driver->load(['user.documentVerifications' => fn ($q) => $q->latest('submitted_at'), 'partner']);
 
         return view('admin.drivers.show', compact('driver'));
     }
