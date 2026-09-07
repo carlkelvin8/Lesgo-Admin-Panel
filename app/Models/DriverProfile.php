@@ -22,6 +22,7 @@ class DriverProfile extends Model
         'vehicle_type',
         'plate_number',
         'package_tier',
+        'id_document_path',
         'documents',
     ];
 

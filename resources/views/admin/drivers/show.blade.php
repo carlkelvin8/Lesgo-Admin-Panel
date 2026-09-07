@@ -56,19 +56,51 @@
 
         <div class="bg-white rounded-xl shadow-sm p-6">
             <h3 class="font-semibold text-gray-800 mb-4">Documents & Requirements</h3>
-            @php $docs = $driver->documents ?? []; @endphp
-            @if($driver->id_document_path)
-                <div class="mb-4"><p class="text-sm text-gray-500 mb-2">ID Document</p><a href="{{ Storage::disk('s3')->url($driver->id_document_path) ?? asset('storage/'.$driver->id_document_path) }}" target="_blank" class="block"><img src="{{ Storage::disk('s3')->url($driver->id_document_path) ?? asset('storage/'.$driver->id_document_path) }}" alt="ID Document" class="max-h-64 rounded-lg border"></a><p class="text-xs text-gray-400 mt-1">{{ $driver->id_document_path }}</p></div>
+            @php
+                $docs = $driver->documents ?? [];
+                $disk = config('filesystems.default') === 's3' ? 's3' : 'public';
+                $idDocUrl = null;
+                if ($driver->id_document_path) {
+                    $p = $driver->id_document_path;
+                    $idDocUrl = \Illuminate\Support\Str::startsWith($p, ['http://','https://']) ? $p : \Illuminate\Support\Facades\Storage::disk($disk)->url($p);
+                }
+            @endphp
+            @if($idDocUrl)
+                <div class="mb-4">
+                    <p class="text-sm text-gray-500 mb-2">ID Document</p>
+                    <a href="{{ $idDocUrl }}" target="_blank" class="block">
+                        @if(\Illuminate\Support\Str::endsWith(strtolower($idDocUrl), '.pdf'))
+                            <span class="inline-flex items-center gap-2 text-sm text-blue-600 hover:underline"><i class="fas fa-file-pdf"></i> View PDF</span>
+                            <iframe src="{{ $idDocUrl }}" class="w-full h-64 rounded-lg border mt-2"></iframe>
+                        @else
+                            <img src="{{ $idDocUrl }}" alt="ID Document" class="max-h-64 rounded-lg border" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                            <p style="display:none" class="text-xs text-red-500 mt-2">Failed to load image. <a href="{{ $idDocUrl }}" target="_blank" class="underline">Open directly</a> — check storage disk / S3 / symlink.</p>
+                        @endif
+                    </a>
+                    <p class="text-xs text-gray-400 mt-1 break-all">{{ $driver->id_document_path }} → {{ $idDocUrl }}</p>
+                </div>
             @endif
             @if(!empty($docs))
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
                     @foreach($docs as $key => $url)
                         @if(is_string($url))
-                            <div class="border rounded-lg p-3"><p class="text-xs font-medium text-gray-500 uppercase">{{ str_replace('_',' ', $key) }}</p><a href="{{ $url }}" target="_blank" class="block mt-2"><img src="{{ $url }}" alt="{{ $key }}" class="h-32 w-full object-cover rounded"></a><p class="text-xs text-blue-600 truncate mt-1">{{ $url }}</p></div>
+                            @php $docUrl = \Illuminate\Support\Str::startsWith($url, ['http://','https://']) ? $url : \Illuminate\Support\Facades\Storage::disk($disk)->url($url); @endphp
+                            <div class="border rounded-lg p-3">
+                                <p class="text-xs font-medium text-gray-500 uppercase">{{ str_replace('_',' ', $key) }}</p>
+                                <a href="{{ $docUrl }}" target="_blank" class="block mt-2">
+                                    @if(\Illuminate\Support\Str::endsWith(strtolower($docUrl), '.pdf'))
+                                        <span class="text-xs text-blue-600 hover:underline"><i class="fas fa-file-pdf"></i> View PDF</span>
+                                    @else
+                                        <img src="{{ $docUrl }}" alt="{{ $key }}" class="h-32 w-full object-cover rounded" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                        <p style="display:none" class="text-xs text-red-500">Failed to load</p>
+                                    @endif
+                                </a>
+                                <p class="text-xs text-blue-600 truncate mt-1 break-all" title="{{ $docUrl }}">{{ $docUrl }}</p>
+                            </div>
                         @endif
                     @endforeach
                 </div>
-            @elseif(!$driver->id_document_path)
+            @elseif(!$idDocUrl)
                 <p class="text-sm text-gray-400 mb-6">No driver documents uploaded yet (documents JSON empty).</p>
             @endif
 
