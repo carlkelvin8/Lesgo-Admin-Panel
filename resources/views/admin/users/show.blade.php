@@ -50,9 +50,13 @@
     <!-- Profile Card -->
     <div class="bg-white rounded-xl shadow-sm p-6">
         <div class="text-center">
-            <div class="w-20 h-20 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-2xl mx-auto mb-4">
-                {{ substr($user->name, 0, 1) }}
-            </div>
+            @if($user->profile_picture)
+                <img src="{{ \Illuminate\Support\Str::startsWith($user->profile_picture, ['http://','https://']) ? $user->profile_picture : \Illuminate\Support\Facades\Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->url($user->profile_picture) }}" alt="{{ $user->name }}" class="w-20 h-20 rounded-full object-cover mx-auto mb-4 border">
+            @else
+                <div class="w-20 h-20 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-2xl mx-auto mb-4">
+                    {{ substr($user->name, 0, 1) }}
+                </div>
+            @endif
             <h3 class="text-xl font-bold text-gray-800">{{ $user->name }}</h3>
             <p class="text-gray-500">{{ $user->email }}</p>
             <x-status-badge :status="$user->role" />

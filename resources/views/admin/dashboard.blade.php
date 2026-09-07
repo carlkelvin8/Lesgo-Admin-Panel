@@ -237,13 +237,20 @@
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                         @forelse($recent_users as $user)
                             @if(is_string($user) || ! is_object($user)) @continue @endif
-                            @php $userName = data_get($user, 'name', 'N/A'); $userEmail = data_get($user, 'email', ''); @endphp
+                            @php 
+                                $userName = data_get($user, 'name', 'N/A'); 
+                                $userEmail = data_get($user, 'email', '');
+                                $userAvatar = data_get($user, 'profile_picture') ?: data_get($user, 'avatar');
+                                if ($userAvatar && !\Illuminate\Support\Str::startsWith($userAvatar, ['http://','https://'])) {
+                                    try { $userAvatar = \Illuminate\Support\Facades\Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->url($userAvatar); } catch (\Throwable $e) {}
+                                }
+                            @endphp
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-800">
                                 <td class="px-4 py-4" data-label="User">
                                     <div class="flex items-center gap-3">
                                         <div class="flex-shrink-0 w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                                            @if(data_get($user, 'avatar'))
-                                                <img src="{{ data_get($user, 'avatar') }}" alt="{{ $userName }}" class="w-8 h-8 rounded-full object-cover">
+                                            @if($userAvatar)
+                                                <img src="{{ $userAvatar }}" alt="{{ $userName }}" class="w-8 h-8 rounded-full object-cover">
                                             @else
                                                 <span class="text-sm font-medium text-gray-600 dark:text-gray-300">{{ substr($userName, 0, 2) }}</span>
                                             @endif
