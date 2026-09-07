@@ -115,6 +115,8 @@ Route::prefix('admin')->name('admin.')->middleware(['admin', 'admin.audit'])->gr
     });
     Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus'])
         ->middleware('admin.permission:orders.manage')->name('orders.status');
+    Route::post('/orders/{order}/proof', [OrderController::class, 'uploadProof'])
+        ->middleware('admin.permission:orders.manage')->name('orders.proof');
 
     // Drivers
     Route::middleware('admin.permission:drivers.manage')->group(function () {

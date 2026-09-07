@@ -44,6 +44,8 @@ class Order extends Model
         'dropoff_contact_name',
         'dropoff_contact_phone',
         'notes',
+        'proof_images',
+        'proof_uploaded_at',
     ];
 
     protected function casts(): array
@@ -55,6 +57,8 @@ class Order extends Model
             'completed_at' => 'datetime',
             'cancelled_at' => 'datetime',
             'meta' => 'array',
+            'proof_images' => 'array',
+            'proof_uploaded_at' => 'datetime',
         ];
     }
 

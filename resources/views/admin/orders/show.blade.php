@@ -72,18 +72,25 @@
             </form>
         </div>
 
-        @if(!empty($order->proof_images))
-            <div class="bg-white rounded-xl shadow-sm p-6">
-                <h3 class="font-semibold text-gray-800 mb-4">Proof Images</h3>
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 class="font-semibold text-gray-800 mb-4">Proof Images @if(!empty($order->proof_images))<span class="text-xs text-gray-400">({{ count((array) $order->proof_images) }})</span>@endif</h3>
+            @if(!empty($order->proof_images))
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
                     @foreach((array) $order->proof_images as $img)
                         @php $imgUrl = is_string($img) ? (\Illuminate\Support\Str::startsWith($img, ['http://','https://']) ? $img : \Illuminate\Support\Facades\Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->url($img)) : ''; @endphp
                         @if($imgUrl)<a href="{{ $imgUrl }}" target="_blank"><img src="{{ $imgUrl }}" alt="Proof" class="h-40 w-full object-cover rounded-lg border"></a>@endif
                     @endforeach
                 </div>
-                @if($order->proof_uploaded_at)<p class="text-xs text-gray-400 mt-2">Uploaded {{ $order->proof_uploaded_at->diffForHumans() }}</p>@endif
-            </div>
-        @endif
+                @if($order->proof_uploaded_at)<p class="text-xs text-gray-400 mb-3">Uploaded {{ $order->proof_uploaded_at->diffForHumans() }}</p>@endif
+            @else
+                <p class="text-sm text-gray-400 mb-3">No proof images yet.</p>
+            @endif
+            <form method="POST" action="{{ route('admin.orders.proof', $order) }}" enctype="multipart/form-data" class="flex flex-wrap gap-3 items-end">
+                @csrf
+                <div class="flex-1 min-w-[200px]"><input type="file" name="proof_images[]" multiple accept=".jpg,.jpeg,.png,.webp" required class="w-full text-sm border rounded-lg px-3 py-2"></div>
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm">Upload Proof</button>
+            </form>
+        </div>
 
         @if($order->lesbuyItems->isNotEmpty())
         <div class="bg-white rounded-xl shadow-sm overflow-hidden">

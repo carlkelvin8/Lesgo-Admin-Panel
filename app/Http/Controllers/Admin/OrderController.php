@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\OrderTrackingEvent;
 use App\Traits\SearchEscaping;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
@@ -96,6 +97,24 @@ class OrderController extends Controller
 
         return redirect()->route('admin.orders.show', $order)
             ->with('success', 'Order status updated successfully.');
+    }
+
+    public function uploadProof(Request $request, Order $order)
+    {
+        $validated = $request->validate([
+            'proof_images.*' => 'required|image|mimes:jpg,jpeg,png,webp|max:5120',
+            'proof_images' => 'required|array|min:1',
+        ]);
+
+        $disk = config('filesystems.default') === 's3' ? 's3' : 'public';
+        $urls = $order->proof_images ?? [];
+        foreach ($request->file('proof_images') as $file) {
+            $path = $file->store('order-proofs/'.$order->id, $disk);
+            $urls[] = Storage::disk($disk)->url($path);
+        }
+        $order->update(['proof_images' => $urls, 'proof_uploaded_at' => now()]);
+
+        return redirect()->route('admin.orders.show', $order)->with('success', 'Proof images uploaded.');
     }
 
     public function export(Request $request)
