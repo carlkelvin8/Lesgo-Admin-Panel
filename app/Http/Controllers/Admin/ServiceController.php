@@ -67,12 +67,14 @@ class ServiceController extends Controller
 
     public function edit(Service $service)
     {
-        return view('admin.services.edit', compact('service'));
+        $partners = Partner::all();
+        return view('admin.services.edit', compact('service', 'partners'));
     }
 
     public function update(Request $request, Service $service)
     {
         $validated = $request->validate([
+            'partner_id' => 'nullable|exists:partners,id',
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:50|unique:services,code,' . $service->id,
             'description' => 'nullable|string',

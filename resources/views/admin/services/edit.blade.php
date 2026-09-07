@@ -9,6 +9,16 @@
             @csrf
             @method('PUT')
 
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Partner</label>
+                <select name="partner_id" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                    <option value="">No Partner (Global)</option>
+                    @foreach($partners as $partner)
+                        <option value="{{ $partner->id }}" @selected(old('partner_id', $service->partner_id) == $partner->id)>{{ $partner->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+
             <div class="grid grid-cols-2 gap-4 mb-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
