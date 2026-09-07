@@ -72,6 +72,19 @@
             </form>
         </div>
 
+        @if(!empty($order->proof_images))
+            <div class="bg-white rounded-xl shadow-sm p-6">
+                <h3 class="font-semibold text-gray-800 mb-4">Proof Images</h3>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    @foreach((array) $order->proof_images as $img)
+                        @php $imgUrl = is_string($img) ? (\Illuminate\Support\Str::startsWith($img, ['http://','https://']) ? $img : \Illuminate\Support\Facades\Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->url($img)) : ''; @endphp
+                        @if($imgUrl)<a href="{{ $imgUrl }}" target="_blank"><img src="{{ $imgUrl }}" alt="Proof" class="h-40 w-full object-cover rounded-lg border"></a>@endif
+                    @endforeach
+                </div>
+                @if($order->proof_uploaded_at)<p class="text-xs text-gray-400 mt-2">Uploaded {{ $order->proof_uploaded_at->diffForHumans() }}</p>@endif
+            </div>
+        @endif
+
         @if($order->lesbuyItems->isNotEmpty())
         <div class="bg-white rounded-xl shadow-sm overflow-hidden">
             <div class="px-6 py-4 border-b"><h3 class="font-semibold text-gray-800">Order Items</h3></div>

@@ -12,8 +12,9 @@
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <div class="bg-white rounded-xl shadow-sm p-6">
         <div class="text-center mb-4">
-            @if($partner->logo_url)
-                <img src="{{ $partner->logo_url }}" class="w-16 h-16 rounded-full mx-auto mb-3 object-cover">
+            @php $logo = $partner->logo_url; if ($logo && !\Illuminate\Support\Str::startsWith($logo, ['http://','https://'])) { try { $logo = \Illuminate\Support\Facades\Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->url($logo); } catch (\Throwable $e) {} } @endphp
+            @if($logo)
+                <img src="{{ $logo }}" class="w-16 h-16 rounded-full mx-auto mb-3 object-cover border">
             @else
                 <div class="w-16 h-16 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center font-bold text-xl mx-auto mb-3">
                     {{ substr($partner->name, 0, 1) }}
@@ -22,6 +23,10 @@
             <h3 class="text-xl font-bold text-gray-800">{{ $partner->name }}</h3>
             @if($partner->legal_name)<p class="text-gray-500 text-sm">{{ $partner->legal_name }}</p>@endif
         </div>
+        @if($partner->cover_image_url)
+            @php $cover = $partner->cover_image_url; if (!\Illuminate\Support\Str::startsWith($cover, ['http://','https://'])) { try { $cover = \Illuminate\Support\Facades\Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->url($cover); } catch (\Throwable $e) {} } @endphp
+            <div class="mb-4"><p class="text-xs text-gray-500 mb-1">Cover Image</p><img src="{{ $cover }}" alt="Cover" class="w-full h-32 object-cover rounded-lg border"></div>
+        @endif
         <div class="space-y-3 text-sm">
             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Category</span><span>{{ $partner->category ?? '-' }}</span></div>
             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Status</span>
@@ -37,6 +42,26 @@
             <div class="mt-4 pt-4 border-t">
                 <p class="text-xs text-gray-500 mb-1">Description</p>
                 <p class="text-sm text-gray-700">{{ $partner->description }}</p>
+            </div>
+        @endif
+        @if(!empty($partner->documents))
+            <div class="mt-4 pt-4 border-t">
+                <p class="text-xs text-gray-500 mb-2">Documents</p>
+                <div class="grid grid-cols-2 gap-3">
+                    @foreach($partner->documents as $key => $url)
+                        @if(is_string($url))
+                            @php $docUrl = \Illuminate\Support\Str::startsWith($url, ['http://','https://']) ? $url : \Illuminate\Support\Facades\Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->url($url); @endphp
+                            <a href="{{ $docUrl }}" target="_blank" class="block border rounded-lg p-2 hover:bg-gray-50"><p class="text-xs font-medium text-gray-500 uppercase">{{ str_replace('_',' ', $key) }}</p><img src="{{ $docUrl }}" alt="{{ $key }}" class="h-24 w-full object-cover rounded mt-1" onerror="this.style.display='none'"><p class="text-xs text-blue-600 truncate mt-1">View →</p></a>
+                        @endif
+                    @endforeach
+                </div>
+            </div>
+        @endif
+        @if($partner->tax_id || $partner->support_email || $partner->support_phone)
+            <div class="mt-4 pt-4 border-t space-y-2 text-sm">
+                @if($partner->tax_id)<div class="flex justify-between"><span class="text-gray-500">Tax ID</span><span>{{ $partner->tax_id }}</span></div>@endif
+                @if($partner->support_email)<div class="flex justify-between"><span class="text-gray-500">Support Email</span><span class="text-xs">{{ $partner->support_email }}</span></div>@endif
+                @if($partner->support_phone)<div class="flex justify-between"><span class="text-gray-500">Support Phone</span><span>{{ $partner->support_phone }}</span></div>@endif
             </div>
         @endif
     </div>
