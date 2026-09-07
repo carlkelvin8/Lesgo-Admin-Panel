@@ -88,6 +88,16 @@
                     <i class="fas fa-concierge-bell w-5"></i> Services
                 </a>
                 @endif
+                @if(auth()->user()->hasAdminPermission('promos.manage'))
+                <a href="{{ route('admin.vouchers.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm {{ request()->routeIs('admin.vouchers.*') ? 'active' : '' }}">
+                    <i class="fas fa-tags w-5"></i> Promos
+                </a>
+                @endif
+                @if(auth()->user()->hasAdminPermission('missions.manage'))
+                <a href="{{ route('admin.mission-templates.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm {{ request()->routeIs('admin.mission-templates.*') ? 'active' : '' }}">
+                    <i class="fas fa-bullseye w-5"></i> Missions
+                </a>
+                @endif
                 @if(auth()->user()->hasAdminPermission('ratings.manage'))
                 <a href="{{ route('admin.ratings.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm {{ request()->routeIs('admin.ratings.*') ? 'active' : '' }}">
                     <i class="fas fa-star w-5"></i> Ratings & Reviews

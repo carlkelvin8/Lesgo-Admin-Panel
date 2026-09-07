@@ -56,6 +56,16 @@ return [
             'group' => 'Service Operations',
             'description' => 'Create and update the services offered by LesGo.',
         ],
+        'promos.manage' => [
+            'label' => 'Manage promos & vouchers',
+            'group' => 'Service Operations',
+            'description' => 'Create and update promo codes, discounts, and vouchers.',
+        ],
+        'missions.manage' => [
+            'label' => 'Manage missions',
+            'group' => 'Service Operations',
+            'description' => 'Create and update missions for customers, drivers, and merchants.',
+        ],
         'payments.view' => [
             'label' => 'View payments',
             'group' => 'Finance & Wallets',
@@ -127,7 +137,7 @@ return [
             'label' => 'Operations',
             'permissions' => [
                 'dashboard.view', 'users.view', 'drivers.manage', 'partners.view', 'partners.manage',
-                'orders.view', 'orders.manage', 'services.manage', 'verifications.manage',
+                'orders.view', 'orders.manage', 'services.manage', 'promos.manage', 'missions.manage', 'verifications.manage',
                 'notifications.manage', 'ratings.manage', 'reports.view',
             ],
         ],

@@ -18,8 +18,10 @@ use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\RolePermissionController;
 use App\Http\Controllers\Admin\SecurityEventController;
 use App\Http\Controllers\Admin\SecuritySettingsController;
+use App\Http\Controllers\Admin\MissionTemplateController;
 use App\Http\Controllers\Admin\ServiceController;
 use App\Http\Controllers\Admin\SystemHealthController;
+use App\Http\Controllers\Admin\VoucherController;
 use App\Http\Controllers\Admin\TicketController;
 use App\Http\Controllers\Admin\TwoFactorAuthController;
 use App\Http\Controllers\Admin\UserController;
@@ -140,6 +142,30 @@ Route::prefix('admin')->name('admin.')->middleware(['admin', 'admin.audit'])->gr
         Route::get('/services/{service}/edit', [ServiceController::class, 'edit'])->name('services.edit');
         Route::put('/services/{service}', [ServiceController::class, 'update'])->name('services.update');
         Route::post('/services/{service}/toggle', [ServiceController::class, 'toggleStatus'])->name('services.toggle');
+    });
+
+    // Promos / Vouchers
+    Route::middleware('admin.permission:promos.manage')->group(function () {
+        Route::get('/vouchers/create', [VoucherController::class, 'create'])->name('vouchers.create');
+        Route::post('/vouchers', [VoucherController::class, 'store'])->name('vouchers.store');
+        Route::get('/vouchers', [VoucherController::class, 'index'])->name('vouchers.index');
+        Route::get('/vouchers/{voucher}', [VoucherController::class, 'show'])->name('vouchers.show');
+        Route::get('/vouchers/{voucher}/edit', [VoucherController::class, 'edit'])->name('vouchers.edit');
+        Route::put('/vouchers/{voucher}', [VoucherController::class, 'update'])->name('vouchers.update');
+        Route::post('/vouchers/{voucher}/toggle', [VoucherController::class, 'toggleStatus'])->name('vouchers.toggle');
+        Route::delete('/vouchers/{voucher}', [VoucherController::class, 'destroy'])->name('vouchers.destroy');
+    });
+
+    // Missions
+    Route::middleware('admin.permission:missions.manage')->group(function () {
+        Route::get('/mission-templates/create', [MissionTemplateController::class, 'create'])->name('mission-templates.create');
+        Route::post('/mission-templates', [MissionTemplateController::class, 'store'])->name('mission-templates.store');
+        Route::get('/mission-templates', [MissionTemplateController::class, 'index'])->name('mission-templates.index');
+        Route::get('/mission-templates/{missionTemplate}', [MissionTemplateController::class, 'show'])->name('mission-templates.show');
+        Route::get('/mission-templates/{missionTemplate}/edit', [MissionTemplateController::class, 'edit'])->name('mission-templates.edit');
+        Route::put('/mission-templates/{missionTemplate}', [MissionTemplateController::class, 'update'])->name('mission-templates.update');
+        Route::post('/mission-templates/{missionTemplate}/toggle', [MissionTemplateController::class, 'toggleStatus'])->name('mission-templates.toggle');
+        Route::delete('/mission-templates/{missionTemplate}', [MissionTemplateController::class, 'destroy'])->name('mission-templates.destroy');
     });
 
     // Payments
