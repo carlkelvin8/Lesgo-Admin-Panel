@@ -130,6 +130,44 @@ class PartnerController extends Controller
         }
         unset($validated['logo'], $validated['cover_image'], $validated['remove_logo'], $validated['remove_cover']);
 
+        // Enforce fee + approval for merchant activation (approved ≈ active)
+        $requestedStatus = $validated['status'];
+        if ($requestedStatus === 'approved' || $requestedStatus === 'active') {
+            $user = $partner->user ?? \App\Models\User::find($partner->user_id);
+            if ($user) {
+                $fee = \App\Models\RegistrationFeePayment::where('user_id', $user->id)->where('account_type', 'merchant')->first();
+                if ($fee) {
+                    if ($fee->payment_status !== 'paid') {
+                        return redirect()->route('admin.partners.show', $partner)
+                            ->with('error', 'Cannot approve merchant: registration fee not paid. Payment via PayMongo required. Approval does not bypass fee.');
+                    }
+                    // Sync approval via service to ensure is_active logic
+                    try {
+                        \App\Services\RegistrationFeeService::approveApplication($fee, $request->user());
+                        $partner->refresh();
+                    } catch (\Throwable $e) {}
+                    // Re-check is_active after service sync
+                    $fee = $fee->fresh();
+                    if (!$fee->is_active) {
+                        return redirect()->route('admin.partners.show', $partner)
+                            ->with('error', 'Merchant remains restricted – fee paid but activation pending. Check payment status.');
+                    }
+                    // Align requested status to active (system uses active)
+                    $validated['status'] = 'active';
+                }
+            }
+        }
+
+        if ($requestedStatus === 'rejected') {
+            $user = $partner->user ?? \App\Models\User::find($partner->user_id);
+            if ($user) {
+                $fee = \App\Models\RegistrationFeePayment::where('user_id', $user->id)->where('account_type', 'merchant')->first();
+                if ($fee) {
+                    \App\Services\RegistrationFeeService::rejectApplication($fee, $request->user(), 'Rejected by admin');
+                }
+            }
+        }
+
         $partner->update($validated);
 
         return redirect()->route('admin.partners.show', $partner)

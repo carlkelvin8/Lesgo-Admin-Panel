@@ -80,6 +80,29 @@
     </div>
 
     <div class="lg:col-span-2 space-y-6">
+        @php $registrationFee = \App\Models\RegistrationFeePayment::where('user_id', $partner->user_id)->where('account_type', 'merchant')->first(); @endphp
+        @if($registrationFee)
+        <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 {{ $registrationFee->is_active ? 'border-green-500' : 'border-yellow-500' }}">
+            <h3 class="font-semibold text-gray-800 mb-4">Registration Fee & Application — Merchant</h3>
+            <div class="grid grid-cols-2 gap-4 text-sm">
+                <div><p class="text-gray-500">Account Status</p><p class="font-bold {{ $registrationFee->is_active ? 'text-green-600' : 'text-red-600' }}">{{ $registrationFee->is_active ? 'Active' : 'Restricted' }} <span class="text-xs font-normal text-gray-500">({{ $registrationFee->application_status }}/{{ $registrationFee->payment_status }})</span></p><p class="text-xs text-gray-400 mt-1">{{ $registrationFee->payment_status === 'paid' && $registrationFee->application_status === 'pending' ? 'Payment Successful – Application Pending Approval' : ($registrationFee->application_status === 'approved' && $registrationFee->payment_status !== 'paid' ? 'Application Approved – Registration Fee Payment Required' : '') }}</p></div>
+                <div><p class="text-gray-500">Amount</p><p class="font-semibold">₱{{ number_format($registrationFee->amount,2) }} {{ $registrationFee->currency }}</p></div>
+                <div><p class="text-gray-500">Payment Status</p><span class="px-2 py-1 text-xs rounded-full {{ $registrationFee->payment_status==='paid' ? 'bg-green-100 text-green-700' : ($registrationFee->payment_status==='pending' ? 'bg-blue-100 text-blue-700' : ($registrationFee->payment_status==='failed' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700')) }}">{{ ucfirst($registrationFee->payment_status) }}</span></div>
+                <div><p class="text-gray-500">Application</p><span class="px-2 py-1 text-xs rounded-full {{ $registrationFee->application_status==='approved' ? 'bg-green-100 text-green-700' : ($registrationFee->application_status==='rejected' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700') }}">{{ ucfirst($registrationFee->application_status) }}</span></div>
+                <div class="col-span-2"><p class="text-gray-500">PayMongo Reference</p><p class="font-mono text-xs break-all">{{ $registrationFee->paymongo_reference ?? '—' }}</p>@if($registrationFee->checkout_url)<a href="{{ $registrationFee->checkout_url }}" target="_blank" class="text-xs text-blue-600 hover:underline">View Checkout URL</a>@endif</div>
+                <div><p class="text-gray-500">Payment Date</p><p class="text-sm">{{ $registrationFee->payment_date?->format('M d, Y H:i') ?? '—' }}</p></div>
+                <div><p class="text-gray-500">Activated At</p><p class="text-sm">{{ $registrationFee->activated_at?->format('M d, Y H:i') ?? '—' }}</p></div>
+            </div>
+            <div class="mt-4 flex gap-2">
+                @if($registrationFee->application_status !== 'approved')
+                <form method="POST" action="{{ route('admin.registration-fees.approve', $registrationFee) }}">@csrf<button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm" onclick="return confirm('Approve? Will only activate if fee PAID. Approval does not bypass fee.')">Approve Application</button></form>
+                @endif
+                @if($registrationFee->application_status !== 'rejected')
+                <form method="POST" action="{{ route('admin.registration-fees.reject', $registrationFee) }}">@csrf<button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm">Reject Application</button></form>
+                @endif
+            </div>
+        </div>
+        @endif
         <div class="bg-white rounded-xl shadow-sm overflow-hidden">
             <div class="px-6 py-4 border-b"><h3 class="font-semibold text-gray-800">Services</h3></div>
             <div class="overflow-x-auto">

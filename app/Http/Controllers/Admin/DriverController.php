@@ -44,8 +44,11 @@ class DriverController extends Controller
     public function show(DriverProfile $driver)
     {
         $driver->load(['user.documentVerifications' => fn ($q) => $q->latest('submitted_at'), 'partner']);
+        $registrationFee = \App\Models\RegistrationFeePayment::where('user_id', $driver->user_id)
+            ->where('account_type', 'rider')
+            ->first();
 
-        return view('admin.drivers.show', compact('driver'));
+        return view('admin.drivers.show', compact('driver', 'registrationFee'));
     }
 
     public function create()
@@ -98,6 +101,39 @@ class DriverController extends Controller
             'package_tier' => 'nullable|string|max:100',
         ]);
 
+        // If admin tries to activate rider, enforce fee-paid check via RegistrationFeePayment
+        if ($validated['status'] === 'active') {
+            $user = $driver->user ?? \App\Models\User::find($driver->user_id);
+            if ($user) {
+                $fee = \App\Models\RegistrationFeePayment::where('user_id', $user->id)->where('account_type', 'rider')->first();
+                if ($fee) {
+                    if ($fee->application_status !== 'approved') {
+                        // Auto-approve via service but still check fee
+                        try {
+                            $fee = \App\Services\RegistrationFeeService::approveApplication($fee, $request->user());
+                        } catch (\Throwable $e) {}
+                    }
+                    if (!$fee->fresh()->is_active) {
+                        return redirect()->route('admin.drivers.show', $driver)
+                            ->with('error', 'Cannot activate rider: registration fee not paid. Status remains restricted — awaiting PayMongo payment. Approval alone does not bypass fee.');
+                    }
+                }
+                // For grandfathered without fee record, allow
+            }
+        }
+
+        if ($validated['status'] === 'active' || $validated['status'] === 'suspended') {
+            // Sync registration fee application status accordingly
+            $fee = \App\Models\RegistrationFeePayment::where('user_id', $driver->user_id)->where('account_type', 'rider')->first();
+            if ($fee) {
+                if ($validated['status'] === 'suspended') {
+                    \App\Services\RegistrationFeeService::rejectApplication($fee, $request->user(), 'Suspended by admin');
+                    $driver->refresh();
+                    return redirect()->route('admin.drivers.show', $driver)->with('success', 'Driver suspended and application rejected.');
+                }
+            }
+        }
+
         $driver->update($validated);
 
         return redirect()->route('admin.drivers.show', $driver)
@@ -106,6 +142,17 @@ class DriverController extends Controller
 
     public function toggleStatus(DriverProfile $driver)
     {
+        if ($driver->status !== 'active') {
+            // Attempt to activate — check fee
+            $user = $driver->user ?? \App\Models\User::find($driver->user_id);
+            if ($user) {
+                $fee = \App\Models\RegistrationFeePayment::where('user_id', $user->id)->where('account_type', 'rider')->first();
+                if ($fee && !$fee->is_active) {
+                    return redirect()->route('admin.drivers.show', $driver)
+                        ->with('error', 'Cannot activate: registration fee not paid and/or approval pending. Fee + approval required.');
+                }
+            }
+        }
         $newStatus = $driver->status === 'active' ? 'inactive' : 'active';
         $driver->update(['status' => $newStatus]);
 

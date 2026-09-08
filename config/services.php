@@ -46,4 +46,13 @@ return [
         'webhook_token' => env('SMS_WEBHOOK_TOKEN'),
     ],
 
+    'paymongo' => [
+        'secret_key'            => env('PAYMONGO_SECRET_KEY'),
+        'public_key'            => env('PAYMONGO_PUBLIC_KEY'),
+        'webhook_secret'        => env('PAYMONGO_WEBHOOK_SECRET'),
+        'wallet_account_number' => env('PAYMONGO_WALLET_ACCOUNT_NUMBER'),
+        'wallet_account_name'   => env('PAYMONGO_WALLET_ACCOUNT_NAME', 'LeSGo Platform'),
+        'webhook_url'           => env('PAYMONGO_WEBHOOK_URL'),
+    ],
+
 ];

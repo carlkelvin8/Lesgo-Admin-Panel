@@ -172,6 +172,21 @@ Route::prefix('admin')->name('admin.')->middleware(['admin', 'admin.audit'])->gr
         Route::delete('/mission-templates/{missionTemplate}', [MissionTemplateController::class, 'destroy'])->name('mission-templates.destroy');
     });
 
+    // Mission Reward Reimbursements (PayMongo-backed)
+    Route::middleware('admin.permission:missions.manage')->group(function () {
+        Route::get('/mission-rewards', [\App\Http\Controllers\Admin\MissionRewardPayoutController::class, 'index'])->name('mission-rewards.index');
+        Route::get('/mission-rewards/{missionReward}', [\App\Http\Controllers\Admin\MissionRewardPayoutController::class, 'show'])->name('mission-rewards.show');
+        Route::post('/mission-rewards/{missionReward}/retry', [\App\Http\Controllers\Admin\MissionRewardPayoutController::class, 'retry'])->name('mission-rewards.retry');
+    });
+
+    // Registration Fees (Rider & Merchant — PayMongo)
+    Route::middleware('admin.permission:users.manage')->group(function () {
+        Route::get('/registration-fees', [\App\Http\Controllers\Admin\RegistrationFeeController::class, 'index'])->name('registration-fees.index');
+        Route::get('/registration-fees/{registrationFee}', [\App\Http\Controllers\Admin\RegistrationFeeController::class, 'show'])->name('registration-fees.show');
+        Route::post('/registration-fees/{registrationFee}/approve', [\App\Http\Controllers\Admin\RegistrationFeeController::class, 'approve'])->name('registration-fees.approve');
+        Route::post('/registration-fees/{registrationFee}/reject', [\App\Http\Controllers\Admin\RegistrationFeeController::class, 'reject'])->name('registration-fees.reject');
+    });
+
     // Payments
     Route::middleware('admin.permission:payments.view')->group(function () {
         Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');

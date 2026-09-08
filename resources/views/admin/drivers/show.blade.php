@@ -58,6 +58,30 @@
     </div>
 
     <div class="lg:col-span-2 space-y-6">
+        @if(isset($registrationFee))
+        <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 {{ $registrationFee->is_active ? 'border-green-500' : 'border-yellow-500' }}">
+            <h3 class="font-semibold text-gray-800 mb-4">Registration Fee & Application — Rider</h3>
+            <div class="grid grid-cols-2 gap-4 text-sm">
+                <div><p class="text-gray-500">Account Status</p><p class="font-bold {{ $registrationFee->is_active ? 'text-green-600' : 'text-red-600' }}">{{ $registrationFee->is_active ? 'Active' : 'Restricted' }} <span class="text-xs font-normal text-gray-500">({{ $registrationFee->application_status }}/{{ $registrationFee->payment_status }})</span></p><p class="text-xs text-gray-400 mt-1">{{ $registrationFee->payment_status === 'paid' && $registrationFee->application_status === 'pending' ? 'Payment Successful – Application Pending Approval' : ($registrationFee->application_status === 'approved' && $registrationFee->payment_status !== 'paid' ? 'Application Approved – Registration Fee Payment Required' : '') }}</p></div>
+                <div><p class="text-gray-500">Amount</p><p class="font-semibold">₱{{ number_format($registrationFee->amount,2) }} {{ $registrationFee->currency }}</p></div>
+                <div><p class="text-gray-500">Payment Status</p><span class="px-2 py-1 text-xs rounded-full {{ $registrationFee->payment_status==='paid' ? 'bg-green-100 text-green-700' : ($registrationFee->payment_status==='pending' ? 'bg-blue-100 text-blue-700' : ($registrationFee->payment_status==='failed' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700')) }}">{{ ucfirst($registrationFee->payment_status) }}</span>@if($registrationFee->failure_reason)<p class="text-xs text-red-500 mt-1">{{ $registrationFee->failure_reason }}</p>@endif</div>
+                <div><p class="text-gray-500">Application</p><span class="px-2 py-1 text-xs rounded-full {{ $registrationFee->application_status==='approved' ? 'bg-green-100 text-green-700' : ($registrationFee->application_status==='rejected' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700') }}">{{ ucfirst($registrationFee->application_status) }}</span>@if($registrationFee->approved_at)<p class="text-xs text-gray-400">{{ $registrationFee->approved_at->format('M d, Y') }} @if($registrationFee->approver)by {{ $registrationFee->approver->name }}@endif</p>@endif</div>
+                <div class="col-span-2"><p class="text-gray-500">PayMongo Reference</p><p class="font-mono text-xs break-all">{{ $registrationFee->paymongo_reference ?? '—' }}</p>@if($registrationFee->paymongo_checkout_id)<p class="text-xs text-gray-400">Checkout: {{ $registrationFee->paymongo_checkout_id }}</p>@endif @if($registrationFee->checkout_url)<a href="{{ $registrationFee->checkout_url }}" target="_blank" class="text-xs text-blue-600 hover:underline">View Checkout URL</a>@endif</div>
+                <div><p class="text-gray-500">Payment Date</p><p class="text-sm">{{ $registrationFee->payment_date?->format('M d, Y H:i') ?? '—' }}</p></div>
+                <div><p class="text-gray-500">Activated At</p><p class="text-sm">{{ $registrationFee->activated_at?->format('M d, Y H:i') ?? '—' }}</p></div>
+                @if($registrationFee->is_grandfathered)<div class="col-span-2"><span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-600">Grandfathered — active before fee enforcement</span></div>@endif
+            </div>
+            <div class="mt-4 flex gap-2">
+                @if($registrationFee->application_status !== 'approved')
+                <form method="POST" action="{{ route('admin.registration-fees.approve', $registrationFee) }}">@csrf<button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm" onclick="return confirm('Approve application? Note: account will only activate if fee is PAID. Approval alone does not bypass fee.')">Approve Application</button></form>
+                @endif
+                @if($registrationFee->application_status !== 'rejected')
+                <form method="POST" action="{{ route('admin.registration-fees.reject', $registrationFee) }}">@csrf<input type="hidden" name="reason" value="Rejected by admin"><button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm" onclick="return confirm('Reject application? Account will remain restricted.')">Reject Application</button></form>
+                @endif
+            </div>
+            <p class="text-xs text-gray-400 mt-2">Keys: is_active = paid + approved. Never bypasses fee.</p>
+        </div>
+        @endif
         <div class="bg-white rounded-xl shadow-sm p-6">
             <h3 class="font-semibold text-gray-800 mb-4">Vehicle Information</h3>
             <div class="grid grid-cols-2 gap-4 text-sm">
