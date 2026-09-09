@@ -1,6 +1,13 @@
 <?php
 
 return [
+    'seed_account' => [
+        'email' => env('ADMIN_EMAIL', 'admin@lesgo.com'),
+        'name' => env('ADMIN_NAME', 'LesGo Admin'),
+        'role' => env('ADMIN_ROLE', 'super_admin'),
+        'password' => env('ADMIN_PASSWORD'),
+    ],
+
     'required_permissions' => [
         'dashboard.view',
     ],

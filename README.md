@@ -78,8 +78,9 @@ Open `http://127.0.0.1:8000/admin/login`.
 Change this password immediately outside local development.
 
 In production, the seeder will only create/update the administrator when
-`ADMIN_PASSWORD` is explicitly configured. Existing administrator accounts are
-automatically assigned the backward-compatible `super_admin` access level.
+`ADMIN_PASSWORD` is explicitly configured for a new account. Existing accounts
+can be repaired without resetting their password by setting `ADMIN_EMAIL`,
+`ADMIN_NAME`, and `ADMIN_ROLE`, then running `AdminSeeder`.
 
 ## Testing
 
