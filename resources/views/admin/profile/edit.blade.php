@@ -6,11 +6,24 @@
 <div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
     <section class="rounded-xl bg-white p-6 shadow-sm">
         <div class="mb-5 flex items-center gap-4">
-            <div class="flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-lg font-bold text-purple-700">{{ strtoupper(substr($admin->name, 0, 1)) }}</div>
+            @if($admin->profile_picture)
+                <img src="{{ \Illuminate\Support\Str::startsWith($admin->profile_picture, ['http://', 'https://']) ? $admin->profile_picture : \Illuminate\Support\Facades\Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->url($admin->profile_picture) }}" alt="{{ $admin->name }}" class="h-12 w-12 rounded-full border object-cover">
+            @else
+                <div class="flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-lg font-bold text-purple-700">{{ strtoupper(substr($admin->name, 0, 1)) }}</div>
+            @endif
             <div><h3 class="font-semibold text-gray-900">Account details</h3><p class="text-sm text-gray-500">{{ $admin->adminRoleLabel() }}</p></div>
         </div>
-        <form method="POST" action="{{ route('admin.profile.update') }}" class="space-y-4">
+        <form method="POST" action="{{ route('admin.profile.update') }}" enctype="multipart/form-data" class="space-y-4">
             @csrf @method('PUT')
+            <div>
+                <label class="mb-1 block text-sm font-medium">Profile picture</label>
+                <input type="file" name="profile_picture" accept=".jpg,.jpeg,.png,.webp" class="w-full rounded-lg border px-3 py-2 text-sm">
+                <p class="mt-1 text-xs text-gray-500">JPG, PNG, or WebP up to 2 MB.</p>
+                @if($admin->profile_picture)
+                    <label class="mt-2 inline-flex items-center gap-2 text-sm text-gray-600"><input type="checkbox" name="remove_profile_picture" value="1"> Remove current picture</label>
+                @endif
+                @error('profile_picture')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+            </div>
             <div><label class="mb-1 block text-sm font-medium">Name</label><input name="name" value="{{ old('name', $admin->name) }}" required class="w-full rounded-lg border px-3 py-2"></div>
             <div><label class="mb-1 block text-sm font-medium">Email</label><input type="email" name="email" value="{{ old('email', $admin->email) }}" required class="w-full rounded-lg border px-3 py-2"></div>
             <div><label class="mb-1 block text-sm font-medium">Phone number</label><input name="phone_number" value="{{ old('phone_number', $admin->phone_number) }}" class="w-full rounded-lg border px-3 py-2"></div>

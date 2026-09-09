@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
@@ -45,7 +47,23 @@ class ProfileController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', Rule::unique('users', 'email')->ignore($admin->id)],
             'phone_number' => ['nullable', 'string', 'max:20'],
+            'profile_picture' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'remove_profile_picture' => ['nullable', 'boolean'],
         ]);
+
+        $disk = config('filesystems.default') === 's3' ? 's3' : 'public';
+
+        if ($request->hasFile('profile_picture')) {
+            $this->deleteLocalProfilePicture($admin->profile_picture, $disk);
+            $validated['profile_picture'] = $request->file('profile_picture')->store('profile-pictures', $disk);
+        } elseif ($request->boolean('remove_profile_picture')) {
+            $this->deleteLocalProfilePicture($admin->profile_picture, $disk);
+            $validated['profile_picture'] = null;
+        } else {
+            unset($validated['profile_picture']);
+        }
+
+        unset($validated['remove_profile_picture']);
 
         $admin->update($validated);
 
@@ -99,5 +117,12 @@ class ProfileController extends Controller
         }
 
         return back()->with('success', 'The selected administrator session was signed out.');
+    }
+
+    private function deleteLocalProfilePicture(?string $path, string $disk): void
+    {
+        if ($path && ! Str::startsWith($path, ['http://', 'https://'])) {
+            Storage::disk($disk)->delete($path);
+        }
     }
 }

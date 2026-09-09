@@ -102,6 +102,9 @@
                 <a href="{{ route('admin.mission-templates.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm {{ request()->routeIs('admin.mission-templates.*') ? 'active' : '' }}">
                     <i class="fas fa-bullseye w-5"></i> Missions
                 </a>
+                <a href="{{ route('admin.mission-rewards.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm {{ request()->routeIs('admin.mission-rewards.*') ? 'active' : '' }}">
+                    <i class="fas fa-gift w-5"></i> Mission Rewards
+                </a>
                 @endif
                 @if(auth()->user()->hasAdminPermission('ratings.manage'))
                 <a href="{{ route('admin.ratings.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm {{ request()->routeIs('admin.ratings.*') ? 'active' : '' }}">
@@ -180,9 +183,13 @@
 
             <div class="admin-user-panel p-4 border-t">
                 <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 bg-white rounded-full flex items-center justify-center text-blue-700 font-bold text-sm shadow-sm">
-                        {{ substr(auth()->user()->name, 0, 1) }}
-                    </div>
+                    @if(auth()->user()->profile_picture)
+                        <img src="{{ \Illuminate\Support\Str::startsWith(auth()->user()->profile_picture, ['http://', 'https://']) ? auth()->user()->profile_picture : \Illuminate\Support\Facades\Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->url(auth()->user()->profile_picture) }}" alt="{{ auth()->user()->name }}" class="h-8 w-8 rounded-full border border-white/40 object-cover shadow-sm">
+                    @else
+                        <div class="w-8 h-8 bg-white rounded-full flex items-center justify-center text-blue-700 font-bold text-sm shadow-sm">
+                            {{ substr(auth()->user()->name, 0, 1) }}
+                        </div>
+                    @endif
                     <a href="{{ route('admin.profile.edit') }}" class="flex-1 min-w-0 hover:opacity-90" title="Open profile settings">
                         <p class="text-sm text-white truncate">{{ auth()->user()->name }}</p>
                         <p class="text-xs text-gray-400 truncate">{{ auth()->user()->adminRoleLabel() }}</p>
