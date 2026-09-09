@@ -73,6 +73,11 @@
                     <i class="fas fa-motorcycle w-5"></i> Drivers
                 </a>
                 @endif
+                @if(auth()->user()->hasAdminPermission('users.manage'))
+                <a href="{{ route('admin.registration-fees.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm {{ request()->routeIs('admin.registration-fees.*') ? 'active' : '' }}">
+                    <i class="fas fa-crown w-5"></i> Rider Subscriptions
+                </a>
+                @endif
                 @if(auth()->user()->hasAdminPermission('partners.manage'))
                 <a href="{{ route('admin.partners.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm {{ request()->routeIs('admin.partners.*') ? 'active' : '' }}">
                     <i class="fas fa-store w-5"></i> Partners

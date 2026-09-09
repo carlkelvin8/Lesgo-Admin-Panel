@@ -1,6 +1,6 @@
 @extends('admin.layouts.app')
-@section('title', 'Registration Fees - LesGo Admin')
-@section('header', 'Registration Fees (Rider & Merchant — PayMongo)')
+@section('title', 'Rider Subscriptions & Registration Fees - LesGo Admin')
+@section('header', 'Rider Subscriptions & Registration Fees')
 
 @section('content')
 <div class="bg-white rounded-xl shadow-sm p-4 mb-6">

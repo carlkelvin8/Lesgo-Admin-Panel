@@ -88,4 +88,22 @@ class RegistrationFeeWaiverTest extends TestCase
         $this->assertDatabaseHas('security_settings', ['setting_key' => 'rider.package.price.pro', 'setting_value' => '3099.00']);
         $this->assertSame(2099.0, (float) $fee->fresh()->amount);
     }
+
+    public function test_rider_subscriptions_are_visible_in_the_admin_navigation(): void
+    {
+        $this->withoutVite();
+
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'admin_role' => 'super_admin',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.registration-fees.index'))
+            ->assertOk()
+            ->assertSee('Rider Subscriptions')
+            ->assertSee('Rider Package Pricing')
+            ->assertSee('Save Rider Prices');
+    }
 }
