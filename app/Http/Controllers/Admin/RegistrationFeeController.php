@@ -65,13 +65,13 @@ class RegistrationFeeController extends Controller
     {
         $validated = $request->validate(['reason' => 'nullable|string|max:1000']);
         try {
-            $updated = \App\Services\RegistrationFeeService::waiveFee($registrationFee, $request->user(), $validated['reason'] ?? null);
+            $updated = \App\Services\RegistrationFeeService::waiveAndApprove($registrationFee, $request->user(), $validated['reason'] ?? null);
         } catch (\DomainException $e) {
             return back()->with('error', $e->getMessage());
         }
         return back()->with('success', $updated->is_active
-            ? 'Registration fee waived; approved account activated.'
-            : 'Registration fee waived; account remains restricted pending approval.');
+            ? 'Registration fee waived; application approved and account activated.'
+            : 'Registration fee waived and application approved, but the account could not be activated.');
     }
 
     public function reject(Request $request, RegistrationFeePayment $registrationFee)
