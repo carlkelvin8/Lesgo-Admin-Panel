@@ -103,6 +103,10 @@ class User extends Authenticatable
             return false;
         }
 
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
         $role = $this->effectiveAdminRole();
         $rolePermissions = AdminRole::definition($role)?->permissions
             ?? config("admin.roles.{$role}.permissions", []);
