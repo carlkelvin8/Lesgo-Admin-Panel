@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\RegistrationFeePayment;
+use App\Models\SecuritySetting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class RegistrationFeeController extends Controller
 {
@@ -46,7 +48,64 @@ class RegistrationFeeController extends Controller
             'restricted' => RegistrationFeePayment::where('is_active', false)->count(),
         ];
 
-        return view('admin.registration-fees.index', compact('fees', 'stats'));
+        $riderPackagePrices = [
+            'basic' => (float) SecuritySetting::value('rider.package.price.basic', 999),
+            'advance' => (float) SecuritySetting::value('rider.package.price.advance', 1999),
+            'pro' => (float) SecuritySetting::value('rider.package.price.pro', 2999),
+        ];
+
+        return view('admin.registration-fees.index', compact('fees', 'stats', 'riderPackagePrices'));
+    }
+
+    public function updateRiderPrices(Request $request)
+    {
+        $validated = $request->validate([
+            'basic' => ['required', 'numeric', 'min:0', 'max:1000000'],
+            'advance' => ['required', 'numeric', 'min:0', 'max:1000000'],
+            'elite' => ['required', 'numeric', 'min:0', 'max:1000000'],
+        ]);
+
+        $prices = [
+            'basic' => round((float) $validated['basic'], 2),
+            'advance' => round((float) $validated['advance'], 2),
+            'pro' => round((float) $validated['elite'], 2),
+        ];
+
+        DB::transaction(function () use ($prices, $request) {
+            foreach ($prices as $tier => $price) {
+                SecuritySetting::query()->updateOrCreate(
+                    ['setting_key' => "rider.package.price.{$tier}"],
+                    [
+                        'setting_value' => number_format($price, 2, '.', ''),
+                        'data_type' => 'string',
+                        'description' => 'One-time rider package registration price in PHP',
+                        'category' => 'rider_packages',
+                        'is_sensitive' => false,
+                        'requires_restart' => false,
+                        'updated_by' => (string) $request->user()->id,
+                    ],
+                );
+            }
+
+            RegistrationFeePayment::query()
+                ->where('account_type', RegistrationFeePayment::TYPE_RIDER)
+                ->whereNotIn('payment_status', [
+                    RegistrationFeePayment::PAYMENT_PAID,
+                    RegistrationFeePayment::PAYMENT_WAIVED,
+                ])
+                ->with('user.driverProfile')
+                ->each(function (RegistrationFeePayment $fee) use ($prices) {
+                    $rawTier = strtolower(trim((string) ($fee->user?->driverProfile?->package_tier ?? 'basic')));
+                    $tier = match ($rawTier) {
+                        'advance', 'advanced', 'premium' => 'advance',
+                        'pro', 'pro_rider', 'professional', 'elite' => 'pro',
+                        default => 'basic',
+                    };
+                    $fee->update(['amount' => $prices[$tier]]);
+                });
+        });
+
+        return back()->with('success', 'Rider package prices updated successfully. Unpaid rider fees were synchronized.');
     }
 
     public function show(RegistrationFeePayment $registrationFee)

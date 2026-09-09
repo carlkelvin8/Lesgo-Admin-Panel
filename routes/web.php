@@ -182,6 +182,7 @@ Route::prefix('admin')->name('admin.')->middleware(['admin', 'admin.audit'])->gr
     // Registration Fees (Rider & Merchant — PayMongo)
     Route::middleware('admin.permission:users.manage')->group(function () {
         Route::get('/registration-fees', [\App\Http\Controllers\Admin\RegistrationFeeController::class, 'index'])->name('registration-fees.index');
+        Route::put('/registration-fees/rider-prices', [\App\Http\Controllers\Admin\RegistrationFeeController::class, 'updateRiderPrices'])->name('registration-fees.rider-prices.update');
         Route::get('/registration-fees/{registrationFee}', [\App\Http\Controllers\Admin\RegistrationFeeController::class, 'show'])->name('registration-fees.show');
         Route::post('/registration-fees/{registrationFee}/approve', [\App\Http\Controllers\Admin\RegistrationFeeController::class, 'approve'])->name('registration-fees.approve');
         Route::post('/registration-fees/{registrationFee}/waive', [\App\Http\Controllers\Admin\RegistrationFeeController::class, 'waive'])->name('registration-fees.waive');

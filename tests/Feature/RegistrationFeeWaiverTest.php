@@ -50,4 +50,42 @@ class RegistrationFeeWaiverTest extends TestCase
         $this->assertSame($admin->id, $fee->approved_by);
         $this->assertSame('active', $profile->fresh()->status);
     }
+
+    public function test_admin_can_configure_all_rider_package_prices(): void
+    {
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'admin_role' => 'super_admin',
+            'is_active' => true,
+        ]);
+        $rider = User::factory()->create(['role' => 'driver', 'is_active' => true]);
+        DriverProfile::query()->create([
+            'user_id' => $rider->id,
+            'status' => 'pending',
+            'package_tier' => 'advance',
+        ]);
+        $fee = RegistrationFeePayment::query()->create([
+            'user_id' => $rider->id,
+            'account_type' => RegistrationFeePayment::TYPE_RIDER,
+            'amount' => 500,
+            'currency' => 'PHP',
+            'idempotency_key' => 'test-rider-price-'.$rider->id,
+            'payment_status' => RegistrationFeePayment::PAYMENT_UNPAID,
+            'application_status' => RegistrationFeePayment::APP_PENDING,
+            'is_active' => false,
+        ]);
+
+        $this->actingAs($admin)
+            ->put(route('admin.registration-fees.rider-prices.update'), [
+                'basic' => 1099,
+                'advance' => 2099,
+                'elite' => 3099,
+            ])
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('security_settings', ['setting_key' => 'rider.package.price.basic', 'setting_value' => '1099.00']);
+        $this->assertDatabaseHas('security_settings', ['setting_key' => 'rider.package.price.advance', 'setting_value' => '2099.00']);
+        $this->assertDatabaseHas('security_settings', ['setting_key' => 'rider.package.price.pro', 'setting_value' => '3099.00']);
+        $this->assertSame(2099.0, (float) $fee->fresh()->amount);
+    }
 }

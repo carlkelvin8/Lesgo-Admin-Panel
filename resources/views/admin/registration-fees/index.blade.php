@@ -4,6 +4,36 @@
 
 @section('content')
 <div class="bg-white rounded-xl shadow-sm p-4 mb-6">
+    <div class="flex items-start justify-between gap-4 mb-4">
+        <div>
+            <h3 class="font-semibold text-gray-800">Rider Package Pricing</h3>
+            <p class="text-xs text-gray-500 mt-1">These prices control new rider registration and package upgrade charges.</p>
+        </div>
+        <span class="px-2 py-1 text-xs rounded-full bg-blue-50 text-blue-700">PHP · One-time</span>
+    </div>
+    <form method="POST" action="{{ route('admin.registration-fees.rider-prices.update') }}" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+        @csrf
+        @method('PUT')
+        <label class="block">
+            <span class="text-sm text-gray-600">Basic</span>
+            <div class="mt-1 flex rounded-lg border border-gray-300 overflow-hidden"><span class="bg-gray-50 px-3 py-2 text-gray-500">₱</span><input type="number" name="basic" value="{{ old('basic', $riderPackagePrices['basic']) }}" min="0" max="1000000" step="0.01" required class="w-full border-0 px-3 py-2 focus:ring-2 focus:ring-purple-500"></div>
+        </label>
+        <label class="block">
+            <span class="text-sm text-gray-600">Advance</span>
+            <div class="mt-1 flex rounded-lg border border-gray-300 overflow-hidden"><span class="bg-gray-50 px-3 py-2 text-gray-500">₱</span><input type="number" name="advance" value="{{ old('advance', $riderPackagePrices['advance']) }}" min="0" max="1000000" step="0.01" required class="w-full border-0 px-3 py-2 focus:ring-2 focus:ring-purple-500"></div>
+        </label>
+        <label class="block">
+            <span class="text-sm text-gray-600">Elite</span>
+            <div class="mt-1 flex rounded-lg border border-gray-300 overflow-hidden"><span class="bg-gray-50 px-3 py-2 text-gray-500">₱</span><input type="number" name="elite" value="{{ old('elite', $riderPackagePrices['pro']) }}" min="0" max="1000000" step="0.01" required class="w-full border-0 px-3 py-2 focus:ring-2 focus:ring-purple-500"></div>
+        </label>
+        <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-lg font-medium">Save Rider Prices</button>
+    </form>
+    @error('basic')<p class="text-xs text-red-600 mt-2">{{ $message }}</p>@enderror
+    @error('advance')<p class="text-xs text-red-600 mt-2">{{ $message }}</p>@enderror
+    @error('elite')<p class="text-xs text-red-600 mt-2">{{ $message }}</p>@enderror
+</div>
+
+<div class="bg-white rounded-xl shadow-sm p-4 mb-6">
     <div class="grid grid-cols-2 md:grid-cols-8 gap-4 mb-4 text-center">
         <div class="bg-gray-50 p-3 rounded-lg"><div class="text-xs text-gray-500">Total</div><div class="text-xl font-bold">{{ $stats['total'] }}</div></div>
         <div class="bg-blue-50 p-3 rounded-lg"><div class="text-xs text-gray-500">Rider</div><div class="text-xl font-bold text-blue-600">{{ $stats['rider'] }}</div></div>
