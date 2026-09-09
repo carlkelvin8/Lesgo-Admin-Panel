@@ -12,13 +12,14 @@
             <div><span class="text-gray-500">User:</span> <span class="font-medium">{{ $fee->user?->name }} ({{ $fee->user?->email }}) — ID {{ $fee->user_id }}</span></div>
             <div><span class="text-gray-500">Account Type:</span> <span class="font-mono">{{ $fee->account_type }}</span></div>
             <div><span class="text-gray-500">Amount:</span> <span class="font-bold text-lg">₱{{ number_format($fee->amount,2) }} {{ $fee->currency }}</span></div>
-            <div><span class="text-gray-500">Account Status:</span> <span class="px-2 py-1 text-xs rounded-full {{ $fee->is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">{{ $fee->is_active ? 'Active' : 'Restricted' }}</span> <span class="text-xs text-gray-500">{{ $fee->is_active ? 'Paid + Approved' : 'Requires fee + approval' }}</span></div>
-            <div><span class="text-gray-500">Payment Status:</span> <span class="px-2 py-1 text-xs rounded-full {{ $fee->payment_status==='paid' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700' }}">{{ ucfirst($fee->payment_status) }}</span></div>
+            <div><span class="text-gray-500">Account Status:</span> <span class="px-2 py-1 text-xs rounded-full {{ $fee->is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">{{ $fee->is_active ? 'Active' : 'Restricted' }}</span> <span class="text-xs text-gray-500">{{ $fee->is_active ? 'Approved + fee satisfied' : 'Requires approval + paid/waived fee' }}</span></div>
+            <div><span class="text-gray-500">Fee Status:</span> <span class="px-2 py-1 text-xs rounded-full {{ $fee->payment_status==='paid' ? 'bg-green-100 text-green-700' : ($fee->payment_status==='waived' ? 'bg-purple-100 text-purple-700' : 'bg-yellow-100 text-yellow-700') }}">{{ ucfirst($fee->payment_status) }}</span></div>
             <div><span class="text-gray-500">Application Status:</span> <span class="px-2 py-1 text-xs rounded-full {{ $fee->application_status==='approved' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700' }}">{{ ucfirst($fee->application_status) }}</span></div>
             <div><span class="text-gray-500">PayMongo Reference:</span> <span class="font-mono text-xs break-all">{{ $fee->paymongo_reference }}</span></div>
             <div><span class="text-gray-500">Checkout ID:</span> <span class="font-mono text-xs break-all">{{ $fee->paymongo_checkout_id ?? '—' }}</span></div>
             <div><span class="text-gray-500">Checkout URL:</span> @if($fee->checkout_url)<a href="{{ $fee->checkout_url }}" target="_blank" class="text-blue-600 hover:underline text-xs break-all">{{ $fee->checkout_url }}</a>@else — @endif</div>
             <div><span class="text-gray-500">Payment Date:</span> {{ $fee->payment_date?->format('Y-m-d H:i:s') ?? '—' }}</div>
+            <div><span class="text-gray-500">Waiver:</span> @if($fee->isWaived()) {{ $fee->waived_at?->format('Y-m-d H:i:s') }} by {{ $fee->waivedBy?->name ?? 'Admin #'.$fee->waived_by }} @if($fee->waiver_reason) — {{ $fee->waiver_reason }} @endif @else — @endif</div>
             <div><span class="text-gray-500">Approved At:</span> {{ $fee->approved_at?->format('Y-m-d H:i:s') ?? '—' }} @if($fee->approver) by {{ $fee->approver->name }} @endif</div>
             <div><span class="text-gray-500">Activated At:</span> {{ $fee->activated_at?->format('Y-m-d H:i:s') ?? '—' }}</div>
             @if($fee->failure_reason)<div class="col-span-2"><span class="text-gray-500">Failure Reason:</span> <span class="text-red-600">{{ $fee->failure_reason }}</span></div>@endif
@@ -27,7 +28,10 @@
 
         <div class="mt-6 flex gap-2">
             @if($fee->application_status !== 'approved')
-                <form method="POST" action="{{ route('admin.registration-fees.approve', $fee) }}">@csrf<button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg" onclick="return confirm('Approve? Account will only activate if fee PAID. Approval does not bypass unpaid fee.')">Approve Application</button></form>
+                <form method="POST" action="{{ route('admin.registration-fees.approve', $fee) }}">@csrf<button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg" onclick="return confirm('Approve? Account activates only if the fee is PAID or WAIVED.')">Approve Application</button></form>
+            @endif
+            @if(!$fee->isPaid() && !$fee->isWaived() && !$fee->is_grandfathered)
+                <form method="POST" action="{{ route('admin.registration-fees.waive', $fee) }}" class="flex gap-2">@csrf<input name="reason" maxlength="1000" placeholder="Waiver reason (optional)" class="rounded border px-3 py-2 text-sm"><button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg" onclick="return confirm('Waive this registration fee? This is an audited admin exception.')">Waive Registration Fee</button></form>
             @endif
             @if($fee->application_status !== 'rejected')
                 <form method="POST" action="{{ route('admin.registration-fees.reject', $fee) }}">@csrf<input type="hidden" name="reason" value="Rejected by admin via detail page"><button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg" onclick="return confirm('Reject application? Account will remain restricted.')">Reject Application</button></form>

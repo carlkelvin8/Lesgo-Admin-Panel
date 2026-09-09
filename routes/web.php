@@ -184,6 +184,7 @@ Route::prefix('admin')->name('admin.')->middleware(['admin', 'admin.audit'])->gr
         Route::get('/registration-fees', [\App\Http\Controllers\Admin\RegistrationFeeController::class, 'index'])->name('registration-fees.index');
         Route::get('/registration-fees/{registrationFee}', [\App\Http\Controllers\Admin\RegistrationFeeController::class, 'show'])->name('registration-fees.show');
         Route::post('/registration-fees/{registrationFee}/approve', [\App\Http\Controllers\Admin\RegistrationFeeController::class, 'approve'])->name('registration-fees.approve');
+        Route::post('/registration-fees/{registrationFee}/waive', [\App\Http\Controllers\Admin\RegistrationFeeController::class, 'waive'])->name('registration-fees.waive');
         Route::post('/registration-fees/{registrationFee}/reject', [\App\Http\Controllers\Admin\RegistrationFeeController::class, 'reject'])->name('registration-fees.reject');
     });
 

@@ -10,7 +10,7 @@ class RegistrationFeeController extends Controller
 {
     public function index(Request $request)
     {
-        $query = RegistrationFeePayment::with(['user:id,name,email', 'approver:id,name']);
+        $query = RegistrationFeePayment::with(['user:id,name,email', 'approver:id,name', 'waivedBy:id,name']);
 
         if ($request->filled('account_type')) {
             $query->where('account_type', $request->account_type);
@@ -40,6 +40,7 @@ class RegistrationFeeController extends Controller
             'rider' => RegistrationFeePayment::where('account_type', 'rider')->count(),
             'merchant' => RegistrationFeePayment::where('account_type', 'merchant')->count(),
             'paid' => RegistrationFeePayment::where('payment_status', 'paid')->count(),
+            'waived' => RegistrationFeePayment::where('payment_status', 'waived')->count(),
             'approved' => RegistrationFeePayment::where('application_status', 'approved')->count(),
             'active' => RegistrationFeePayment::where('is_active', true)->count(),
             'restricted' => RegistrationFeePayment::where('is_active', false)->count(),
@@ -50,17 +51,27 @@ class RegistrationFeeController extends Controller
 
     public function show(RegistrationFeePayment $registrationFee)
     {
-        $registrationFee->load(['user', 'approver']);
+        $registrationFee->load(['user', 'approver', 'waivedBy']);
         return view('admin.registration-fees.show', ['fee' => $registrationFee]);
     }
 
     public function approve(Request $request, RegistrationFeePayment $registrationFee)
     {
-        if ($registrationFee->payment_status !== 'paid') {
-            return back()->with('error', 'Cannot approve: registration fee not paid. PayMongo payment required.');
-        }
         \App\Services\RegistrationFeeService::approveApplication($registrationFee, $request->user());
-        return back()->with('success', $registrationFee->fresh()->is_active ? 'Approved and activated (fee paid + approved).' : 'Approved – but account remains restricted until fee paid.');
+        return back()->with('success', $registrationFee->fresh()->is_active ? 'Approved and activated (fee paid/waived + approved).' : 'Approved – account remains restricted until fee is paid or waived.');
+    }
+
+    public function waive(Request $request, RegistrationFeePayment $registrationFee)
+    {
+        $validated = $request->validate(['reason' => 'nullable|string|max:1000']);
+        try {
+            $updated = \App\Services\RegistrationFeeService::waiveFee($registrationFee, $request->user(), $validated['reason'] ?? null);
+        } catch (\DomainException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+        return back()->with('success', $updated->is_active
+            ? 'Registration fee waived; approved account activated.'
+            : 'Registration fee waived; account remains restricted pending approval.');
     }
 
     public function reject(Request $request, RegistrationFeePayment $registrationFee)

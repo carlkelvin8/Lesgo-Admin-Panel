@@ -45,6 +45,12 @@ class DriverProfile extends Model
         return $this->belongsTo(Partner::class);
     }
 
+    public function registrationFee()
+    {
+        return $this->hasOne(RegistrationFeePayment::class, 'user_id', 'user_id')
+            ->where('account_type', RegistrationFeePayment::TYPE_RIDER);
+    }
+
     public function orders()
     {
         return $this->hasMany(Order::class, 'driver_id');

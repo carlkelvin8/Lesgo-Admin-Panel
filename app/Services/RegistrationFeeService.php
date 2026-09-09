@@ -17,22 +17,7 @@ class RegistrationFeeService
                 'approved_at' => now(),
                 'approved_by' => $admin->id,
             ]);
-            // is_active = paid + approved
-            $isActive = $locked->fresh()->payment_status === RegistrationFeePayment::PAYMENT_PAID
-                && $locked->fresh()->application_status === RegistrationFeePayment::APP_APPROVED;
-            $locked->update([
-                'is_active' => $isActive,
-                'activated_at' => $isActive ? ($locked->activated_at ?? now()) : null,
-            ]);
-            // Sync partner/driver status if active
-            if ($isActive) {
-                if ($locked->account_type === 'rider') {
-                    \App\Models\DriverProfile::where('user_id', $locked->user_id)->update(['status' => 'active']);
-                } else {
-                    \App\Models\Partner::where('user_id', $locked->user_id)->update(['status' => 'active']);
-                }
-            }
-            return $locked->fresh();
+            return self::syncActivation($locked->fresh());
         });
     }
 
@@ -55,5 +40,48 @@ class RegistrationFeeService
             }
             return $locked->fresh();
         });
+    }
+
+    public static function waiveFee(RegistrationFeePayment $payment, User $admin, ?string $reason = null): RegistrationFeePayment
+    {
+        return DB::transaction(function () use ($payment, $admin, $reason) {
+            $locked = RegistrationFeePayment::where('id', $payment->id)->lockForUpdate()->firstOrFail();
+            if ($locked->isPaid()) {
+                throw new \DomainException('A paid registration fee cannot be changed to waived.');
+            }
+            if (!$locked->isWaived()) {
+                $locked->update([
+                    'payment_status' => RegistrationFeePayment::PAYMENT_WAIVED,
+                    'waived_at' => now(),
+                    'waived_by' => $admin->id,
+                    'waiver_reason' => $reason,
+                    'failure_reason' => null,
+                    'metadata' => array_merge($locked->metadata ?? [], [
+                        'fee_resolution' => 'admin_waiver',
+                        'waiver_audit' => ['waived_at' => now()->toIso8601String(), 'waived_by' => $admin->id, 'reason' => $reason],
+                    ]),
+                ]);
+            }
+            return self::syncActivation($locked->fresh());
+        });
+    }
+
+    public static function syncActivation(RegistrationFeePayment $payment): RegistrationFeePayment
+    {
+        $isActive = $payment->shouldBeActive();
+        $payment->update([
+            'is_active' => $isActive,
+            'activated_at' => $isActive ? ($payment->activated_at ?? now()) : null,
+        ]);
+
+        if ($payment->account_type === 'rider') {
+            $status = $isActive ? 'active' : ($payment->application_status === RegistrationFeePayment::APP_REJECTED ? 'suspended' : 'pending');
+            \App\Models\DriverProfile::where('user_id', $payment->user_id)->update(['status' => $status]);
+        } else {
+            $status = $isActive ? 'active' : ($payment->application_status === RegistrationFeePayment::APP_REJECTED ? 'rejected' : 'pending');
+            \App\Models\Partner::where('user_id', $payment->user_id)->update(['status' => $status]);
+        }
+
+        return $payment->fresh();
     }
 }

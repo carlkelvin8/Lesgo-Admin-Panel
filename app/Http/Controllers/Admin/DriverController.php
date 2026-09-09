@@ -17,7 +17,7 @@ class DriverController extends Controller
     use SearchEscaping;
     public function index(Request $request)
     {
-        $query = DriverProfile::with('user');
+        $query = DriverProfile::with(['user', 'registrationFee.waivedBy']);
 
         if ($request->filled('search')) {
             $search = $this->escapeLikePattern($request->search);
@@ -36,9 +36,25 @@ class DriverController extends Controller
             $query->where('package_tier', $request->package_tier);
         }
 
+        if ($request->filled('fee_status')) {
+            if ($request->fee_status === 'no_record') {
+                $query->whereDoesntHave('registrationFee');
+            } else {
+                $query->whereHas('registrationFee', fn ($feeQuery) => $feeQuery
+                    ->where('payment_status', $request->fee_status));
+            }
+        }
+
         $drivers = $query->latest()->paginate(20)->withQueryString();
 
-        return view('admin.drivers.index', compact('drivers'));
+        $feeStats = [
+            'paid' => DriverProfile::whereHas('registrationFee', fn ($q) => $q->where('payment_status', 'paid'))->count(),
+            'waived' => DriverProfile::whereHas('registrationFee', fn ($q) => $q->where('payment_status', 'waived'))->count(),
+            'unpaid' => DriverProfile::whereHas('registrationFee', fn ($q) => $q->whereIn('payment_status', ['unpaid', 'pending', 'failed', 'expired']))->count(),
+            'no_record' => DriverProfile::whereDoesntHave('registrationFee')->count(),
+        ];
+
+        return view('admin.drivers.index', compact('drivers', 'feeStats'));
     }
 
     public function show(DriverProfile $driver)
@@ -46,6 +62,7 @@ class DriverController extends Controller
         $driver->load(['user.documentVerifications' => fn ($q) => $q->latest('submitted_at'), 'partner']);
         $registrationFee = \App\Models\RegistrationFeePayment::where('user_id', $driver->user_id)
             ->where('account_type', 'rider')
+            ->with(['approver:id,name', 'waivedBy:id,name'])
             ->first();
 
         return view('admin.drivers.show', compact('driver', 'registrationFee'));
@@ -115,7 +132,7 @@ class DriverController extends Controller
                     }
                     if (!$fee->fresh()->is_active) {
                         return redirect()->route('admin.drivers.show', $driver)
-                            ->with('error', 'Cannot activate rider: registration fee not paid. Status remains restricted — awaiting PayMongo payment. Approval alone does not bypass fee.');
+                            ->with('error', 'Cannot activate rider: registration fee must be paid through PayMongo or explicitly waived. Approval alone does not bypass the fee.');
                     }
                 }
                 // For grandfathered without fee record, allow
@@ -149,7 +166,7 @@ class DriverController extends Controller
                 $fee = \App\Models\RegistrationFeePayment::where('user_id', $user->id)->where('account_type', 'rider')->first();
                 if ($fee && !$fee->is_active) {
                     return redirect()->route('admin.drivers.show', $driver)
-                        ->with('error', 'Cannot activate: registration fee not paid and/or approval pending. Fee + approval required.');
+                        ->with('error', 'Cannot activate: application approval and a paid or explicitly waived registration fee are required.');
                 }
             }
         }

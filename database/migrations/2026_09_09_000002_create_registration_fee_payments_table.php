@@ -22,8 +22,11 @@ return new class extends Migration
             $table->string('paymongo_reference')->nullable()->unique();
             $table->string('idempotency_key')->unique();
             $table->string('checkout_url', 500)->nullable();
-            $table->enum('payment_status', ['unpaid', 'pending', 'paid', 'failed', 'expired'])->default('unpaid')->index();
+            $table->enum('payment_status', ['unpaid', 'pending', 'paid', 'waived', 'failed', 'expired'])->default('unpaid')->index();
             $table->timestamp('payment_date')->nullable();
+            $table->timestamp('waived_at')->nullable();
+            $table->foreignId('waived_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->text('waiver_reason')->nullable();
             $table->enum('application_status', ['pending', 'approved', 'rejected'])->default('pending')->index();
             $table->timestamp('approved_at')->nullable();
             $table->foreignId('approved_by')->nullable()->constrained('users')->nullOnDelete();

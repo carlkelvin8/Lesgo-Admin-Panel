@@ -8,9 +8,16 @@
 
 @section('content')
 <div class="bg-white rounded-xl shadow-sm p-4 mb-6">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4 text-center">
+        <div class="rounded-lg bg-green-50 p-3"><div class="text-xs text-gray-500">Paid via PayMongo</div><div class="text-xl font-bold text-green-700">{{ $feeStats['paid'] }}</div></div>
+        <div class="rounded-lg bg-purple-50 p-3"><div class="text-xs text-gray-500">Admin Waived</div><div class="text-xl font-bold text-purple-700">{{ $feeStats['waived'] }}</div></div>
+        <div class="rounded-lg bg-yellow-50 p-3"><div class="text-xs text-gray-500">Not Paid</div><div class="text-xl font-bold text-yellow-700">{{ $feeStats['unpaid'] }}</div></div>
+        <div class="rounded-lg bg-gray-50 p-3"><div class="text-xs text-gray-500">No Fee Record</div><div class="text-xl font-bold text-gray-700">{{ $feeStats['no_record'] }}</div></div>
+    </div>
     <x-filter-panel action="{{ request()->url() }}">
         <x-filter-input name="search" label="Search" placeholder="Search by name, license..." value="{{ request('search') }}" />
         <x-filter-input name="status" label="Status" type="select" :options="['pending' => 'Pending', 'active' => 'Active', 'inactive' => 'Inactive', 'suspended' => 'Suspended']" />
+        <x-filter-input name="fee_status" label="Registration Fee" type="select" :options="['' => 'All', 'paid' => 'Paid via PayMongo', 'waived' => 'Waived by Admin', 'unpaid' => 'Unpaid', 'pending' => 'Payment Pending', 'failed' => 'Payment Failed', 'expired' => 'Payment Expired', 'no_record' => 'No Fee Record']" />
     </x-filter-panel>
 </div>
 
@@ -32,6 +39,7 @@
                     <th class="text-left px-6 py-3 text-gray-500 font-medium">License</th>
                     <th class="text-left px-6 py-3 text-gray-500 font-medium">Vehicle</th>
                     <th class="text-left px-6 py-3 text-gray-500 font-medium">Status</th>
+                    <th class="text-left px-6 py-3 text-gray-500 font-medium">Registration Fee</th>
                     <th class="text-left px-6 py-3 text-gray-500 font-medium">Rating</th>
                     <th class="text-left px-6 py-3 text-gray-500 font-medium">Trips</th>
                     <th class="text-left px-6 py-3 text-gray-500 font-medium">Package</th>
@@ -61,6 +69,21 @@
                         <td class="px-6 py-4">
                             <x-status-badge status="{{ $driver->status }}" />
                         </td>
+                        <td class="px-6 py-4">
+                            @php($fee = $driver->registrationFee)
+                            @if(!$fee)
+                                <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-600">No Record</span>
+                            @elseif($fee->isPaid())
+                                <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">Paid</span>
+                                <span class="block mt-1 text-xs text-gray-400">PayMongo · {{ $fee->payment_date?->format('M d, Y') ?? 'verified' }}</span>
+                            @elseif($fee->isWaived())
+                                <span class="px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-700">Waived</span>
+                                <span class="block mt-1 text-xs text-gray-400">Admin · {{ $fee->waived_at?->format('M d, Y') ?? 'recorded' }}</span>
+                            @else
+                                <span class="px-2 py-1 text-xs rounded-full {{ $fee->payment_status === 'failed' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700' }}">{{ ucfirst($fee->payment_status) }}</span>
+                                <span class="block mt-1 text-xs text-gray-400">Not paid</span>
+                            @endif
+                        </td>
                         <td class="px-6 py-4">{{ $driver->rating }} <i class="fas fa-star text-yellow-400 text-xs"></i></td>
                         <td class="px-6 py-4">{{ $driver->total_trips }}</td>
                         <td class="px-6 py-4 text-xs">{{ $driver->package_tier ?? '-' }}</td>
@@ -83,7 +106,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="9"><x-empty-state icon="fa-motorcycle" title="No drivers found" description="There are no drivers matching your criteria." /></td></tr>
+                    <tr><td colspan="10"><x-empty-state icon="fa-motorcycle" title="No drivers found" description="There are no drivers matching your criteria." /></td></tr>
                 @endforelse
             </tbody>
         </table>

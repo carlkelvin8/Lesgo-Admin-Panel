@@ -137,9 +137,9 @@ class PartnerController extends Controller
             if ($user) {
                 $fee = \App\Models\RegistrationFeePayment::where('user_id', $user->id)->where('account_type', 'merchant')->first();
                 if ($fee) {
-                    if ($fee->payment_status !== 'paid') {
+                    if (!$fee->isFeeSatisfied()) {
                         return redirect()->route('admin.partners.show', $partner)
-                            ->with('error', 'Cannot approve merchant: registration fee not paid. Payment via PayMongo required. Approval does not bypass fee.');
+                            ->with('error', 'Cannot activate merchant: registration fee must be paid through PayMongo or explicitly waived.');
                     }
                     // Sync approval via service to ensure is_active logic
                     try {
