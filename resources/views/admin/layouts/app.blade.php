@@ -6,8 +6,9 @@
     <title>@yield('title', 'LesGo Admin')</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" integrity="sha512-UtLOu9C7NuThQhuXXrGFAjN3e05_0YWX/lDEgON42jKgORw4lLMOqY5Xm/FBfTqE6YpDLeIDzYQAQ+lTbSg==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
     <style>[x-cloak]{display:none!important}.cropper-view-box,.cropper-face{border-radius:50%}.cropper-modal{background:rgba(0,0,0,.6)}</style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     @stack('head')
 </head>
 <body class="admin-shell min-h-screen" x-data>
@@ -330,7 +331,6 @@
         </main>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js" integrity="sha512-JyCZjfuQ2oxQvQGVBVIDh3HheIqZV5Y0ISzrrRhRRXbFzK32R2RtihiWQGPjMTODVv/BfSdfwmKjoYvHEK9DjA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     @yield('scripts')
 
     <!-- Keyboard Shortcuts & Command Palette -->

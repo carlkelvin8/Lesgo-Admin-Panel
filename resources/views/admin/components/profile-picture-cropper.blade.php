@@ -52,7 +52,8 @@
 @endonce
 
 <script>
-(() => {
+document.addEventListener('DOMContentLoaded', () => {
+    if (typeof Cropper === 'undefined') { console.error('Cropper.js not loaded'); return; }
     const input = document.getElementById('{{ $inputId }}');
     const hidden = document.getElementById('{{ $hiddenInputId }}');
     const preview = document.getElementById('{{ $previewId }}');
@@ -150,5 +151,5 @@
     document.getElementById('{{ $inputId }}-rotate-right')?.addEventListener('click', () => cropper?.rotate(90));
     document.getElementById('{{ $inputId }}-zoom-in')?.addEventListener('click', () => cropper?.zoom(0.1));
     document.getElementById('{{ $inputId }}-zoom-out')?.addEventListener('click', () => cropper?.zoom(-0.1));
-})();
+});
 </script>
