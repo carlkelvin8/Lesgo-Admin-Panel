@@ -92,34 +92,42 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!file.type.match(/^image\//)) { alert('Please select an image file'); input.value=''; return; }
         if (file.size > 5*1024*1024) { alert('Image too large (max 5MB)'); input.value=''; return; }
         originalFileName = file.name;
-        // Show selected feedback immediately (input's native "No file chosen" is confusing)
+        // Show selected feedback immediately
         actions?.classList.remove('hidden');
         status?.classList.remove('hidden');
         status.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Selected: ' + originalFileName + ' — opening cropper...';
-        const url = URL.createObjectURL(file);
-        cropperImg.src = url;
-        cropperImg.classList.remove('hidden');
-        openModal();
-        // init cropper after image loads
-        cropperImg.onload = () => {
-            if (cropper) cropper.destroy();
-            cropper = new Cropper(cropperImg, {
-                aspectRatio: 1,
-                viewMode: 1,
-                autoCropArea: 1,
-                movable: true,
-                zoomable: true,
-                rotatable: true,
-                scalable: false,
-                background: false,
-                guides: true,
-                center: true,
-                highlight: true,
-                cropBoxMovable: true,
-                cropBoxResizable: true,
-                dragMode: 'move',
-            });
+        // Use FileReader (dataURL) instead of blob URL — more reliable, no "file not found" on blob revoke/CSP
+        const reader = new FileReader();
+        reader.onerror = () => { alert('Failed to read file'); input.value=''; status.classList.add('hidden'); };
+        reader.onload = (ev) => {
+            cropperImg.src = ev.target.result;
+            cropperImg.classList.remove('hidden');
+            openModal();
+            // init cropper after image loads
+            cropperImg.onerror = () => { alert('Image failed to load (file not found). Try another file.'); closeModal(); };
+            cropperImg.onload = () => {
+                if (cropper) cropper.destroy();
+                cropper = new Cropper(cropperImg, {
+                    aspectRatio: 1,
+                    viewMode: 1,
+                    autoCropArea: 1,
+                    movable: true,
+                    zoomable: true,
+                    rotatable: true,
+                    scalable: false,
+                    background: false,
+                    guides: true,
+                    center: true,
+                    highlight: true,
+                    cropBoxMovable: true,
+                    cropBoxResizable: true,
+                    dragMode: 'move',
+                });
+            };
+            // If image already cached, onload may not fire
+            if (cropperImg.complete && cropperImg.naturalWidth) cropperImg.onload();
         };
+        reader.readAsDataURL(file);
     });
 
     confirmBtn?.addEventListener('click', () => {
