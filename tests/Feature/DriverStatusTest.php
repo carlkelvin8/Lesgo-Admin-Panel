@@ -102,4 +102,43 @@ class DriverStatusTest extends TestCase
 
         $this->assertSame('active', $driver->fresh()->status);
     }
+
+    public function test_driver_pages_render_cloud_registration_images(): void
+    {
+        $this->withoutVite();
+
+        config()->set('filesystems.disks.s3.url', 'https://media.example.test');
+        config()->set('filesystems.disks.s3.key', null);
+        config()->set('filesystems.disks.s3.secret', null);
+
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'admin_role' => 'super_admin',
+            'is_active' => true,
+        ]);
+        $driverUser = User::factory()->create([
+            'role' => 'driver',
+            'is_active' => true,
+        ]);
+        $driver = DriverProfile::query()->create([
+            'user_id' => $driverUser->id,
+            'status' => 'pending',
+            'id_document_path' => 'registrations/drivers/example/drivers_license.jpg',
+            'documents' => [
+                'selfie_path' => 'registrations/drivers/example/selfie.jpg',
+                'motorcycle_orcr_path' => 'registrations/drivers/example/orcr.jpg',
+            ],
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.drivers.index'))
+            ->assertOk()
+            ->assertSee('https://media.example.test/registrations/drivers/example/selfie.jpg', false);
+
+        $this->actingAs($admin)
+            ->get(route('admin.drivers.show', $driver))
+            ->assertOk()
+            ->assertSee('https://media.example.test/registrations/drivers/example/drivers_license.jpg', false)
+            ->assertSee('https://media.example.test/registrations/drivers/example/orcr.jpg', false);
+    }
 }

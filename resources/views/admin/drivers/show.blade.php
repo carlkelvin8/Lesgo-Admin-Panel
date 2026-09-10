@@ -38,12 +38,22 @@
 @endsection
 
 @section('content')
+@php
+    $driverImage = \App\Services\MediaUrlService::publicUrl(
+        $driver->user?->profile_picture
+            ?: $driver->user?->getRawOriginal('profile_photo_url')
+            ?: data_get($driver->documents, 'selfie_path')
+    );
+@endphp
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <div class="bg-white rounded-xl shadow-sm p-6">
         <div class="text-center mb-4">
-            <div class="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center font-bold text-2xl mx-auto mb-4">
-                {{ substr($driver->user?->name ?? '?', 0, 1) }}
-            </div>
+            @if($driverImage)
+                <img src="{{ $driverImage }}" alt="{{ $driver->user?->name ?? 'Driver' }}" class="w-20 h-20 rounded-full object-cover border mx-auto mb-4" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div style="display:none" class="w-20 h-20 bg-green-100 text-green-600 rounded-full items-center justify-center font-bold text-2xl mx-auto mb-4">{{ substr($driver->user?->name ?? '?', 0, 1) }}</div>
+            @else
+                <div class="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center font-bold text-2xl mx-auto mb-4">{{ substr($driver->user?->name ?? '?', 0, 1) }}</div>
+            @endif
             <h3 class="text-xl font-bold text-gray-800">{{ $driver->user?->name ?? 'N/A' }}</h3>
             <p class="text-gray-500 text-sm">{{ $driver->user?->email ?? '' }}</p>
             <x-status-badge status="{{ $driver->status }}" />
@@ -99,11 +109,9 @@
             <h3 class="font-semibold text-gray-800 mb-4">Documents & Requirements</h3>
             @php
                 $docs = $driver->documents ?? [];
-                $disk = config('filesystems.default') === 's3' ? 's3' : 'public';
                 $idDocUrl = null;
                 if ($driver->id_document_path) {
-                    $p = $driver->id_document_path;
-                    $idDocUrl = \Illuminate\Support\Str::startsWith($p, ['http://','https://']) ? $p : \Illuminate\Support\Facades\Storage::disk($disk)->url($p);
+                    $idDocUrl = \App\Services\MediaUrlService::publicUrl($driver->id_document_path);
                 }
             @endphp
             @if($idDocUrl)
@@ -125,7 +133,7 @@
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
                     @foreach($docs as $key => $url)
                         @if(is_string($url))
-                            @php $docUrl = \Illuminate\Support\Str::startsWith($url, ['http://','https://']) ? $url : \Illuminate\Support\Facades\Storage::disk($disk)->url($url); @endphp
+                            @php $docUrl = \App\Services\MediaUrlService::publicUrl($url); @endphp
                             <div class="border rounded-lg p-3">
                                 <p class="text-xs font-medium text-gray-500 uppercase">{{ str_replace('_',' ', $key) }}</p>
                                 <a href="{{ $docUrl }}" target="_blank" class="block mt-2">

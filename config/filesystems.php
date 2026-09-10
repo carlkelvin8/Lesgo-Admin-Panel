@@ -13,7 +13,12 @@ return [
     |
     */
 
-    'default' => env('FILESYSTEM_DISK', 'local'),
+    'media_disk' => env('MEDIA_DISK'),
+
+    'default' => env(
+        'FILESYSTEM_DISK',
+        (env('AWS_ACCESS_KEY_ID') && env('AWS_SECRET_ACCESS_KEY')) ? 's3' : 'local'
+    ),
 
     /*
     |--------------------------------------------------------------------------

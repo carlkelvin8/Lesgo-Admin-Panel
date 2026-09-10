@@ -74,10 +74,12 @@
             <h3 class="font-semibold text-gray-800 mb-3"><i class="fas fa-link mr-2 text-green-600"></i>Document Files</h3>
             <div class="space-y-2">
                 @foreach($documentVerification->document_urls as $index => $url)
-                    <a href="{{ $url }}" target="_blank" class="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 hover:underline">
-                        <i class="fas fa-file-alt"></i>
-                        Document {{ $index + 1 }}
-                        <i class="fas fa-external-link-alt text-xs"></i>
+                    @php($documentUrl = \App\Services\MediaUrlService::publicUrl($url))
+                    <a href="{{ $documentUrl }}" target="_blank" class="block text-sm text-blue-600 hover:text-blue-800 hover:underline">
+                        @if($documentUrl && !\Illuminate\Support\Str::endsWith(strtolower(parse_url($documentUrl, PHP_URL_PATH) ?? ''), '.pdf'))
+                            <img src="{{ $documentUrl }}" alt="Document {{ $index + 1 }}" class="w-full max-w-lg max-h-80 object-contain rounded-lg border mb-2" loading="lazy">
+                        @endif
+                        <span><i class="fas fa-file-alt mr-1"></i>Document {{ $index + 1 }} <i class="fas fa-external-link-alt text-xs"></i></span>
                     </a>
                 @endforeach
             </div>

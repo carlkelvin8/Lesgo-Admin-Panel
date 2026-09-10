@@ -48,11 +48,23 @@
             </thead>
             <tbody class="divide-y divide-gray-100">
                 @forelse($drivers as $driver)
+                    @php
+                        $driverImage = \App\Services\MediaUrlService::publicUrl(
+                            $driver->user?->profile_picture
+                                ?: $driver->user?->getRawOriginal('profile_photo_url')
+                                ?: data_get($driver->documents, 'selfie_path')
+                        );
+                    @endphp
                     <tr class="hover:bg-gray-50">
                         <td class="px-4 py-4"><input type="checkbox" name="ids[]" value="{{ $driver->id }}" x-model="selected" aria-label="Select {{ $driver->user?->name ?? 'rider' }}"></td>
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 bg-green-100 text-green-600 rounded-full flex items-center justify-center font-bold text-sm">{{ substr($driver->user?->name ?? '?', 0, 1) }}</div>
+                                @if($driverImage)
+                                    <img src="{{ $driverImage }}" alt="{{ $driver->user?->name ?? 'Driver' }}" class="w-8 h-8 rounded-full object-cover border" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    <div style="display:none" class="w-8 h-8 bg-green-100 text-green-600 rounded-full items-center justify-center font-bold text-sm">{{ substr($driver->user?->name ?? '?', 0, 1) }}</div>
+                                @else
+                                    <div class="w-8 h-8 bg-green-100 text-green-600 rounded-full flex items-center justify-center font-bold text-sm">{{ substr($driver->user?->name ?? '?', 0, 1) }}</div>
+                                @endif
                                 <div>
                                     <p class="font-medium text-gray-800">{{ $driver->user?->name ?? 'N/A' }}</p>
                                     <p class="text-xs text-gray-500">{{ $driver->user?->email ?? '' }}</p>
