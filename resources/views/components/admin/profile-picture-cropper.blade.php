@@ -92,6 +92,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!file.type.match(/^image\//)) { alert('Please select an image file'); input.value=''; return; }
         if (file.size > 5*1024*1024) { alert('Image too large (max 5MB)'); input.value=''; return; }
         originalFileName = file.name;
+        // Show selected feedback immediately (input's native "No file chosen" is confusing)
+        actions?.classList.remove('hidden');
+        status?.classList.remove('hidden');
+        status.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Selected: ' + originalFileName + ' — opening cropper...';
         const url = URL.createObjectURL(file);
         cropperImg.src = url;
         cropperImg.classList.remove('hidden');
@@ -129,11 +133,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const dataUrl = ev.target.result;
                 hidden.value = dataUrl; // base64 for backend
                 showPreview(dataUrl);
-                // Replace file input with cropped file via DataTransfer for fallback
-                const dt = new DataTransfer();
-                const file = new File([blob], originalFileName || 'cropped.jpg', { type: 'image/jpeg' });
-                dt.items.add(file);
-                input.files = dt.files;
+                status.innerHTML = '<i class="fas fa-check mr-1"></i> Cropped ready: ' + (originalFileName || 'cropped.jpg') + ' (' + (blob.size/1024).toFixed(1) + ' KB)';
+                // Replace file input with cropped file via DataTransfer for fallback (helps if JS disabled)
+                try {
+                    const dt = new DataTransfer();
+                    const file = new File([blob], originalFileName || 'cropped.jpg', { type: 'image/jpeg' });
+                    dt.items.add(file);
+                    input.files = dt.files;
+                } catch(e) { console.warn('DataTransfer not supported, using base64 only', e); }
             };
             reader.readAsDataURL(blob);
             closeModal();
