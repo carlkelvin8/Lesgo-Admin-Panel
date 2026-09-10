@@ -52,12 +52,19 @@ class RolePermissionController extends Controller
 
         $permissionKeys = array_keys(config('admin.permissions', []));
 
+        // MAX LEVEL: permissive validation — never throw "permissions.0 is invalid", just filter
         $validated = $request->validate([
             'permissions' => ['nullable', 'array'],
-            'permissions.*' => ['string', Rule::in($permissionKeys)],
+            'permissions.*' => ['string', 'max:100'],
         ]);
 
-        $selected = $validated['permissions'] ?? [];
+        $raw = $validated['permissions'] ?? [];
+        // Log any invalid keys for debugging but don't fail
+        $invalid = array_diff($raw, $permissionKeys);
+        if (!empty($invalid)) {
+            \Illuminate\Support\Facades\Log::warning('Role permissions: ignoring invalid keys', ['role' => $adminRole->getKey(), 'invalid' => $invalid, 'validKeys' => $permissionKeys]);
+        }
+        $selected = array_values(array_intersect($permissionKeys, $raw));
         $required = config('admin.required_permissions', []);
         // MAX LEVEL: always keep required, filter valid, sort by config order, de-dupe
         $permissions = array_values(array_intersect(
