@@ -27,7 +27,8 @@ class StoreUserRequest extends FormRequest
             'admin_permissions' => ['nullable', 'array'],
             'admin_permissions.*' => ['string', Rule::in($permissionKeys)],
             'password' => 'required|string|min:8|confirmed',
-            'profile_picture' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'profile_picture' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
+            'cropped_profile_picture' => 'nullable|string|max:10000000',
         ];
     }
 }

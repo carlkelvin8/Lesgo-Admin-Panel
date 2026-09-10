@@ -73,12 +73,19 @@ class UserController extends Controller
             }
         }
 
-        if ($request->hasFile('profile_picture')) {
+        // Handle cropped base64 (from Cropper.js) — takes precedence over file
+        $croppedStored = null;
+        if ($request->filled('cropped_profile_picture') && str_starts_with($request->input('cropped_profile_picture'), 'data:image')) {
+            $croppedStored = $this->storeCroppedImage($request->input('cropped_profile_picture'));
+        }
+        if ($croppedStored) {
+            $validated['profile_picture'] = $croppedStored;
+        } elseif ($request->hasFile('profile_picture')) {
             $validated['profile_picture'] = $request->file('profile_picture')->store('profile-pictures', config('filesystems.default') === 's3' ? 's3' : 'public');
         } else {
             unset($validated['profile_picture']);
         }
-        unset($validated['remove_profile_picture']);
+        unset($validated['remove_profile_picture'], $validated['cropped_profile_picture']);
 
         $validated['password'] = Hash::make($validated['password']);
         $validated['is_active'] = true;
@@ -117,7 +124,17 @@ class UserController extends Controller
             }
         }
 
-        if ($request->hasFile('profile_picture')) {
+        // Handle cropped base64 (Cropper.js) — precedence over file
+        $croppedStored = null;
+        if ($request->filled('cropped_profile_picture') && str_starts_with($request->input('cropped_profile_picture'), 'data:image')) {
+            if ($user->profile_picture) {
+                try { Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->delete($user->profile_picture); } catch (\Throwable $e) {}
+            }
+            $croppedStored = $this->storeCroppedImage($request->input('cropped_profile_picture'));
+        }
+        if ($croppedStored) {
+            $validated['profile_picture'] = $croppedStored;
+        } elseif ($request->hasFile('profile_picture')) {
             if ($user->profile_picture) {
                 try { Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->delete($user->profile_picture); } catch (\Throwable $e) {}
             }
@@ -130,7 +147,7 @@ class UserController extends Controller
         } else {
             unset($validated['profile_picture']);
         }
-        unset($validated['remove_profile_picture']);
+        unset($validated['remove_profile_picture'], $validated['cropped_profile_picture']);
 
         if ($user->is($request->user()) && ($validated['role'] !== 'admin' || ! $request->boolean('is_active'))) {
             return back()->withInput()->withErrors(['role' => 'You cannot remove your own admin access or deactivate your own account.']);
@@ -310,5 +327,24 @@ class UserController extends Controller
         return AdminRole::definitions()
             ->sortBy(fn (AdminRole $role) => $order[$role->getKey()] ?? PHP_INT_MAX)
             ->values();
+    }
+
+    private function storeCroppedImage(string $dataUrl): ?string
+    {
+        try {
+            // data:image/jpeg;base64,...
+            $parts = explode(',', $dataUrl, 2);
+            if (count($parts) !== 2) return null;
+            $meta = $parts[0];
+            $base64 = $parts[1];
+            $ext = str_contains($meta, 'png') ? 'png' : (str_contains($meta, 'webp') ? 'webp' : 'jpg');
+            $data = base64_decode($base64, true);
+            if (!$data) return null;
+            $filename = 'profile-pictures/cropped_' . uniqid() . '.' . $ext;
+            Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->put($filename, $data);
+            return $filename;
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 }

@@ -5,7 +5,7 @@
 @section('content')
 <div class="max-w-2xl">
     <div class="bg-white rounded-xl shadow-sm p-6">
-        <form method="POST" action="{{ route('admin.drivers.update', $driver) }}">
+        <form method="POST" action="{{ route('admin.drivers.update', $driver) }}" enctype="multipart/form-data">
             @csrf
             @method('PUT')
 
@@ -43,6 +43,13 @@
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Package Tier</label>
                 <input type="text" name="package_tier" value="{{ old('package_tier', $driver->package_tier) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="basic / premium / elite">
+            </div>
+
+            @php $riderProfileUrl = $driver->user?->profile_picture ? \Illuminate\Support\Facades\Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->url($driver->user->profile_picture) : null; @endphp
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Rider Profile Picture <span class="text-xs font-normal text-gray-500">(croppable to circle — saves to user)</span></label>
+                <x-admin.profile-picture-cropper :existing-url="$riderProfileUrl" input-id="profile_picture_input_rider" hidden-input-id="cropped_profile_picture_rider" preview-id="cropper-preview-img-rider" />
+                <input type="hidden" name="profile_picture_cropped" id="profile_picture_cropped_flag" value="0">
             </div>
 
             <div class="flex items-center gap-3">

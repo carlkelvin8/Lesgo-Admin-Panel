@@ -83,9 +83,8 @@
             </div>
 
             <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Profile Picture</label>
-                <input type="file" name="profile_picture" accept=".jpg,.jpeg,.png,.webp" class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2">
-                <p class="text-xs text-gray-500 mt-1">JPG/PNG/WEBP, max 2MB</p>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Profile Picture <span class="text-xs font-normal text-gray-500">(croppable to circle)</span></label>
+                <x-admin.profile-picture-cropper :existing-url="null" input-id="profile_picture_input_create" hidden-input-id="cropped_profile_picture_create" preview-id="cropper-preview-img-create" />
             </div>
 
             <div class="mb-6">

@@ -116,7 +116,27 @@ class DriverController extends Controller
             'vehicle_type' => 'nullable|string|max:255',
             'plate_number' => 'nullable|string|max:50',
             'package_tier' => 'nullable|string|max:100',
+            'profile_picture' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
+            'cropped_profile_picture' => 'nullable|string|max:10000000',
         ]);
+
+        // Handle rider user profile picture cropping (croppable to circle)
+        $user = $driver->user ?? User::find($driver->user_id);
+        if ($user && ($request->filled('cropped_profile_picture') || $request->hasFile('profile_picture'))) {
+            $oldPic = $user->profile_picture;
+            $newPath = null;
+            if ($request->filled('cropped_profile_picture') && str_starts_with($request->input('cropped_profile_picture'), 'data:image')) {
+                $newPath = $this->storeCroppedImage($request->input('cropped_profile_picture'));
+            } elseif ($request->hasFile('profile_picture')) {
+                $newPath = $request->file('profile_picture')->store('profile-pictures', config('filesystems.default') === 's3' ? 's3' : 'public');
+            }
+            if ($newPath) {
+                if ($oldPic) { try { Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->delete($oldPic); } catch (\Throwable $e) {} }
+                $user->update(['profile_picture' => $newPath]);
+            }
+        }
+        // Remove cropping fields from driver validated data
+        unset($validated['profile_picture'], $validated['cropped_profile_picture']);
 
         // If admin tries to activate rider, enforce fee-paid check via RegistrationFeePayment
         if ($validated['status'] === 'active') {
@@ -263,6 +283,23 @@ class DriverController extends Controller
         }
 
         return redirect()->route('admin.drivers.show', $driver)->with('success', 'Driver documents updated.');
+    }
+
+    private function storeCroppedImage(string $dataUrl): ?string
+    {
+        try {
+            $parts = explode(',', $dataUrl, 2);
+            if (count($parts) !== 2) return null;
+            $meta = $parts[0];
+            $ext = str_contains($meta, 'png') ? 'png' : (str_contains($meta, 'webp') ? 'webp' : 'jpg');
+            $data = base64_decode($parts[1], true);
+            if (!$data) return null;
+            $filename = 'profile-pictures/cropped_' . uniqid() . '.' . $ext;
+            Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->put($filename, $data);
+            return $filename;
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 
 }

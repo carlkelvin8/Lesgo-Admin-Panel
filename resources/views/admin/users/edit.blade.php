@@ -77,13 +77,15 @@
             </div>
 
             <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Profile Picture</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Profile Picture <span class="text-xs font-normal text-gray-500">(croppable to circle)</span></label>
                 @if($user->profile_picture)
-                    <img src="{{ \Illuminate\Support\Str::startsWith($user->profile_picture, ['http://','https://']) ? $user->profile_picture : \Illuminate\Support\Facades\Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->url($user->profile_picture) }}" alt="Profile" class="w-16 h-16 rounded-full object-cover mb-2 border">
-                    <label class="inline-flex items-center gap-2 text-xs"><input type="checkbox" name="remove_profile_picture" value="1"> Remove current</label>
+                    <div class="mb-2 flex items-center gap-3">
+                        <img src="{{ \Illuminate\Support\Str::startsWith($user->profile_picture, ['http://','https://']) ? $user->profile_picture : \Illuminate\Support\Facades\Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->url($user->profile_picture) }}" alt="Current" class="w-16 h-16 rounded-full object-cover border">
+                        <label class="inline-flex items-center gap-2 text-xs"><input type="checkbox" name="remove_profile_picture" value="1"> Remove current</label>
+                    </div>
                 @endif
-                <input type="file" name="profile_picture" accept=".jpg,.jpeg,.png,.webp" class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 mt-2">
-                <p class="text-xs text-gray-500 mt-1">JPG/PNG/WEBP, max 2MB</p>
+                @php $existingCropUrl = $user->profile_picture ? (\Illuminate\Support\Str::startsWith($user->profile_picture, ['http://','https://']) ? $user->profile_picture : \Illuminate\Support\Facades\Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->url($user->profile_picture)) : null; @endphp
+                <x-admin.profile-picture-cropper :existing-url="$existingCropUrl" input-id="profile_picture_input" hidden-input-id="cropped_profile_picture" preview-id="cropper-preview-img" />
             </div>
 
             <div class="mb-6">
