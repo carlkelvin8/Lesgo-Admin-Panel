@@ -63,6 +63,14 @@ class UserController extends Controller
 
         if ($validated['role'] !== 'admin') {
             $validated['admin_role'] = null;
+            $validated['admin_permissions'] = null;
+        } else {
+            $permissionKeys = array_keys(config('admin.permissions', []));
+            $perms = array_values(array_unique(array_intersect($permissionKeys, $validated['admin_permissions'] ?? [])));
+            $validated['admin_permissions'] = empty($perms) ? null : $perms;
+            if (($validated['admin_role'] ?? null) === 'super_admin') {
+                $validated['admin_permissions'] = null;
+            }
         }
 
         if ($request->hasFile('profile_picture')) {
@@ -132,7 +140,24 @@ class UserController extends Controller
             return back()->withInput()->withErrors(['admin_role' => 'At least one active super administrator must remain.']);
         }
 
+        $oldPerms = $user->admin_permissions;
         $user->update($validated);
+
+        // Audit max level
+        try {
+            if (($oldPerms ?? null) !== ($validated['admin_permissions'] ?? null) || ($user->wasChanged('admin_role'))) {
+                \App\Models\AuditLog::create([
+                    'user_id' => $request->user()?->id,
+                    'action' => 'update_user_permissions',
+                    'auditable_type' => User::class,
+                    'auditable_id' => $user->id,
+                    'old_values' => ['admin_role' => $user->getOriginal('admin_role'), 'admin_permissions' => $oldPerms],
+                    'new_values' => ['admin_role' => $validated['admin_role'] ?? null, 'admin_permissions' => $validated['admin_permissions'] ?? null],
+                    'ip_address' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                ]);
+            }
+        } catch (\Throwable $e) {}
 
         return redirect()->route('admin.users.show', $user)
             ->with('success', 'User updated successfully.');

@@ -67,6 +67,10 @@
                 <span class="text-gray-800">{{ $user->phone_number ?? '-' }}</span>
             </div>
             <div class="flex justify-between border-b pb-2">
+                <span class="text-gray-500">Role</span>
+                <span class="text-gray-800">{{ ucfirst($user->role) }} @if($user->isAdmin()) ({{ $user->adminRoleLabel() }}) @endif</span>
+            </div>
+            <div class="flex justify-between border-b pb-2">
                 <span class="text-gray-500">Status</span>
                 <span class="text-{{ $user->is_active ? 'green' : 'red' }}-600 font-medium">{{ $user->is_active ? 'Active' : 'Inactive' }}</span>
             </div>
@@ -79,6 +83,32 @@
                 <span class="text-gray-800">{{ $user->updated_at->diffForHumans() }}</span>
             </div>
         </div>
+
+        @if($user->isAdmin())
+        @php
+            $roleDef = \App\Models\AdminRole::definition($user->effectiveAdminRole());
+            $rolePerms = $roleDef?->permissions ?? [];
+            $extraPerms = $user->admin_permissions ?? [];
+            $effective = $user->isSuperAdmin() ? ['*'] : array_unique(array_merge($rolePerms, $extraPerms));
+        @endphp
+        <div class="mt-6 pt-4 border-t">
+            <h4 class="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Effective Permissions</h4>
+            @if($user->isSuperAdmin())
+                <span class="inline-flex items-center gap-1 rounded-full bg-purple-100 px-3 py-1 text-xs font-medium text-purple-700"><i class="fas fa-crown text-[10px]"></i> Full Access (*)</span>
+            @else
+                <div class="flex flex-wrap gap-1.5">
+                    @forelse($effective as $perm)
+                        <span class="rounded-full px-2.5 py-1 text-xs font-medium {{ in_array($perm, $extraPerms) ? 'bg-blue-100 text-blue-700 border border-blue-200' : 'bg-gray-100 text-gray-700' }}">{{ $perm }} @if(in_array($perm, $extraPerms)) <span class="text-[10px]">+extra</span> @endif</span>
+                    @empty
+                        <span class="text-xs text-gray-400">No permissions</span>
+                    @endforelse
+                </div>
+                @if(!empty($extraPerms))
+                <p class="mt-2 text-xs text-gray-500">{{ count($extraPerms) }} extra permission(s) on top of {{ $roleDef?->label ?? $user->effectiveAdminRole() }}</p>
+                @endif
+            @endif
+        </div>
+        @endif
     </div>
 
     <!-- Activity -->

@@ -59,16 +59,36 @@ class RolePermissionController extends Controller
 
         $selected = $validated['permissions'] ?? [];
         $required = config('admin.required_permissions', []);
+        // MAX LEVEL: always keep required, filter valid, sort by config order, de-dupe
         $permissions = array_values(array_intersect(
             $permissionKeys,
             array_unique([...$required, ...$selected]),
         ));
 
+        $old = $adminRole->permissions ?? [];
         $adminRole->update(['permissions' => $permissions]);
+        // Force cache bust for all workers
+        AdminRole::forgetDefinitionCache();
+        // Clear config cache if cached (ensures hasAdminPermission sees new perms immediately)
+        try { \Illuminate\Support\Facades\Artisan::call('config:clear'); } catch (\Throwable $e) {}
+
+        // Audit log max level
+        try {
+            \App\Models\AuditLog::create([
+                'user_id' => $request->user()?->id,
+                'action' => 'update_role_permissions',
+                'auditable_type' => AdminRole::class,
+                'auditable_id' => $adminRole->getKey(),
+                'old_values' => ['permissions' => $old],
+                'new_values' => ['permissions' => $permissions],
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ]);
+        } catch (\Throwable $e) {}
 
         return redirect()
             ->route('admin.roles.index')
-            ->with('success', "{$adminRole->label} permissions updated successfully.");
+            ->with('success', "{$adminRole->label} permissions updated successfully. (" . count($permissions) . " permissions)");
     }
 
     private function orderedRoles()
