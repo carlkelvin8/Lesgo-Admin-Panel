@@ -18,7 +18,7 @@ class UpdateUserRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $this->route('user')->id,
+            'email' => ['required','email', Rule::unique('users','email')->whereNull('deleted_at')->ignore($this->route('user')->id)],
             'phone_number' => 'nullable|string|max:20',
             'role' => 'required|in:customer,driver,partner,admin',
             'admin_role' => ['nullable', 'required_if:role,admin', Rule::in(['super_admin', 'operations', 'finance', 'support'])],
