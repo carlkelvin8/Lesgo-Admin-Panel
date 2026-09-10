@@ -81,7 +81,9 @@ class User extends Authenticatable
             return null;
         }
 
-        return $this->admin_role ?: 'super_admin';
+        $role = trim((string) ($this->admin_role ?: 'super_admin'));
+
+        return str_replace(['-', ' '], '_', strtolower($role));
     }
 
     public function adminRoleLabel(): string

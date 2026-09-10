@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\AdminRole;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class SuperAdminAccessTest extends TestCase
@@ -39,5 +40,30 @@ class SuperAdminAccessTest extends TestCase
         ]);
 
         $this->assertFalse($admin->hasAdminPermission('partners.view'));
+    }
+
+    #[DataProvider('legacySuperAdminRoleProvider')]
+    public function test_legacy_super_admin_role_values_keep_full_sidebar_access(?string $adminRole): void
+    {
+        $admin = User::factory()->make([
+            'role' => 'admin',
+            'admin_role' => $adminRole,
+            'is_active' => true,
+        ]);
+
+        $this->assertSame('super_admin', $admin->effectiveAdminRole());
+        $this->assertTrue($admin->hasAdminPermission('roles.manage'));
+        $this->assertTrue($admin->hasAdminPermission('missions.manage'));
+        $this->assertTrue($admin->hasAdminPermission('security.manage'));
+    }
+
+    public static function legacySuperAdminRoleProvider(): array
+    {
+        return [
+            'null' => [null],
+            'title case with space' => ['Super Admin'],
+            'hyphenated' => ['super-admin'],
+            'uppercase padded' => ['  SUPER_ADMIN  '],
+        ];
     }
 }
