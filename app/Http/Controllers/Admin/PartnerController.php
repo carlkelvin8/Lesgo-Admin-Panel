@@ -22,7 +22,9 @@ class PartnerController extends Controller
             $search = $this->escapeLikePattern($request->search);
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('category', 'like', "%{$search}%");
+                  ->orWhere('category', 'like', "%{$search}%")
+                  ->orWhereHas('user', fn ($uq) => $uq->where('name', 'like', "%{$search}%")
+                      ->orWhere('email', 'like', "%{$search}%"));
             });
         }
 

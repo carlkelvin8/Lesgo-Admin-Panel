@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\RecordRefundRequest;
 use App\Http\Requests\Admin\ReconcilePaymentRequest;
 use App\Models\Payment;
 use App\Traits\SearchEscaping;
+use App\Support\CsvFormatter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -21,8 +22,10 @@ class PaymentController extends Controller
         if ($request->filled('search')) {
             $search = $this->escapeLikePattern($request->search);
             $query->where(function ($q) use ($search) {
-                $q->where('id', $search)
-                    ->orWhereHas('customer', fn ($cq) => $cq->where('name', 'like', "%{$search}%"))
+                if (is_numeric($search)) {
+                    $q->where('id', (int) $search);
+                }
+                $q->orWhereHas('customer', fn ($cq) => $cq->where('name', 'like', "%{$search}%"))
                     ->orWhereHas('customer', fn ($cq) => $cq->where('email', 'like', "%{$search}%"));
             });
         }
@@ -112,8 +115,10 @@ class PaymentController extends Controller
         if ($request->filled('search')) {
             $search = $this->escapeLikePattern($request->search);
             $query->where(function ($q) use ($search) {
-                $q->where('id', $search)
-                    ->orWhereHas('customer', fn ($cq) => $cq->where('name', 'like', "%{$search}%"))
+                if (is_numeric($search)) {
+                    $q->where('id', (int) $search);
+                }
+                $q->orWhereHas('customer', fn ($cq) => $cq->where('name', 'like', "%{$search}%"))
                     ->orWhereHas('customer', fn ($cq) => $cq->where('email', 'like', "%{$search}%"));
             });
         }
@@ -148,11 +153,11 @@ class PaymentController extends Controller
                 foreach ($payments as $payment) {
                     fputcsv($file, [
                         $payment->id,
-                        $payment->customer?->name ?? 'N/A',
+                        CsvFormatter::cell($payment->customer?->name ?? 'N/A'),
                         $payment->order_id ?? 'N/A',
                         $payment->amount,
-                        $payment->method ?? 'N/A',
-                        $payment->status,
+                        CsvFormatter::cell($payment->method ?? 'N/A'),
+                        CsvFormatter::cell($payment->status),
                         $payment->refunded_amount ?? 0,
                         $payment->paid_at ? $payment->paid_at->format('Y-m-d H:i:s') : '',
                     ]);

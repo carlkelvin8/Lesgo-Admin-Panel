@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use App\Traits\SearchEscaping;
+use App\Support\CsvFormatter;
 use Illuminate\Validation\Rule;
 
 class UserController extends Controller
@@ -297,11 +298,11 @@ class UserController extends Controller
                 foreach ($users as $user) {
                     fputcsv($file, [
                         $user->id,
-                        $user->name,
-                        $user->email,
-                        $user->phone_number ?? '',
-                        $user->role,
-                        $user->admin_role ?? '',
+                        CsvFormatter::cell($user->name),
+                        CsvFormatter::cell($user->email),
+                        CsvFormatter::cell($user->phone_number ?? ''),
+                        CsvFormatter::cell($user->role),
+                        CsvFormatter::cell($user->admin_role ?? ''),
                         $user->is_active ? 'Active' : 'Inactive',
                         $user->created_at->format('Y-m-d H:i:s'),
                     ]);

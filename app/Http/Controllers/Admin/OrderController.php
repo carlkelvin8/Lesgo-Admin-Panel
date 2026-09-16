@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\UpdateOrderStatusRequest;
 use App\Models\Order;
 use App\Models\OrderTrackingEvent;
 use App\Traits\SearchEscaping;
+use App\Support\CsvFormatter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
@@ -21,8 +22,10 @@ class OrderController extends Controller
         if ($request->filled('search')) {
             $search = $this->escapeLikePattern($request->search);
             $query->where(function ($q) use ($search) {
-                $q->where('id', $search)
-                    ->orWhereHas('customer', fn ($cq) => $cq->where('name', 'like', "%{$search}%"))
+                if (is_numeric($search)) {
+                    $q->where('id', (int) $search);
+                }
+                $q->orWhereHas('customer', fn ($cq) => $cq->where('name', 'like', "%{$search}%"))
                     ->orWhereHas('partner', fn ($pq) => $pq->where('name', 'like', "%{$search}%"));
             });
         }
@@ -124,8 +127,10 @@ class OrderController extends Controller
         if ($request->filled('search')) {
             $search = $this->escapeLikePattern($request->search);
             $query->where(function ($q) use ($search) {
-                $q->where('id', $search)
-                    ->orWhereHas('customer', fn ($cq) => $cq->where('name', 'like', "%{$search}%"))
+                if (is_numeric($search)) {
+                    $q->where('id', (int) $search);
+                }
+                $q->orWhereHas('customer', fn ($cq) => $cq->where('name', 'like', "%{$search}%"))
                     ->orWhereHas('partner', fn ($pq) => $pq->where('name', 'like', "%{$search}%"));
             });
         }
@@ -160,11 +165,11 @@ class OrderController extends Controller
                 foreach ($orders as $order) {
                     fputcsv($file, [
                         $order->id,
-                        $order->customer?->name ?? 'N/A',
-                        $order->partner?->name ?? 'N/A',
-                        $order->driver?->user?->name ?? 'N/A',
-                        $order->status,
-                        $order->payment_status,
+                        CsvFormatter::cell($order->customer?->name ?? 'N/A'),
+                        CsvFormatter::cell($order->partner?->name ?? 'N/A'),
+                        CsvFormatter::cell($order->driver?->user?->name ?? 'N/A'),
+                        CsvFormatter::cell($order->status),
+                        CsvFormatter::cell($order->payment_status),
                         $order->actual_fare ?? $order->estimated_fare,
                         $order->created_at->format('Y-m-d H:i:s'),
                     ]);
