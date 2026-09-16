@@ -43,6 +43,7 @@ class Partner extends Model
             'tags' => 'array',
             'cuisine_types' => 'array',
             'opening_hours' => 'array',
+            'documents' => 'array',
             'is_open' => 'boolean',
             'is_featured' => 'boolean',
             'accepts_online_payment' => 'boolean',

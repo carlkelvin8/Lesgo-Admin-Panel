@@ -286,6 +286,10 @@ class AuditActionResolver
             return $old !== $new;
         }
 
+        if (! is_scalar($old) || ! is_scalar($new)) {
+            return json_encode($old) !== json_encode($new);
+        }
+
         return trim((string) $old) !== trim((string) $new);
     }
 
