@@ -13,7 +13,7 @@
 <!-- Filters -->
 <x-filter-panel>
     <x-filter-input name="search" label="Search" placeholder="Name, email, phone..." />
-    <x-filter-input name="role" label="Role" type="select" :options="['' => 'All Roles', 'customer' => 'Customer', 'driver' => 'Driver', 'partner' => 'Partner', 'admin' => 'Admin']" />
+    <x-filter-input name="role" label="Role" type="select" :options="['' => 'All Roles', 'customer' => 'Customer', 'driver' => 'Driver', 'partner' => 'Partner', 'partner_admin' => 'Partner Admin', 'admin' => 'Admin']" />
     <x-filter-input name="status" label="Status" type="select" :options="['' => 'All', 'active' => 'Active', 'inactive' => 'Inactive']" />
 </x-filter-panel>
 

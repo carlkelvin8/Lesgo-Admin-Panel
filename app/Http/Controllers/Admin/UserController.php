@@ -31,7 +31,12 @@ class UserController extends Controller
         }
 
         if ($request->filled('role')) {
-            $query->where('role', $request->role);
+            $query->where(function ($q) use ($request) {
+                $q->where('role', $request->role);
+                if ($request->role === 'partner') {
+                    $q->orWhere('role', 'partner_admin');
+                }
+            });
         }
 
         if ($request->filled('status')) {
@@ -266,7 +271,12 @@ class UserController extends Controller
         }
 
         if ($request->filled('role')) {
-            $query->where('role', $request->role);
+            $query->where(function ($q) use ($request) {
+                $q->where('role', $request->role);
+                if ($request->role === 'partner') {
+                    $q->orWhere('role', 'partner_admin');
+                }
+            });
         }
 
         if ($request->filled('status')) {

@@ -39,6 +39,7 @@
         'super_admin' => 'bg-red-100 text-red-700',
         'driver' => 'bg-blue-100 text-blue-700',
         'partner' => 'bg-green-100 text-green-700',
+        'partner_admin' => 'bg-green-100 text-green-700',
         'customer' => 'bg-gray-100 text-gray-600',
         'operations' => 'bg-orange-100 text-orange-700',
         // Revenue types

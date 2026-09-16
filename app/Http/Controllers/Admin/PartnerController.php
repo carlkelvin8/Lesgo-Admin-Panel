@@ -50,7 +50,7 @@ class PartnerController extends Controller
 
     public function create()
     {
-        $users = User::where('role', 'partner')->whereDoesntHave('partner')->get();
+        $users = User::whereIn('role', ['partner', 'partner_admin'])->whereDoesntHave('partner')->get();
         return view('admin.partners.create', compact('users'));
     }
 

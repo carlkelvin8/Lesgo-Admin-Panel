@@ -78,7 +78,12 @@ class NotificationController extends Controller
                 fn ($query) => $query->whereKey($validated['user_id']),
                 fn ($query) => $query->when(
                     $validated['recipient_role'] !== 'all',
-                    fn ($roleQuery) => $roleQuery->where('role', $validated['recipient_role'])
+                    fn ($roleQuery) => $roleQuery->where(function ($q) use ($validated) {
+                        $q->where('role', $validated['recipient_role']);
+                        if ($validated['recipient_role'] === 'partner') {
+                            $q->orWhere('role', 'partner_admin');
+                        }
+                    })
                 )
             )
             ->pluck('id');

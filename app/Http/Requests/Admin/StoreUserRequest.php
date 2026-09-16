@@ -22,7 +22,7 @@ class StoreUserRequest extends FormRequest
             'name' => 'required|string|max:255',
             'email' => ['required','email', Rule::unique('users','email')->whereNull('deleted_at')],
             'phone_number' => 'nullable|string|max:20',
-            'role' => 'required|in:customer,driver,partner,admin',
+            'role' => 'required|in:customer,driver,partner,partner_admin,admin',
             'admin_role' => ['nullable', 'required_if:role,admin', Rule::in(['super_admin', 'operations', 'finance', 'support'])],
             'admin_permissions' => ['nullable', 'array'],
             'admin_permissions.*' => ['string', 'max:100'],
