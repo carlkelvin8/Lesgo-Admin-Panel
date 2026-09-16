@@ -80,7 +80,7 @@
                     <i class="fas fa-crown w-5"></i> Rider Subscriptions
                 </a>
                 @endif
-                @if(auth()->user()->hasAdminPermission('partners.manage'))
+                @if(auth()->user()->hasAdminPermission('partners.manage') || auth()->user()->hasAdminPermission('partners.view'))
                 <a href="{{ route('admin.partners.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm {{ request()->routeIs('admin.partners.*') ? 'active' : '' }}">
                     <i class="fas fa-store w-5"></i> Partners
                 </a>

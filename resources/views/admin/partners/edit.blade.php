@@ -48,7 +48,7 @@
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
                 <select name="status" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">
-                    @foreach(['pending', 'approved', 'rejected', 'suspended'] as $s)
+                    @foreach(['pending', 'approved', 'active', 'rejected', 'suspended'] as $s)
                         <option value="{{ $s }}" {{ old('status', $partner->status) === $s ? 'selected' : '' }}>{{ ucfirst($s) }}</option>
                     @endforeach
                 </select>

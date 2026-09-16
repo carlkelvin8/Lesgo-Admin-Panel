@@ -10,7 +10,7 @@
 <div class="bg-white rounded-xl shadow-sm p-4 mb-6">
     <x-filter-panel action="{{ request()->url() }}">
         <x-filter-input name="search" label="Search" placeholder="Search partners..." />
-        <x-filter-input name="status" label="Status" type="select" :options="['' => 'All Status', 'pending' => 'Pending', 'approved' => 'Approved', 'rejected' => 'Rejected', 'suspended' => 'Suspended']" />
+        <x-filter-input name="status" label="Status" type="select" :options="['' => 'All Status', 'pending' => 'Pending', 'approved' => 'Approved', 'active' => 'Active', 'rejected' => 'Rejected', 'suspended' => 'Suspended']" />
     </x-filter-panel>
 </div>
 

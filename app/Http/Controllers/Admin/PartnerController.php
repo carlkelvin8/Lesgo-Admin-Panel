@@ -102,7 +102,7 @@ class PartnerController extends Controller
             'legal_name' => 'nullable|string|max:255',
             'business_type' => 'nullable|string|max:255',
             'category' => 'nullable|string|max:255',
-            'status' => 'required|in:pending,approved,rejected,suspended',
+            'status' => 'required|in:pending,approved,active,rejected,suspended',
             'is_open' => 'boolean',
             'is_featured' => 'boolean',
             'delivery_fee' => 'nullable|numeric|min:0',
