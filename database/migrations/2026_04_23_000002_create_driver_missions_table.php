@@ -9,6 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         // Mission templates (defined by admin)
+        if (!Schema::hasTable('mission_templates')) {
         Schema::create('mission_templates', function (Blueprint $table) {
             $table->id();
             $table->string('title');
@@ -22,24 +23,45 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
+        }
 
         // Driver mission progress (per driver)
-        Schema::create('driver_missions', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('driver_profile_id')->constrained('driver_profiles')->cascadeOnDelete();
-            $table->foreignId('mission_template_id')->constrained('mission_templates')->cascadeOnDelete();
-            $table->integer('current_progress')->default(0);
-            $table->integer('goal_target');
-            $table->boolean('is_completed')->default(false);
-            $table->timestamp('completed_at')->nullable();
-            $table->boolean('reward_claimed')->default(false);
-            $table->timestamp('claimed_at')->nullable();
-            $table->date('mission_date'); // for daily missions
-            $table->timestamps();
+        if (!Schema::hasTable('driver_missions')) {
+            Schema::create('driver_missions', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('driver_profile_id')->constrained('driver_profiles')->cascadeOnDelete();
+                $table->foreignId('mission_template_id')->constrained('mission_templates')->cascadeOnDelete();
+                $table->integer('current_progress')->default(0);
+                $table->integer('goal_target');
+                $table->boolean('is_completed')->default(false);
+                $table->timestamp('completed_at')->nullable();
+                $table->boolean('reward_claimed')->default(false);
+                $table->timestamp('claimed_at')->nullable();
+                $table->date('mission_date'); // for daily missions
+                $table->timestamps();
 
-            // Unique constraint: one mission per driver per day
-            $table->unique(['driver_profile_id', 'mission_template_id', 'mission_date']);
-        });
+                // Unique constraint: one mission per driver per day (short name for MySQL 64-char limit)
+                $table->unique(['driver_profile_id', 'mission_template_id', 'mission_date'], 'drv_mission_daily');
+            });
+        }
+
+        // Repair path: an earlier failed MySQL run may have left the table without its unique index.
+        if (Schema::getConnection()->getDriverName() === 'mysql' && Schema::hasTable('driver_missions')) {
+            $indexes = collect(DB::select(
+                "SELECT index_name FROM information_schema.statistics
+                 WHERE table_schema = DATABASE() AND table_name = 'driver_missions'"
+            ))->pluck('index_name');
+            if ($indexes->contains('driver_missions_driver_profile_id_mission_template_id_mission_date_unique')) {
+                Schema::table('driver_missions', function (Blueprint $table) {
+                    $table->dropUnique('driver_missions_driver_profile_id_mission_template_id_mission_date_unique');
+                });
+            }
+            if (! $indexes->contains('drv_mission_daily')) {
+                Schema::table('driver_missions', function (Blueprint $table) {
+                    $table->unique(['driver_profile_id', 'mission_template_id', 'mission_date'], 'drv_mission_daily');
+                });
+            }
+        }
     }
 
     public function down(): void

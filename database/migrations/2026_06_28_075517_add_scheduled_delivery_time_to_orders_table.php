@@ -15,7 +15,6 @@ return new class extends Migration
             // Add scheduled delivery time column
             $table->timestamp('scheduled_delivery_time')
                 ->nullable()
-                ->after('estimated_delivery_time')
                 ->comment('When customer wants delivery (NULL = ASAP)');
             
             // Add index for efficient queries on scheduled orders

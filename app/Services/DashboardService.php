@@ -107,15 +107,35 @@ class DashboardService
     public function getTopPartners(int $days = 7, int $limit = 5)
     {
         $startDate = Carbon::now()->subDays($days)->startOfDay();
-        return $this->safeRemember("dashboard:top_partners:{$days}", 300, fn () => Order::with(['partner.user'])
-            ->where('created_at', '>=', $startDate)
-            ->whereNotNull('partner_id')
-            ->select('partner_id', DB::raw('COUNT(*) as order_count'), DB::raw('SUM(actual_fare) as revenue'))
-            ->groupBy('partner_id')
-            ->orderByDesc('order_count')
-            ->take($limit)
-            ->get()
-            ->filter(fn ($row) => is_object($row) && ! empty($row->partner_id))
-            ->values());
+        return $this->safeRemember("dashboard:top_partners:{$days}", 300, function () use ($startDate, $limit) {
+            // Partner orders are resolved via menus (orders → lesbuy_items → menu_items.partner_id),
+            // since the API never populates orders.partner_id.
+            $rows = Order::query()
+                ->leftJoin('lesbuy_items', 'lesbuy_items.order_id', '=', 'orders.id')
+                ->leftJoin('menu_items', 'menu_items.id', '=', 'lesbuy_items.menu_item_id')
+                ->select(
+                    DB::raw('COALESCE(orders.partner_id, menu_items.partner_id) as partner_id'),
+                    DB::raw('COUNT(DISTINCT orders.id) as order_count'),
+                    DB::raw('SUM(COALESCE(orders.actual_fare, orders.estimated_fare, 0)) as revenue')
+                )
+                ->where('orders.created_at', '>=', $startDate)
+                ->whereNotNull(DB::raw('COALESCE(orders.partner_id, menu_items.partner_id)'))
+                ->groupBy(DB::raw('COALESCE(orders.partner_id, menu_items.partner_id)'))
+                ->orderByDesc('order_count')
+                ->limit($limit)
+                ->get()
+                ->filter(fn ($row) => is_object($row) && ! empty($row->partner_id))
+                ->values();
+
+            $ids = $rows->pluck('partner_id')->filter()->unique()->values();
+            $partners = Partner::with('user')->whereIn('id', $ids)->get()->keyBy('id');
+
+            return $rows->map(fn ($row) => [
+                'partner_id' => $row->partner_id,
+                'order_count' => $row->order_count,
+                'revenue' => $row->revenue,
+                'partner' => $partners->get((int) $row->partner_id),
+            ])->values();
+        });
     }
 }
