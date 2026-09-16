@@ -61,6 +61,12 @@ class AdminFeaturesTest extends TestCase
         }
     }
 
+    public function test_legacy_admin_dashboard_path_redirects_to_canonical_dashboard(): void
+    {
+        $this->get('/admin/dashboard')
+            ->assertRedirect(route('admin.dashboard'));
+    }
+
     public function test_admin_can_publish_a_notification_to_a_role(): void
     {
         User::factory()->count(2)->create(['role' => 'customer', 'is_active' => true]);

@@ -60,6 +60,9 @@ Route::prefix('admin')->name('admin.')->middleware(['admin', 'admin.audit'])->gr
     Route::get('/', [DashboardController::class, 'index'])
         ->middleware('admin.permission:dashboard.view')->name('dashboard');
 
+    // Backwards-compatible alias: any legacy /admin/dashboard link redirects to the canonical dashboard URL
+    Route::get('/dashboard', fn () => redirect()->route('admin.dashboard'));
+
     // Roles and permissions
     Route::middleware('admin.permission:roles.manage')->group(function () {
         Route::get('/roles-permissions', [RolePermissionController::class, 'index'])->name('roles.index');
