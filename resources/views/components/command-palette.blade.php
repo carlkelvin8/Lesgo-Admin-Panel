@@ -83,14 +83,32 @@
                 query: '',
                 selectedIndex: 0,
                 items: [
+                    @auth
+                    @if(auth()->user()->hasAdminPermission('dashboard.view'))
                     { name: 'Dashboard', url: '{{ route("admin.dashboard") }}', icon: '&#9632;', shortcut: 'Ctrl+D' },
+                    @endif
+                    @if(auth()->user()->hasAdminPermission('users.view'))
                     { name: 'Users', url: '{{ route("admin.users.index") }}', icon: '&#9775;', shortcut: 'Ctrl+U' },
+                    @endif
+                    @if(auth()->user()->hasAdminPermission('partners.manage'))
                     { name: 'Partners', url: '{{ route("admin.partners.index") }}', icon: '&#9878;' },
+                    @endif
+                    @if(auth()->user()->hasAdminPermission('orders.view'))
                     { name: 'Orders', url: '{{ route("admin.orders.index") }}', icon: '&#9881;', shortcut: 'Ctrl+O' },
+                    @endif
+                    @if(auth()->user()->hasAdminPermission('services.manage'))
                     { name: 'Services', url: '{{ route("admin.services.index") }}', icon: '&#9879;' },
+                    @endif
+                    @if(auth()->user()->hasAdminPermission('payments.view'))
                     { name: 'Payments', url: '{{ route("admin.payments.index") }}', icon: '&#36;' },
+                    @endif
+                    @if(auth()->user()->hasAdminPermission('tickets.manage'))
                     { name: 'Tickets', url: '{{ route("admin.tickets.index") }}', icon: '&#9993;' },
+                    @endif
+                    @if(auth()->user()->hasAdminPermission('security.manage'))
                     { name: 'Settings', url: '{{ route("admin.security-settings.index") }}', icon: '&#9881;' },
+                    @endif
+                    @endauth
                 ],
                 get filteredItems() {
                     if (!this.query) return this.items;

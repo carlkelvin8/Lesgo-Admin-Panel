@@ -26,7 +26,7 @@ class DriverDeletionTest extends TestCase
         $this->actingAs($admin)
             ->get(route('admin.drivers.show', $driver))
             ->assertOk()
-            ->assertSee('Delete Rider &amp; Data', false)
+            ->assertSee('Delete Rider & Data', false)
             ->assertSee(route('admin.drivers.destroy', $driver));
 
         $this->delete(route('admin.drivers.destroy', $driver))

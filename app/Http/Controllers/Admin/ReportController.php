@@ -30,7 +30,23 @@ class ReportController extends Controller
 
         $reports = $query->orderByDesc('report_date')->paginate(20)->withQueryString();
 
-        return view('admin.reports.index', compact('reports'));
+        $since = now()->subDays(30)->startOfDay();
+
+        $paidPayments = Payment::where('status', 'paid')
+            ->where(function ($query) use ($since) {
+                $query->where('paid_at', '>=', $since)
+                    ->orWhere(fn ($fallback) => $fallback->whereNull('paid_at')->where('created_at', '>=', $since));
+            });
+
+        $liveSummary = [
+            'orders_30d' => Order::where('created_at', '>=', $since)->count(),
+            'revenue_30d' => (clone $paidPayments)->sum('amount'),
+            'transactions_30d' => (clone $paidPayments)->count(),
+            'new_users_30d' => User::where('created_at', '>=', $since)->count(),
+            'new_drivers_30d' => DriverProfile::where('created_at', '>=', $since)->count(),
+        ];
+
+        return view('admin.reports.index', compact('reports', 'liveSummary'));
     }
 
     public function generate(Request $request)
@@ -132,6 +148,10 @@ class ReportController extends Controller
             $query->where('date', '<=', $request->date_to);
         }
 
+        if (! (clone $query)->exists()) {
+            return $this->liveRevenue($request);
+        }
+
         $summary = (clone $query)
             ->select(
                 DB::raw('SUM(amount) as total_revenue'),
@@ -208,5 +228,54 @@ class ReportController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    private function liveRevenue(Request $request)
+    {
+        $from = $request->filled('date_from') ? Carbon::parse($request->date_from)->startOfDay() : now()->subDays(30)->startOfDay();
+        $to = $request->filled('date_to') ? Carbon::parse($request->date_to)->endOfDay() : now()->endOfDay();
+
+        $paidPayments = Payment::where('status', 'paid')
+            ->where(function ($query) use ($from, $to) {
+                $query->whereBetween('paid_at', [$from, $to])
+                    ->orWhere(fn ($fallback) => $fallback->whereNull('paid_at')->whereBetween('created_at', [$from, $to]));
+            });
+
+        $total = (float) (clone $paidPayments)->sum('amount');
+        $count = (int) (clone $paidPayments)->count();
+
+        $byDate = (clone $paidPayments)
+            ->select(
+                DB::raw('DATE(COALESCE(paid_at, created_at)) as date'),
+                DB::raw('SUM(amount) as total_amount'),
+                DB::raw('COUNT(*) as total_transactions')
+            )
+            ->groupBy(DB::raw('DATE(COALESCE(paid_at, created_at))'))
+            ->orderBy('date')
+            ->get()
+            ->map(fn ($row) => (object) [
+                'date' => Carbon::parse($row->date),
+                'total_amount' => $row->total_amount,
+                'total_transactions' => $row->total_transactions,
+            ]);
+
+        $bySource = (clone $paidPayments)
+            ->select('method as revenue_source', DB::raw('SUM(amount) as total_amount'), DB::raw('COUNT(*) as total_transactions'), DB::raw('AVG(amount) as avg_transaction'))
+            ->groupBy('method')
+            ->orderByDesc('total_amount')
+            ->get();
+
+        $byType = collect([
+            (object) ['revenue_type' => 'gross', 'total_amount' => $total, 'total_transactions' => $count],
+        ]);
+
+        $summary = (object) [
+            'total_revenue' => $total,
+            'total_transactions' => $count,
+            'avg_transaction' => $count > 0 ? $total / $count : 0,
+            'days_with_data' => $byDate->count(),
+        ];
+
+        return view('admin.reports.revenue', compact('summary', 'byType', 'bySource', 'byDate'));
     }
 }

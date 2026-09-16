@@ -26,6 +26,7 @@
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        @if(auth()->user()->hasAdminPermission('verifications.manage'))
         <x-card href="{{ route('admin.document-verifications.index') }}" border hover class="cursor-pointer">
             <div class="flex items-center gap-4">
                 <div class="flex-shrink-0 w-12 h-12 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
@@ -37,7 +38,9 @@
                 </div>
             </div>
         </x-card>
+        @endif
 
+        @if(auth()->user()->hasAdminPermission('ratings.manage'))
         <x-card href="{{ route('admin.ratings.index') }}" border hover class="cursor-pointer">
             <div class="flex items-center gap-4">
                 <div class="flex-shrink-0 w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
@@ -49,7 +52,9 @@
                 </div>
             </div>
         </x-card>
+        @endif
 
+        @if(auth()->user()->hasAdminPermission('security.manage'))
         <x-card href="{{ route('admin.security-events.index') }}" border hover class="cursor-pointer">
             <div class="flex items-center gap-4">
                 <div class="flex-shrink-0 w-12 h-12 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
@@ -61,6 +66,7 @@
                 </div>
             </div>
         </x-card>
+        @endif
     </div>
 
     <div x-data="dashboardCharts()">
@@ -167,6 +173,7 @@
     </x-card>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        @if(auth()->user()->hasAdminPermission('orders.view'))
         <x-card>
             <x-slot name="header">
                 <div class="flex items-center justify-between">
@@ -216,7 +223,9 @@
                 </table>
             </div>
         </x-card>
+        @endif
 
+        @if(auth()->user()->hasAdminPermission('users.view'))
         <x-card>
             <x-slot name="header">
                 <div class="flex items-center justify-between">
@@ -240,7 +249,10 @@
                             @php 
                                 $userName = data_get($user, 'name', 'N/A'); 
                                 $userEmail = data_get($user, 'email', '');
-                                $userAvatar = data_get($user, 'profile_picture') ?: data_get($user, 'avatar');
+                                $userAvatar = (method_exists($user, 'profileImageUrl') ? $user->profileImageUrl() : null)
+                                ?: data_get($user, 'profile_picture')
+                                ?: data_get($user, 'profile_photo_url')
+                                ?: data_get($user, 'avatar');
                                 if ($userAvatar && !\Illuminate\Support\Str::startsWith($userAvatar, ['http://','https://'])) {
                                     try { $userAvatar = \Illuminate\Support\Facades\Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->url($userAvatar); } catch (\Throwable $e) {}
                                 }
@@ -282,6 +294,7 @@
                 </table>
             </div>
         </x-card>
+        @endif
     </div>
 
 </div>

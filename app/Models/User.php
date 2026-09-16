@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use App\Notifications\AdminResetPasswordNotification;
+use App\Services\MediaUrlService;
 
 class User extends Authenticatable
 {
@@ -22,6 +23,7 @@ class User extends Authenticatable
         'is_active',
         'password',
         'profile_picture',
+        'profile_photo_url',
         'fcm_token',
         'google_id',
         'deactivated_at',
@@ -68,6 +70,19 @@ class User extends Authenticatable
     public function documentVerifications()
     {
         return $this->hasMany(DocumentVerification::class);
+    }
+
+    public function profileImageUrl(): ?string
+    {
+        foreach (['profile_picture', 'profile_photo_url'] as $field) {
+            $value = $this->getRawOriginal($field);
+
+            if (! empty($value)) {
+                return MediaUrlService::publicUrl($value);
+            }
+        }
+
+        return null;
     }
 
     public function isAdmin(): bool

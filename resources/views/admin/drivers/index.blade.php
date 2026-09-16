@@ -49,11 +49,8 @@
             <tbody class="divide-y divide-gray-100">
                 @forelse($drivers as $driver)
                     @php
-                        $driverImage = \App\Services\MediaUrlService::publicUrl(
-                            $driver->user?->profile_picture
-                                ?: $driver->user?->getRawOriginal('profile_photo_url')
-                                ?: data_get($driver->documents, 'selfie_path')
-                        );
+                        $driverImage = $driver->user?->profileImageUrl()
+                            ?: \App\Services\MediaUrlService::publicUrl(data_get($driver->documents, 'selfie_path'));
                     @endphp
                     <tr class="hover:bg-gray-50">
                         <td class="px-4 py-4"><input type="checkbox" name="ids[]" value="{{ $driver->id }}" x-model="selected" aria-label="Select {{ $driver->user?->name ?? 'rider' }}"></td>

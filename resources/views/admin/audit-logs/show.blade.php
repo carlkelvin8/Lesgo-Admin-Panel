@@ -4,6 +4,12 @@
 
 @section('content')
 
+<div class="bg-white rounded-xl shadow-sm p-6 mb-6 border-l-4 border-blue-500">
+    <h3 class="text-sm uppercase tracking-wider text-gray-500 mb-1 font-medium"><i class="fas fa-circle-info mr-2 text-blue-600"></i>What happened</h3>
+    <p class="text-lg font-semibold text-gray-800">{{ app(\App\Services\AuditActionResolver::class)->describeForDisplay($auditLog) }}</p>
+    <p class="text-xs text-gray-400 font-mono mt-1">{{ $auditLog->action }}</p>
+</div>
+
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <!-- Event Info -->
     <div class="bg-white rounded-xl shadow-sm p-6">

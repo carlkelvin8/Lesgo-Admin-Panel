@@ -39,11 +39,8 @@
 
 @section('content')
 @php
-    $driverImage = \App\Services\MediaUrlService::publicUrl(
-        $driver->user?->profile_picture
-            ?: $driver->user?->getRawOriginal('profile_photo_url')
-            ?: data_get($driver->documents, 'selfie_path')
-    );
+    $driverImage = $driver->user?->profileImageUrl()
+        ?: \App\Services\MediaUrlService::publicUrl(data_get($driver->documents, 'selfie_path'));
 @endphp
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <div class="bg-white rounded-xl shadow-sm p-6">

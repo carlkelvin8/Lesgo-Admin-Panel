@@ -46,8 +46,8 @@
                         <td class="px-4 py-4"><input type="checkbox" name="ids[]" value="{{ $user->id }}" x-model="selected" aria-label="Select {{ $user->name }}"></td>
                         <td class="px-6 py-4" data-label="User">
                             <div class="flex items-center gap-3">
-                                @if($user->profile_picture)
-                                    <img src="{{ \Illuminate\Support\Str::startsWith($user->profile_picture, ['http://','https://']) ? $user->profile_picture : \Illuminate\Support\Facades\Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->url($user->profile_picture) }}" alt="{{ $user->name }}" class="w-8 h-8 rounded-full object-cover border">
+                                @if($user->profileImageUrl())
+                                    <img src="{{ $user->profileImageUrl() }}" alt="{{ $user->name }}" class="w-8 h-8 rounded-full object-cover border">
                                 @else
                                     <div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-sm">
                                         {{ substr($user->name, 0, 1) }}

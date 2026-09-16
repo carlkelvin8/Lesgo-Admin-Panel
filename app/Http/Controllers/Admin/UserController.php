@@ -112,12 +112,15 @@ class UserController extends Controller
             $validated['admin_role'] = null;
             $validated['admin_permissions'] = null;
         } else {
-            // Normalize admin_permissions: only keep valid keys, de-dupe, null if empty
-            if (array_key_exists('admin_permissions', $validated)) {
-                $permissionKeys = array_keys(config('admin.permissions', []));
-                $perms = array_values(array_unique(array_intersect($permissionKeys, $validated['admin_permissions'] ?? [])));
-                $validated['admin_permissions'] = empty($perms) ? null : $perms;
+            // Unchecked checkboxes are absent from the request — always resolve from raw input
+            // so clearing all extra permissions actually stores null instead of keeping old values
+            $rawPerms = $request->input('admin_permissions');
+            if (! is_array($rawPerms)) {
+                $rawPerms = [];
             }
+            $permissionKeys = array_keys(config('admin.permissions', []));
+            $perms = array_values(array_unique(array_intersect($permissionKeys, $rawPerms)));
+            $validated['admin_permissions'] = empty($perms) ? null : $perms;
             // Super admin always has '*' – don't store extra perms that confuse hasAdminPermission
             if (($validated['admin_role'] ?? $user->admin_role) === 'super_admin') {
                 $validated['admin_permissions'] = null;

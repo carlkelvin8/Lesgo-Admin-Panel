@@ -42,4 +42,15 @@ class UserFactory extends Factory
             'email_verified_at' => null,
         ]);
     }
+
+    /**
+     * Indicate that the user is a driver/rider.
+     */
+    public function driver(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'driver',
+            'is_active' => true,
+        ]);
+    }
 }

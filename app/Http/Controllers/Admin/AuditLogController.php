@@ -18,6 +18,7 @@ class AuditLogController extends Controller
             $search = $this->escapeLikePattern($request->search);
             $query->where(function ($q) use ($search) {
                 $q->where('action', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%")
                   ->orWhere('resource_type', 'like', "%{$search}%")
                   ->orWhere('ip_address', 'like', "%{$search}%")
                   ->orWhereHas('user', function ($uq) use ($search) {

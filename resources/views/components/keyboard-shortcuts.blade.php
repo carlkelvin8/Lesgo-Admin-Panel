@@ -37,6 +37,7 @@
                         <kbd class="px-2 py-1 text-xs font-mono bg-gray-100 border border-gray-300 rounded">D</kbd>
                     </div>
                 </div>
+                @if(auth()->user()->hasAdminPermission('users.view'))
                 <div class="flex items-center justify-between py-2">
                     <span class="text-sm text-gray-700">Go to Users</span>
                     <div class="flex gap-1">
@@ -44,6 +45,8 @@
                         <kbd class="px-2 py-1 text-xs font-mono bg-gray-100 border border-gray-300 rounded">U</kbd>
                     </div>
                 </div>
+                @endif
+                @if(auth()->user()->hasAdminPermission('orders.view'))
                 <div class="flex items-center justify-between py-2">
                     <span class="text-sm text-gray-700">Go to Orders</span>
                     <div class="flex gap-1">
@@ -51,6 +54,7 @@
                         <kbd class="px-2 py-1 text-xs font-mono bg-gray-100 border border-gray-300 rounded">O</kbd>
                     </div>
                 </div>
+                @endif
                 <div class="flex items-center justify-between py-2">
                     <span class="text-sm text-gray-700">Show This Help</span>
                     <kbd class="px-2 py-1 text-xs font-mono bg-gray-100 border border-gray-300 rounded">?</kbd>
@@ -95,14 +99,18 @@
                             e.preventDefault();
                             window.location.href = '{{ route("admin.dashboard") }}';
                         }
+                        @if(auth()->user()->hasAdminPermission('users.view'))
                         if (ctrl && e.key === 'u') {
                             e.preventDefault();
                             window.location.href = '{{ route("admin.users.index") }}';
                         }
+                        @endif
+                        @if(auth()->user()->hasAdminPermission('orders.view'))
                         if (ctrl && e.key === 'o') {
                             e.preventDefault();
                             window.location.href = '{{ route("admin.orders.index") }}';
                         }
+                        @endif
                     });
                 }
             }

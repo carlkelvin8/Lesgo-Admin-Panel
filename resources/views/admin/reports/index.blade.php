@@ -8,6 +8,25 @@
 @endsection
 
 @section('content')
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-blue-500">
+        <p class="text-sm text-gray-500">Orders (30d)</p>
+        <p class="text-2xl font-bold text-gray-800">{{ number_format($liveSummary['orders_30d']) }}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-green-500">
+        <p class="text-sm text-gray-500">Revenue (30d)</p>
+        <p class="text-2xl font-bold text-gray-800">₱{{ number_format($liveSummary['revenue_30d'], 2) }}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-purple-500">
+        <p class="text-sm text-gray-500">Paid Transactions (30d)</p>
+        <p class="text-2xl font-bold text-gray-800">{{ number_format($liveSummary['transactions_30d']) }}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-orange-500">
+        <p class="text-sm text-gray-500">New Users (30d)</p>
+        <p class="text-2xl font-bold text-gray-800">{{ number_format($liveSummary['new_users_30d']) }}</p>
+    </div>
+</div>
+
 <div class="bg-white rounded-xl shadow-sm p-4 mb-6">
     <x-filter-panel action="{{ request()->url() }}">
         <x-filter-input name="date_from" label="Date From" type="date" value="{{ request('date_from') }}" />

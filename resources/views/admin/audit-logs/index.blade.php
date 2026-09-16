@@ -31,6 +31,7 @@
             </thead>
             <tbody class="divide-y divide-gray-100">
                 @forelse($logs as $log)
+                    @php($description = app(\App\Services\AuditActionResolver::class)->describeForDisplay($log))
                     <tr class="hover:bg-gray-50">
                         <td class="px-6 py-4 text-gray-500 text-xs">{{ $log->occurred_at?->format('M d, Y H:i:s') ?? '-' }}</td>
                         <td class="px-6 py-4">
@@ -43,7 +44,10 @@
                                 <span class="text-gray-400 text-xs">System</span>
                             @endif
                         </td>
-                        <td class="px-6 py-4 text-gray-800 max-w-[200px] truncate">{{ $log->action }}</td>
+                        <td class="px-6 py-4 text-gray-800 max-w-[260px]">
+                            <p class="truncate" title="{{ $description }}">{{ $description }}</p>
+                            <p class="text-xs text-gray-400 font-mono truncate max-w-[260px]">{{ $log->action }}</p>
+                        </td>
                         <td class="px-6 py-4 text-gray-600 text-xs">{{ $log->resource_type }} #{{ $log->resource_id ?? '-' }}</td>
                         <td class="px-6 py-4">
                             <x-status-badge :status="$log->risk_level" />

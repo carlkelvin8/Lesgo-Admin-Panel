@@ -3,10 +3,14 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\DailyReport;
-use App\Models\RevenueAnalytics;
-use App\Models\DailyMetric;
 use App\Models\AnalyticsEvent;
+use App\Models\DailyMetric;
+use App\Models\DailyReport;
+use App\Models\Order;
+use App\Models\Payment;
+use App\Models\RevenueAnalytics;
+use App\Models\User;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class AnalyticsController extends Controller
@@ -17,6 +21,20 @@ class AnalyticsController extends Controller
         $thirtyDaysAgo = now()->subDays(30)->toDateString();
         $sevenDaysAgo = now()->subDays(7)->toDateString();
 
+        $paidPayments = fn (string $from) => Payment::where('status', 'paid')
+            ->where(function ($query) use ($from) {
+                $query->whereDate('paid_at', '>=', $from)
+                    ->orWhere(fn ($fallback) => $fallback->whereNull('paid_at')->whereDate('created_at', '>=', $from));
+            });
+
+        $paid30 = $paidPayments($thirtyDaysAgo);
+        $paid7 = $paidPayments($sevenDaysAgo);
+
+        $liveRevenue = (clone $paid30)->sum('amount');
+        $liveTransactions = (clone $paid30)->count();
+        $liveOrders = Order::whereDate('created_at', '>=', $thirtyDaysAgo)->count();
+        $liveNewUsers = User::whereDate('created_at', '>=', $thirtyDaysAgo)->count();
+
         $todayMetrics = DailyMetric::where('date', $today)
             ->get()
             ->groupBy('metric_type');
@@ -25,21 +43,60 @@ class AnalyticsController extends Controller
             ->take(14)
             ->get();
 
-        $revenueByType = RevenueAnalytics::where('date', '>=', $thirtyDaysAgo)
+        $tableRevenue = RevenueAnalytics::where('date', '>=', $thirtyDaysAgo)
             ->select('revenue_type', DB::raw('SUM(amount) as total_amount'), DB::raw('SUM(transaction_count) as total_transactions'))
             ->groupBy('revenue_type')
             ->get();
 
-        $totalRevenue = RevenueAnalytics::where('date', '>=', $thirtyDaysAgo)->sum('amount');
-        $totalTransactions = RevenueAnalytics::where('date', '>=', $thirtyDaysAgo)->sum('transaction_count');
-        $totalOrders = DailyReport::where('report_date', '>=', $thirtyDaysAgo)->sum('total_orders');
-        $totalNewUsers = DailyReport::where('report_date', '>=', $thirtyDaysAgo)->sum('new_users');
-        $avgDailyRevenue = DailyReport::where('report_date', '>=', $thirtyDaysAgo)->avg('total_revenue') ?? 0;
+        if ($tableRevenue->isNotEmpty()) {
+            $revenueByType = $tableRevenue;
+            $totalRevenue = (float) $tableRevenue->sum('total_amount');
+            $totalTransactions = (int) $tableRevenue->sum('total_transactions');
+        } else {
+            $revenueByType = collect([
+                (object) ['revenue_type' => 'gross', 'total_amount' => $liveRevenue, 'total_transactions' => $liveTransactions],
+            ]);
+            $totalRevenue = $liveRevenue;
+            $totalTransactions = $liveTransactions;
+        }
 
-        $dailyRevenueTrend = DailyReport::where('report_date', '>=', $sevenDaysAgo)
+        $tableTrend = DailyReport::where('report_date', '>=', $sevenDaysAgo)
             ->select('report_date', 'total_revenue', 'total_orders')
             ->orderBy('report_date')
             ->get();
+
+        if ($tableTrend->isNotEmpty()) {
+            $dailyRevenueTrend = $tableTrend;
+        } else {
+            $dailyRevenueTrend = (clone $paid7)
+                ->select(
+                    DB::raw('DATE(COALESCE(paid_at, created_at)) as report_date'),
+                    DB::raw('SUM(amount) as total_revenue'),
+                    DB::raw('COUNT(*) as total_orders')
+                )
+                ->groupBy(DB::raw('DATE(COALESCE(paid_at, created_at))'))
+                ->orderBy('report_date')
+                ->get()
+                ->map(fn ($row) => (object) [
+                    'report_date' => Carbon::parse($row->report_date),
+                    'total_revenue' => $row->total_revenue,
+                    'total_orders' => $row->total_orders,
+                ]);
+        }
+
+        if ($todayMetrics->isEmpty()) {
+            $todayOrders = Order::whereDate('created_at', $today)->count();
+            $todayRevenue = (clone $paidPayments($today))->sum('amount');
+            $todayUsers = User::whereDate('created_at', $today)->count();
+
+            $todayMetrics = collect([
+                'operations' => collect([
+                    (object) ['metric_key' => 'total_orders_today', 'metric_value' => $todayOrders],
+                    (object) ['metric_key' => 'new_users_today', 'metric_value' => $todayUsers],
+                    (object) ['metric_key' => 'total_revenue_today', 'metric_value' => $todayRevenue],
+                ]),
+            ]);
+        }
 
         $eventStats = AnalyticsEvent::where('event_time', '>=', now()->subDays(7))
             ->select('event_type', DB::raw('COUNT(*) as count'))
@@ -48,11 +105,13 @@ class AnalyticsController extends Controller
             ->take(5)
             ->get();
 
+        $activeDays = $dailyRevenueTrend->count();
+
         $stats = [
             'total_revenue' => $totalRevenue,
-            'total_orders' => $totalOrders,
-            'avg_daily_revenue' => $avgDailyRevenue,
-            'total_new_users' => $totalNewUsers,
+            'total_orders' => $liveOrders,
+            'avg_daily_revenue' => $activeDays > 0 ? $totalRevenue / $activeDays : 0,
+            'total_new_users' => $liveNewUsers,
             'total_transactions' => $totalTransactions,
         ];
 

@@ -79,7 +79,9 @@ class PartnerController extends Controller
         }
         unset($validated['logo'], $validated['cover_image']);
 
-        $validated['slug'] = Str::slug($validated['name']) . '-' . Str::random(5);
+        $validated['delivery_fee'] = $validated['delivery_fee'] ?? 0;
+
+        $validated['slug'] = Str::limit(Str::slug($validated['name']), 250, '') . '-' . Str::random(5);
         $validated['status'] = 'pending';
 
         Partner::create($validated);
@@ -129,6 +131,8 @@ class PartnerController extends Controller
             $validated['cover_image_url'] = null;
         }
         unset($validated['logo'], $validated['cover_image'], $validated['remove_logo'], $validated['remove_cover']);
+
+        $validated['delivery_fee'] = $validated['delivery_fee'] ?? 0;
 
         // Enforce fee + approval for merchant activation (approved ≈ active)
         $requestedStatus = $validated['status'];

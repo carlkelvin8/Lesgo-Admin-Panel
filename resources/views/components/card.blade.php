@@ -8,5 +8,10 @@
 @endphp
 
 <{{ $tag }} {{ $href ? "href=\"{$href}\"" : '' }} class="{{ $classes }}">
+    @isset($header)
+        <div class="border-b border-gray-100 dark:border-gray-800 pb-4 mb-4">
+            {{ $header }}
+        </div>
+    @endisset
     {{ $slot }}
 </{{ $tag }}>
