@@ -6,23 +6,67 @@
 <div class="space-y-6">
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        @if(auth()->user()->hasAdminPermission('users.view'))
+        <x-stat-card label="Total Users" :value="$stats['total_users'] ?? 0" icon="users" color="blue" href="{{ route('admin.users.index') }}" />
+        @else
         <x-stat-card label="Total Users" :value="$stats['total_users'] ?? 0" icon="users" color="blue" />
+        @endif
+        @if(auth()->user()->hasAdminPermission('orders.view'))
+        <x-stat-card label="Total Orders" :value="$stats['total_orders'] ?? 0" icon="shopping-cart" color="green" href="{{ route('admin.orders.index') }}" />
+        @else
         <x-stat-card label="Total Orders" :value="$stats['total_orders'] ?? 0" icon="shopping-cart" color="green" />
+        @endif
+        @if(auth()->user()->hasAdminPermission('partners.view'))
+        <x-stat-card label="Total Partners" :value="$stats['total_partners'] ?? 0" icon="building" color="purple" href="{{ route('admin.partners.index') }}" />
+        @else
         <x-stat-card label="Total Partners" :value="$stats['total_partners'] ?? 0" icon="building" color="purple" />
+        @endif
+        @if(auth()->user()->hasAdminPermission('drivers.manage'))
+        <x-stat-card label="Total Drivers" :value="$stats['total_drivers'] ?? 0" icon="truck" color="orange" href="{{ route('admin.drivers.index') }}" />
+        @else
         <x-stat-card label="Total Drivers" :value="$stats['total_drivers'] ?? 0" icon="truck" color="orange" />
+        @endif
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        @if(auth()->user()->hasAdminPermission('payments.view'))
+        <x-stat-card label="Revenue" :value="$stats['total_revenue'] ?? 0" icon="dollar-sign" color="green" format="currency" href="{{ route('admin.payments.index') }}" />
+        @else
         <x-stat-card label="Revenue" :value="$stats['total_revenue'] ?? 0" icon="dollar-sign" color="green" format="currency" />
+        @endif
+        @if(auth()->user()->hasAdminPermission('tickets.manage'))
+        <x-stat-card label="Open Tickets" :value="$stats['open_tickets'] ?? 0" icon="ticket" color="yellow" href="{{ route('admin.tickets.index') }}" />
+        @else
         <x-stat-card label="Open Tickets" :value="$stats['open_tickets'] ?? 0" icon="ticket" color="yellow" />
+        @endif
+        @if(auth()->user()->hasAdminPermission('orders.view'))
+        <x-stat-card label="Pending Orders" :value="$stats['pending_orders'] ?? 0" icon="clock" color="red" href="{{ route('admin.orders.index', ['status' => 'pending']) }}" />
+        @else
         <x-stat-card label="Pending Orders" :value="$stats['pending_orders'] ?? 0" icon="clock" color="red" />
+        @endif
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        @if(auth()->user()->hasAdminPermission('orders.view'))
+        <x-stat-card label="Completed Orders" :value="$stats['completed_orders'] ?? 0" icon="check-circle" color="green" href="{{ route('admin.orders.index', ['status' => 'completed']) }}" />
+        @else
         <x-stat-card label="Completed Orders" :value="$stats['completed_orders'] ?? 0" icon="check-circle" color="green" />
+        @endif
+        @if(auth()->user()->hasAdminPermission('users.view'))
+        <x-stat-card label="Active Users" :value="$stats['active_users'] ?? 0" icon="user-check" color="blue" href="{{ route('admin.users.index', ['status' => 'active']) }}" />
+        @else
         <x-stat-card label="Active Users" :value="$stats['active_users'] ?? 0" icon="user-check" color="blue" />
+        @endif
+        @if(auth()->user()->hasAdminPermission('partners.view'))
+        <x-stat-card label="Active Partners" :value="$stats['active_partners'] ?? 0" icon="building" color="purple" href="{{ route('admin.partners.index', ['status' => 'active']) }}" />
+        @else
         <x-stat-card label="Active Partners" :value="$stats['active_partners'] ?? 0" icon="building" color="purple" />
+        @endif
+        @if(auth()->user()->hasAdminPermission('ratings.manage'))
+        <x-stat-card label="Pending Reviews" :value="$stats['pending_reviews'] ?? 0" icon="star" color="yellow" href="{{ route('admin.ratings.index') }}" />
+        @else
         <x-stat-card label="Pending Reviews" :value="$stats['pending_reviews'] ?? 0" icon="star" color="yellow" />
+        @endif
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">

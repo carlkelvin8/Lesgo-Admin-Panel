@@ -12,7 +12,7 @@
     ];
     $c = $colorMap[$color] ?? $colorMap['blue'];
     $classes = "bg-white rounded-xl shadow-sm p-6 border-l-4 {$c['border']}";
-    if ($href) $classes .= ' hover:shadow-md transition-shadow';
+    if ($href) $classes .= ' hover:shadow-md transition-shadow cursor-pointer block';
     $displayValue = $value;
     if ($format === 'currency') $displayValue = number_format((float) $value, 2);
     elseif ($format === 'number') $displayValue = number_format((int) $value);
