@@ -75,42 +75,63 @@ class DashboardService
 
     public function getStats(): array
     {
-        return $this->safeRemember('dashboard:stats', 300, fn () => $this->fetchStats());
+        return $this->safeRemember('dashboard:stats', 600, fn () => $this->fetchStats());
     }
 
     private function fetchStats(): array
     {
+        $paymentStatuses = implode(',', array_map(fn ($s) => "'{$s}'", self::PAID_STATUSES));
+
+        $row = (object) DB::selectOne("
+            SELECT
+                (SELECT COUNT(*) FROM users) AS total_users,
+                (SELECT COUNT(*) FROM orders) AS total_orders,
+                (SELECT COUNT(*) FROM partners) AS total_partners,
+                (SELECT COUNT(*) FROM driver_profiles) AS total_drivers,
+                (SELECT COUNT(*) FROM support_tickets WHERE status IN ('open','in_progress','waiting_internal')) AS open_tickets,
+                (SELECT COUNT(*) FROM orders WHERE status = 'pending') AS pending_orders,
+                (SELECT COUNT(*) FROM orders WHERE status = 'completed') AS completed_orders,
+                (SELECT COUNT(*) FROM users WHERE is_active = true) AS active_users,
+                (SELECT COUNT(*) FROM partners WHERE is_open = true) AS active_partners,
+                (SELECT COUNT(*) FROM document_verifications WHERE status IN ('pending','under_review')) AS pending_verifications,
+                (SELECT COUNT(*) FROM ratings_reviews WHERE status IN ('pending','flagged')) AS pending_reviews,
+                (SELECT COUNT(*) FROM security_events WHERE is_resolved = false) AS open_security_events,
+                (SELECT COUNT(*) FROM orders WHERE payment_status = 'paid') AS paid_order_count,
+                (SELECT COALESCE(SUM(COALESCE(actual_fare, estimated_fare, 0)), 0) FROM orders WHERE payment_status = 'paid') AS paid_order_revenue,
+                (SELECT COALESCE(SUM(amount), 0) FROM payments WHERE status IN ({$paymentStatuses})) AS payment_revenue
+        ");
+
         return [
-            'total_users' => User::count(),
-            'total_orders' => Order::count(),
-            'total_partners' => Partner::count(),
-            'total_drivers' => DriverProfile::count(),
-            'open_tickets' => SupportTicket::whereIn('status', ['open', 'in_progress', 'waiting_internal'])->count(),
-            'total_revenue' => $this->revenueTotal(),
-            'pending_orders' => Order::where('status', 'pending')->count(),
-            'completed_orders' => Order::where('status', 'completed')->count(),
-            'active_users' => User::where('is_active', true)->count(),
-            'active_partners' => Partner::where('is_open', true)->count(),
-            'pending_verifications' => DocumentVerification::whereIn('status', ['pending', 'under_review'])->count(),
-            'pending_reviews' => RatingReview::whereIn('status', ['pending', 'flagged'])->count(),
-            'open_security_events' => SecurityEvent::where('is_resolved', false)->count(),
+            'total_users' => (int) $row->total_users,
+            'total_orders' => (int) $row->total_orders,
+            'total_partners' => (int) $row->total_partners,
+            'total_drivers' => (int) $row->total_drivers,
+            'open_tickets' => (int) $row->open_tickets,
+            'total_revenue' => (float) ((int) $row->paid_order_count > 0 ? $row->paid_order_revenue : $row->payment_revenue),
+            'pending_orders' => (int) $row->pending_orders,
+            'completed_orders' => (int) $row->completed_orders,
+            'active_users' => (int) $row->active_users,
+            'active_partners' => (int) $row->active_partners,
+            'pending_verifications' => (int) $row->pending_verifications,
+            'pending_reviews' => (int) $row->pending_reviews,
+            'open_security_events' => (int) $row->open_security_events,
         ];
     }
 
     public function getRecentOrders(int $limit = 10)
     {
-        return $this->safeRemember("dashboard:recent_orders:{$limit}", 60, fn () => Order::with(['customer', 'partner'])->latest()->take($limit)->get());
+        return $this->safeRemember("dashboard:recent_orders:{$limit}", 120, fn () => Order::with(['customer', 'partner'])->latest()->take($limit)->get());
     }
 
     public function getRecentUsers(int $limit = 10)
     {
-        return $this->safeRemember("dashboard:recent_users:{$limit}", 60, fn () => User::latest()->take($limit)->get());
+        return $this->safeRemember("dashboard:recent_users:{$limit}", 120, fn () => User::latest()->take($limit)->get());
     }
 
     public function getDailyRevenue(int $days = 7)
     {
         $startDate = Carbon::now()->subDays($days)->startOfDay();
-        return $this->safeRemember("dashboard:daily_revenue:{$days}", 300, function () use ($startDate) {
+        return $this->safeRemember("dashboard:daily_revenue:{$days}", 600, function () use ($startDate) {
             if ($this->usesOrdersForRevenue()) {
                 return Order::where('payment_status', 'paid')
                     ->where('created_at', '>=', $startDate)
@@ -131,14 +152,14 @@ class DashboardService
 
     public function getOrderStatusDistribution()
     {
-        return $this->safeRemember('dashboard:order_status_dist', 300, fn () => Order::select('status', DB::raw('count(*) as total'))
+        return $this->safeRemember('dashboard:order_status_dist', 600, fn () => Order::select('status', DB::raw('count(*) as total'))
             ->groupBy('status')->get());
     }
 
     public function getDailyUsers(int $days = 7)
     {
         $startDate = Carbon::now()->subDays($days)->startOfDay();
-        return $this->safeRemember("dashboard:daily_users:{$days}", 300, fn () => User::where('created_at', '>=', $startDate)
+        return $this->safeRemember("dashboard:daily_users:{$days}", 600, fn () => User::where('created_at', '>=', $startDate)
             ->select(DB::raw('DATE(created_at) as date'), DB::raw('COUNT(*) as total'))
             ->groupBy('date')->orderBy('date')->get());
     }
@@ -146,7 +167,7 @@ class DashboardService
     public function getTopPartners(int $days = 7, int $limit = 5)
     {
         $startDate = Carbon::now()->subDays($days)->startOfDay();
-        return $this->safeRemember("dashboard:top_partners:{$days}", 300, function () use ($startDate, $limit) {
+        return $this->safeRemember("dashboard:top_partners:{$days}", 600, function () use ($startDate, $limit) {
             // Partner orders are resolved via menus (orders → lesbuy_items → menu_items.partner_id),
             // since the API never populates orders.partner_id.
             $partnerExpr = 'COALESCE(orders.partner_id, menu_items.partner_id, menu_categories.partner_id, services.partner_id)';
