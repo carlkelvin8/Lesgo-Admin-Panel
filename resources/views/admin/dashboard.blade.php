@@ -149,7 +149,12 @@
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">User Growth</h3>
                 </x-slot>
                 <div class="h-64">
-                    <canvas x-ref="userGrowthChart" x-init="initUserGrowth()"></canvas>
+                    @forelse($dailyUsers as $_du)
+                        <canvas x-ref="userGrowthChart" x-init="initUserGrowth()"></canvas>
+                        @break
+                    @empty
+                        <x-empty-state icon="users" title="No user growth yet" description="New user registrations will appear here." />
+                    @endforelse
                 </div>
             </x-card>
         </div>

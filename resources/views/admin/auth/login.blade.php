@@ -71,7 +71,7 @@
         <i class="fas fa-shield-halved text-blue-500"></i>
         <span>Your session is encrypted and monitored.</span>
     </div>
-    <!-- lesgo-admin-build:2026-09-18-b -->
+    <!-- lesgo-admin-build:2026-09-18-c -->
 @endsection
 
 @push('scripts')
