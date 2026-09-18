@@ -207,7 +207,7 @@
                     @empty
                         <tr>
                             <td colspan="3">
-                                <x-empty-state icon="building" title="No partners found" description="No partner data available yet." />
+                                <x-empty-state icon="building" title="No partner orders yet" description="Orders tied to a partner will appear here (via menu items, category, or service)." />
                             </td>
                         </tr>
                     @endforelse

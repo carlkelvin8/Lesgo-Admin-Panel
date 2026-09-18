@@ -54,6 +54,25 @@ class DashboardService
         }
     }
 
+    /**
+     * Revenue is recorded on orders in this system (orders.payment_status / actual_fare);
+     * the payments table is usually empty. Fall back to payments only when no paid orders exist.
+     */
+    private function usesOrdersForRevenue(): bool
+    {
+        return Order::where('payment_status', 'paid')->exists();
+    }
+
+    private function revenueTotal(): float
+    {
+        if ($this->usesOrdersForRevenue()) {
+            return (float) Order::where('payment_status', 'paid')
+                ->sum(DB::raw('COALESCE(actual_fare, estimated_fare, 0)'));
+        }
+
+        return (float) Payment::whereIn('status', self::PAID_STATUSES)->sum('amount');
+    }
+
     public function getStats(): array
     {
         return $this->safeRemember('dashboard:stats', 300, fn () => $this->fetchStats());
@@ -67,7 +86,7 @@ class DashboardService
             'total_partners' => Partner::count(),
             'total_drivers' => DriverProfile::count(),
             'open_tickets' => SupportTicket::whereIn('status', ['open', 'in_progress', 'waiting_internal'])->count(),
-            'total_revenue' => Payment::whereIn('status', self::PAID_STATUSES)->sum('amount'),
+            'total_revenue' => $this->revenueTotal(),
             'pending_orders' => Order::where('status', 'pending')->count(),
             'completed_orders' => Order::where('status', 'completed')->count(),
             'active_users' => User::where('is_active', true)->count(),
@@ -91,10 +110,23 @@ class DashboardService
     public function getDailyRevenue(int $days = 7)
     {
         $startDate = Carbon::now()->subDays($days)->startOfDay();
-        return $this->safeRemember("dashboard:daily_revenue:{$days}", 300, fn () => Payment::whereIn('status', self::PAID_STATUSES)
-            ->where('created_at', '>=', $startDate)
-            ->select(DB::raw('DATE(created_at) as date'), DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as count'))
-            ->groupBy('date')->orderBy('date')->get());
+        return $this->safeRemember("dashboard:daily_revenue:{$days}", 300, function () use ($startDate) {
+            if ($this->usesOrdersForRevenue()) {
+                return Order::where('payment_status', 'paid')
+                    ->where('created_at', '>=', $startDate)
+                    ->select(
+                        DB::raw('DATE(created_at) as date'),
+                        DB::raw('SUM(COALESCE(actual_fare, estimated_fare, 0)) as total'),
+                        DB::raw('COUNT(*) as count')
+                    )
+                    ->groupBy('date')->orderBy('date')->get();
+            }
+
+            return Payment::whereIn('status', self::PAID_STATUSES)
+                ->where('created_at', '>=', $startDate)
+                ->select(DB::raw('DATE(created_at) as date'), DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as count'))
+                ->groupBy('date')->orderBy('date')->get();
+        });
     }
 
     public function getOrderStatusDistribution()

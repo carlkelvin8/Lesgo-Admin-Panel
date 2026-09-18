@@ -35,17 +35,21 @@ class DashboardDiagnose extends Command
         $this->show('orders (total)', Order::count());
         $this->show('partners (total)', Partner::count());
         $this->show('orders pending', Order::where('status', 'pending')->count());
+        $this->show('orders paid', Order::where('payment_status', 'paid')->count());
+        $this->show('revenue from paid orders', Order::where('payment_status', 'paid')->sum(DB::raw('COALESCE(actual_fare, estimated_fare, 0)')));
+        $this->show('payments rows (legacy)', Payment::count());
         $this->show('payments paid + sum', Payment::whereIn('status', $paid)->count().' / '.Payment::whereIn('status', $paid)->sum('amount'));
 
         $this->line('');
-        $this->line('--- Revenue Overview: paid payments in the last 7 days ---');
-        $this->show('last 7d paid payments', Payment::whereIn('status', $paid)->where(function ($q) use ($week) {
-            $q->where('paid_at', '>=', $week)->orWhereNull('paid_at')->where('created_at', '>=', $week);
-        })->count());
+        $this->line('--- Revenue Overview (paid orders in the last 7 days) ---');
+        $this->show('last 7d paid orders', Order::where('payment_status', 'paid')->where('created_at', '>=', $week)->count());
+        $this->show('last 7d paid order revenue', Order::where('payment_status', 'paid')->where('created_at', '>=', $week)->sum(DB::raw('COALESCE(actual_fare, estimated_fare, 0)')));
         $this->show('payments per status', Payment::select('status', DB::raw('count(*) as total'))->groupBy('status')->orderByDesc('total')->get()
             ->map(fn ($r) => $r->status.'='.$r->total)->implode(', '));
-        $latestPaid = Payment::whereIn('status', $paid)->max('created_at');
-        $this->line('       latest paid payment created_at: '.($latestPaid ?? 'none'));
+        $this->show('order payment_status per status', Order::select('payment_status', DB::raw('count(*) as total'))->groupBy('payment_status')->orderByDesc('total')->get()
+            ->map(fn ($r) => $r->payment_status.'='.$r->total)->implode(', '));
+        $latestPaid = Order::where('payment_status', 'paid')->max('created_at');
+        $this->line('       latest paid order created_at: '.($latestPaid ?? 'none'));
 
         $this->line('');
         $this->line('--- Order Status Distribution ---');
