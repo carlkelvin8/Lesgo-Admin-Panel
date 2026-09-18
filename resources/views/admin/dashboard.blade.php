@@ -113,7 +113,7 @@
         @endif
     </div>
 
-    <div x-data="dashboardCharts">
+    <div x-data="dashboardCharts()">
         <div class="flex items-center justify-between mb-4">
             <div></div>
             <div class="flex items-center gap-2">

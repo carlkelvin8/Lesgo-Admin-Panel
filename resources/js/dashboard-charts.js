@@ -171,6 +171,6 @@ function dashboardCharts() {
 }
 
 window.dashboardCharts = dashboardCharts;
-window.addEventListener('alpine:init', () => {
+document.addEventListener('alpine:init', () => {
     window.Alpine.data('dashboardCharts', dashboardCharts);
 });
