@@ -27,7 +27,8 @@ function dashboardCharts() {
         async initRevenue() {
             const Chart = await ensureChart();
             const ctx = this.$refs.revenueChart.getContext('2d');
-            const data = asChartArray(window.dashboardData?.dailyRevenue);
+            const data = asChartArray(window.dashboardData?.dailyRevenue)
+                .filter(item => item !== null && typeof item === 'object' && typeof item.date === 'string');
             this.revenueChart = new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -95,9 +96,12 @@ function dashboardCharts() {
                 'cancelled': '#ef4444', 'refunded': '#8b5cf6', 'delivered': '#06b6d4', 'shipped': '#ec4899'
             };
             const defaults = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899','#6366f1'];
-            const labels = data.map(item => item.status.charAt(0).toUpperCase() + item.status.slice(1));
-            const values = data.map(item => item.total);
-            const colors = data.map((item, i) => statusColors[item.status.toLowerCase()] || defaults[i % defaults.length]);
+            const rows = data.filter(item =>
+                item !== null && typeof item === 'object' && typeof item.status === 'string'
+            );
+            const labels = rows.map(item => item.status.charAt(0).toUpperCase() + item.status.slice(1));
+            const values = rows.map(item => Number(item.total) || 0);
+            const colors = rows.map((item, i) => statusColors[item.status.toLowerCase()] || defaults[i % defaults.length]);
 
             this.orderStatusChart = new Chart(ctx, {
                 type: 'doughnut',
@@ -136,7 +140,8 @@ function dashboardCharts() {
         async initUserGrowth() {
             const Chart = await ensureChart();
             const ctx = this.$refs.userGrowthChart.getContext('2d');
-            const data = asChartArray(window.dashboardData?.dailyUsers);
+            const data = asChartArray(window.dashboardData?.dailyUsers)
+                .filter(item => item !== null && typeof item === 'object' && typeof item.date === 'string');
 
             if (data.length === 0) {
                 // Show a friendly empty state inside the canvas area
