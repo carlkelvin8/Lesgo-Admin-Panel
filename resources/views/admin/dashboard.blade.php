@@ -113,7 +113,7 @@
         @endif
     </div>
 
-    <div x-data="dashboardCharts()">
+    <div x-data="dashboardCharts">
         <div class="flex items-center justify-between mb-4">
             <div></div>
             <div class="flex items-center gap-2">
@@ -350,7 +350,6 @@
 @endsection
 
 @section('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script>
 window.dashboardData = {
     dailyRevenue: @json($dailyRevenue),

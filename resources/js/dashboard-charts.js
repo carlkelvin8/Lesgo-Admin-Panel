@@ -1,3 +1,5 @@
+import { Chart } from 'chart.js';
+
 function dashboardCharts() {
     return {
         revenueChart: null,
@@ -169,3 +171,8 @@ function dashboardCharts() {
         }
     };
 }
+
+window.dashboardCharts = dashboardCharts;
+window.addEventListener('alpine:init', () => {
+    window.Alpine.data('dashboardCharts', dashboardCharts);
+});
