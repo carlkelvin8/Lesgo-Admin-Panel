@@ -15,7 +15,6 @@ use App\Models\SupportTicket;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Concurrency;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -39,8 +38,13 @@ class DashboardService
     // ──────────────────────────────────────────────────────────────────────────
 
     /**
-     * Load all dashboard data in one shot using concurrent DB calls.
-     * Each closure is executed in parallel; results are keyed by array position.
+     * Load all dashboard data, using the cache when available.
+     *
+     * Concurrency::run() requires closures to be serialisable (they must be
+     * defined inside a named file, not generated at call-time via eval / artisan
+     * tinker / etc.).  Rather than risk a silent crash-and-double-execute, we
+     * run the queries sequentially.  The page-level cache (120 s TTL) means the
+     * sequential path is only hit on a cold load, which is fast enough.
      */
     public function getAll(int $days = 7): array
     {
@@ -49,35 +53,20 @@ class DashboardService
             return $cached;
         }
 
-        $workers = [
-            fn () => $this->fetchStats(),
-            fn () => $this->fetchRecentOrders(),
-            fn () => $this->fetchRecentUsers(),
-            fn () => $this->fetchDailyRevenue($days),
-            fn () => $this->fetchOrderStatusDistribution(),
-            fn () => $this->fetchDailyUsers($days),
-            fn () => $this->fetchTopPartners($days),
-        ];
-
-        try {
-            [$stats, $recentOrders, $recentUsers, $dailyRevenue, $orderStatusDist, $dailyUsers, $topPartners]
-                = Concurrency::run($workers);
-        } catch (Throwable $e) {
-            // A subprocess worker hiccup (eg. sqlite :memory: in tests) must never
-            // take the whole dashboard down — fall back to sequential queries.
-            report($e);
-            $workerResults = array_map(fn (callable $worker) => $worker(), $workers);
-            [$stats, $recentOrders, $recentUsers, $dailyRevenue, $orderStatusDist, $dailyUsers, $topPartners]
-                = $workerResults;
-        }
+        $stats           = $this->fetchStats();
+        $recentOrders    = $this->fetchRecentOrders();
+        $recentUsers     = $this->fetchRecentUsers();
+        $dailyRevenue    = $this->fetchDailyRevenue($days);
+        $orderStatusDist = $this->fetchOrderStatusDistribution();
+        $dailyUsers      = $this->fetchDailyUsers($days);
+        $topPartners     = $this->fetchTopPartners($days);
 
         $result = compact(
             'stats', 'recentOrders', 'recentUsers',
             'dailyRevenue', 'orderStatusDist', 'dailyUsers', 'topPartners'
         );
 
-        // Store combined payload — shorter TTL (120 s) so recent data stays fresh,
-        // while individual heavy queries benefit from the same warm cache.
+        // Cache the combined payload (120 s) so subsequent hits are instant.
         try {
             Cache::put('dashboard:all:'.$days, $result, 120);
         } catch (Throwable $e) {
@@ -268,56 +257,20 @@ class DashboardService
      *  2. For orders that lack partner_id (lesgo-buy / checklist orders), we
      *     fall back to menu_items.partner_id via lesbuy_items.
      *  3. A final GROUP BY on the resolved partner_id gives us the ranking.
-     *
-     * This avoids the previous four-table correlated COALESCE which could
-     * resolve to ambiguous nulls and mask real partners.
+     *  4. If the date-filtered window returns no results (e.g. on a fresh DB or
+     *     when the period is shorter than the oldest order), we fall back to
+     *     all-time data so the table is never left showing "No partner orders".
      */
     private function fetchTopPartners(int $days = 7, int $limit = 5): array
     {
         $startDate = Carbon::now()->subDays($days)->startOfDay();
 
-        // Step 1 — orders that have a direct partner_id
-        $directRows = DB::table('orders')
-            ->select(
-                'partner_id',
-                DB::raw('COUNT(*) as order_count'),
-                DB::raw('SUM(COALESCE(actual_fare, estimated_fare, 0)) as revenue')
-            )
-            ->whereNotNull('partner_id')
-            ->where('created_at', '>=', $startDate)
-            ->groupBy('partner_id');
+        $rows = $this->queryTopPartnerRows($startDate, $limit);
 
-        // Step 2 — orders without partner_id, resolved via lesbuy_items → menu_items
-        $indirectRows = DB::table('orders')
-            ->join('lesbuy_items', 'lesbuy_items.order_id', '=', 'orders.id')
-            ->join('menu_items', 'menu_items.id', '=', 'lesbuy_items.menu_item_id')
-            ->select(
-                'menu_items.partner_id',
-                DB::raw('COUNT(DISTINCT orders.id) as order_count'),
-                DB::raw('SUM(COALESCE(orders.actual_fare, orders.estimated_fare, 0)) as revenue')
-            )
-            ->whereNull('orders.partner_id')
-            ->whereNotNull('menu_items.partner_id')
-            ->where('orders.created_at', '>=', $startDate)
-            ->groupBy('menu_items.partner_id');
-
-        // Step 3 — UNION and re-aggregate
-        $rows = DB::table(DB::raw('('
-                .$directRows->toSql()
-                .' UNION ALL '
-                .$indirectRows->toSql()
-                .') as combined'))
-            ->mergeBindings($directRows)
-            ->mergeBindings($indirectRows)
-            ->select(
-                'partner_id',
-                DB::raw('SUM(order_count) as order_count'),
-                DB::raw('SUM(revenue) as revenue')
-            )
-            ->groupBy('partner_id')
-            ->orderByDesc('order_count')
-            ->limit($limit)
-            ->get();
+        // Fall back to all-time when the window is empty.
+        if ($rows->isEmpty()) {
+            $rows = $this->queryTopPartnerRows(null, $limit);
+        }
 
         if ($rows->isEmpty()) {
             return [];
@@ -341,6 +294,66 @@ class DashboardService
             ->filter(fn ($item) => $item['partner'] !== null)   // drop orphan IDs
             ->values()
             ->all();
+    }
+
+    /**
+     * Run the UNION query that resolves partner_id from direct orders and
+     * indirect orders (via lesbuy_items → menu_items).
+     *
+     * @param  \Carbon\Carbon|null  $startDate  When null, no date filter is applied.
+     */
+    private function queryTopPartnerRows(?\Carbon\Carbon $startDate, int $limit = 5)
+    {
+        // Step 1 — orders that have a direct partner_id
+        $directRows = DB::table('orders')
+            ->select(
+                'partner_id',
+                DB::raw('COUNT(*) as order_count'),
+                DB::raw('SUM(COALESCE(actual_fare, estimated_fare, 0)) as revenue')
+            )
+            ->whereNotNull('partner_id');
+
+        if ($startDate !== null) {
+            $directRows->where('created_at', '>=', $startDate);
+        }
+
+        $directRows->groupBy('partner_id');
+
+        // Step 2 — orders without partner_id, resolved via lesbuy_items → menu_items
+        $indirectRows = DB::table('orders')
+            ->join('lesbuy_items', 'lesbuy_items.order_id', '=', 'orders.id')
+            ->join('menu_items', 'menu_items.id', '=', 'lesbuy_items.menu_item_id')
+            ->select(
+                'menu_items.partner_id',
+                DB::raw('COUNT(DISTINCT orders.id) as order_count'),
+                DB::raw('SUM(COALESCE(orders.actual_fare, orders.estimated_fare, 0)) as revenue')
+            )
+            ->whereNull('orders.partner_id')
+            ->whereNotNull('menu_items.partner_id');
+
+        if ($startDate !== null) {
+            $indirectRows->where('orders.created_at', '>=', $startDate);
+        }
+
+        $indirectRows->groupBy('menu_items.partner_id');
+
+        // Step 3 — UNION and re-aggregate
+        return DB::table(DB::raw('('
+                .$directRows->toSql()
+                .' UNION ALL '
+                .$indirectRows->toSql()
+                .') as combined'))
+            ->mergeBindings($directRows)
+            ->mergeBindings($indirectRows)
+            ->select(
+                'partner_id',
+                DB::raw('SUM(order_count) as order_count'),
+                DB::raw('SUM(revenue) as revenue')
+            )
+            ->groupBy('partner_id')
+            ->orderByDesc('order_count')
+            ->limit($limit)
+            ->get();
     }
 
     // ──────────────────────────────────────────────────────────────────────────

@@ -11,6 +11,12 @@ function ensureChart() {
     return chartLoad;
 }
 
+function asChartArray(value) {
+    if (Array.isArray(value)) return value;
+    if (value !== null && typeof value === 'object') return Object.values(value);
+    return [];
+}
+
 function dashboardCharts() {
     return {
         revenueChart: null,
@@ -21,7 +27,7 @@ function dashboardCharts() {
         async initRevenue() {
             const Chart = await ensureChart();
             const ctx = this.$refs.revenueChart.getContext('2d');
-            const data = window.dashboardData?.dailyRevenue || [];
+            const data = asChartArray(window.dashboardData?.dailyRevenue);
             this.revenueChart = new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -83,7 +89,7 @@ function dashboardCharts() {
         async initOrderStatus() {
             const Chart = await ensureChart();
             const ctx = this.$refs.orderStatusChart.getContext('2d');
-            const data = window.dashboardData?.orderStatusDistribution || [];
+            const data = asChartArray(window.dashboardData?.orderStatusDistribution);
             const statusColors = {
                 'pending': '#f59e0b', 'processing': '#3b82f6', 'completed': '#10b981',
                 'cancelled': '#ef4444', 'refunded': '#8b5cf6', 'delivered': '#06b6d4', 'shipped': '#ec4899'
@@ -130,7 +136,20 @@ function dashboardCharts() {
         async initUserGrowth() {
             const Chart = await ensureChart();
             const ctx = this.$refs.userGrowthChart.getContext('2d');
-            const data = window.dashboardData?.dailyUsers || [];
+            const data = asChartArray(window.dashboardData?.dailyUsers);
+
+            if (data.length === 0) {
+                // Show a friendly empty state inside the canvas area
+                const canvas = this.$refs.userGrowthChart;
+                const parent = canvas.parentElement;
+                canvas.style.display = 'none';
+                const msg = document.createElement('div');
+                msg.className = 'h-full flex flex-col items-center justify-center text-gray-400 gap-2';
+                msg.innerHTML = '<svg class="w-10 h-10 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg><p class="text-sm font-medium">No user growth yet</p><p class="text-xs opacity-70">New registrations will appear here</p>';
+                parent.appendChild(msg);
+                return;
+            }
+
             this.userGrowthChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
