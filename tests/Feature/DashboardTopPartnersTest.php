@@ -73,7 +73,7 @@ class DashboardTopPartnersTest extends TestCase
         $topPartners = app(DashboardService::class)->getTopPartners(7, 5);
 
         $this->assertCount(1, $topPartners);
-        $entry = $topPartners->first();
+        $entry = $topPartners[0];
         $this->assertSame('Top Eatery', data_get($entry, 'partner.name'));
         $this->assertSame(2, (int) data_get($entry, 'order_count'));
         $this->assertSame(150.0, (float) data_get($entry, 'revenue'));

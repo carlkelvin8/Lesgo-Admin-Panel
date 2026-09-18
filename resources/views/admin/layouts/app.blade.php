@@ -312,6 +312,12 @@
                     <button @click="show = false" class="ml-auto"><i class="fas fa-times"></i></button>
                 </div>
             @endif
+            @if(session('warning'))
+                <div x-data="{ show: true }" x-show="show" x-transition class="mx-6 mt-4 bg-amber-50 border border-amber-300 text-amber-800 px-4 py-3 rounded-lg flex items-center gap-2">
+                    <i class="fas fa-triangle-exclamation"></i> {{ session('warning') }}
+                    <button @click="show = false" class="ml-auto"><i class="fas fa-times"></i></button>
+                </div>
+            @endif
             @if($errors->any())
                 <div x-data="{ show: true }" x-show="show" x-transition class="mx-6 mt-4 bg-red-50 border border-red-300 text-red-800 px-4 py-3 rounded-lg">
                     <div class="flex items-center gap-2 mb-1"><i class="fas fa-exclamation-circle"></i> <strong>Please fix the following errors:</strong></div>

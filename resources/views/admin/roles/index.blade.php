@@ -42,6 +42,24 @@
                     </p>
                 </div>
 
+                <div class="mt-4 border-t border-gray-100 pt-4">
+                    <p class="text-xs font-medium uppercase tracking-wide text-gray-400">Assigned administrators</p>
+                    <ul class="mt-2 space-y-1.5">
+                        @forelse(($adminsByRole->get($role->key) ?? collect())->take(4) as $assigned)
+                            <li class="flex items-center justify-between gap-2 text-sm">
+                                <a href="{{ route('admin.users.edit', $assigned) }}" class="truncate text-gray-700 hover:text-blue-600 hover:underline" title="Edit {{ $assigned->email }}">
+                                    {{ $assigned->name }}
+                                </a>
+                                @if(!$assigned->is_active)
+                                    <span class="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-gray-500">Inactive</span>
+                                @endif
+                            </li>
+                        @empty
+                            <li class="text-xs text-gray-400">No administrators assigned.</li>
+                        @endforelse
+                    </ul>
+                </div>
+
                 <div class="mt-auto pt-5">
                     <a href="{{ route('admin.roles.edit', $role) }}" class="inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium {{ $role->is_protected ? 'border border-gray-200 text-gray-700 hover:bg-gray-50' : 'bg-blue-600 text-white hover:bg-blue-700' }}">
                         <i class="fas {{ $role->is_protected ? 'fa-eye' : 'fa-pen' }}"></i>

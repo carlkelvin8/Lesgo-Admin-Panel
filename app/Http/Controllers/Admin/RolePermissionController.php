@@ -18,9 +18,15 @@ class RolePermissionController extends Controller
             ->get(['admin_role'])
             ->countBy(fn (User $user) => $user->effectiveAdminRole());
 
+        $adminsByRole = User::query()
+            ->where('role', 'admin')
+            ->get(['id', 'name', 'email', 'admin_role', 'is_active'])
+            ->groupBy(fn (User $user) => $user->effectiveAdminRole());
+
         return view('admin.roles.index', [
             'roles' => $roles,
             'roleCounts' => $roleCounts,
+            'adminsByRole' => $adminsByRole,
             'permissionCount' => count(config('admin.permissions', [])),
         ]);
     }

@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -34,3 +35,9 @@ Artisan::command('payments:diagnose', function () {
         $this->error('Partner query failed: '.$e->getMessage());
     }
 })->purpose('Diagnose which database the admin panel is reading and whether payments exist');
+
+// ── Dashboard cache warming ───────────────────────────────────────────────────
+// Keeps the admin dashboard cache hot so every page-load hits cached data.
+// Runs every 5 minutes; --flush resets stale keys once per hour.
+Schedule::command('admin:warm-dashboard --days=7')->everyFiveMinutes();
+Schedule::command('admin:warm-dashboard --days=7 --flush')->hourly();

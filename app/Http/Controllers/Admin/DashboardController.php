@@ -16,13 +16,17 @@ class DashboardController extends Controller
         $days = (int) request('days', 7);
         $days = max(1, min(90, $days));
 
-        $stats = $this->dashboardService->getStats();
-        $recent_orders = $this->dashboardService->getRecentOrders();
-        $recent_users = $this->dashboardService->getRecentUsers();
-        $dailyRevenue = $this->dashboardService->getDailyRevenue($days);
-        $orderStatusDistribution = $this->dashboardService->getOrderStatusDistribution();
-        $dailyUsers = $this->dashboardService->getDailyUsers($days);
-        $topPartners = $this->dashboardService->getTopPartners($days);
+        // All seven queries run concurrently inside getAll(); the combined result
+        // is also stored as a single cache entry so subsequent hits are instant.
+        $data = $this->dashboardService->getAll($days);
+
+        $stats                 = $data['stats'];
+        $recent_orders         = $data['recentOrders'];
+        $recent_users          = $data['recentUsers'];
+        $dailyRevenue          = $data['dailyRevenue'];
+        $orderStatusDistribution = $data['orderStatusDist'];
+        $dailyUsers            = $data['dailyUsers'];
+        $topPartners           = $data['topPartners'];
 
         return view('admin.dashboard', compact(
             'stats', 'recent_orders', 'recent_users',

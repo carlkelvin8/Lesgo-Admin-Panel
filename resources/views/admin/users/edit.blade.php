@@ -74,6 +74,8 @@
                     @endforeach
                 </div>
                 <p id="super-admin-note" class="hidden mt-2 text-xs text-purple-600">Super Admin has * — extra permissions not needed.</p>
+                <p id="extra-perms-summary" class="mt-2 text-xs text-gray-500"></p>
+                <a href="{{ route('admin.roles.index') }}" class="mt-1 inline-block text-xs font-medium text-blue-600 hover:text-blue-800" target="_blank">Edit role-level permissions on Roles & Permissions →</a>
             </div>
 
             <div class="mb-4">
@@ -111,6 +113,7 @@
     const adminRoleSelect = document.getElementById('admin-role-select');
     const permSection = document.getElementById('admin-permissions-section');
     const superNote = document.getElementById('super-admin-note');
+    const permSummary = document.getElementById('extra-perms-summary');
     const permCheckboxes = [...document.querySelectorAll('.admin-perm-checkbox')];
     const refresh = () => {
         const isAdmin = roleSelect?.value === 'admin';
@@ -121,9 +124,23 @@
             cb.disabled = isSuper && isAdmin;
             cb.closest('label')?.classList.toggle('opacity-50', isSuper && isAdmin);
         });
+        if (permSummary) {
+            if (!isAdmin) {
+                permSummary.textContent = '';
+            } else if (isSuper) {
+                permSummary.textContent = 'Extra permissions are ignored — full access is automatic for Super Admin.';
+            } else {
+                const count = permCheckboxes.filter(cb => cb.checked).length;
+                const roleLabel = adminRoleSelect?.selectedOptions?.[0]?.textContent?.trim() || '';
+                permSummary.textContent = count
+                    ? `${count} extra permission${count !== 1 ? 's' : ''} selected — these will be granted on top of the ${roleLabel} role's permissions.`
+                    : `No extra permissions — access comes only from the ${roleLabel} role's permissions.`;
+            }
+        }
     };
     roleSelect?.addEventListener('change', refresh);
     adminRoleSelect?.addEventListener('change', refresh);
+    permCheckboxes.forEach(cb => cb.addEventListener('change', refresh));
     refresh();
 })();
 </script>

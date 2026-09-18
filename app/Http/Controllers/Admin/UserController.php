@@ -67,6 +67,8 @@ class UserController extends Controller
     {
         $validated = $request->validated();
 
+        $permsIgnored = false;
+
         if ($validated['role'] !== 'admin') {
             $validated['admin_role'] = null;
             $validated['admin_permissions'] = null;
@@ -75,6 +77,7 @@ class UserController extends Controller
             $perms = array_values(array_unique(array_intersect($permissionKeys, $validated['admin_permissions'] ?? [])));
             $validated['admin_permissions'] = empty($perms) ? null : $perms;
             if (($validated['admin_role'] ?? null) === 'super_admin') {
+                $permsIgnored = ! empty($perms);
                 $validated['admin_permissions'] = null;
             }
         }
@@ -99,7 +102,9 @@ class UserController extends Controller
         User::create($validated);
 
         return redirect()->route('admin.users.index')
-            ->with('success', 'User created successfully.');
+            ->with($permsIgnored ? 'warning' : 'success', $permsIgnored
+                ? 'User created. Extra permissions were ignored — Super Admin always has full access.'
+                : 'User created successfully.');
     }
 
     public function edit(User $user)
@@ -113,6 +118,8 @@ class UserController extends Controller
     public function update(UpdateUserRequest $request, User $user)
     {
         $validated = $request->validated();
+
+        $permsIgnored = false;
 
         if ($validated['role'] !== 'admin') {
             $validated['admin_role'] = null;
@@ -129,6 +136,7 @@ class UserController extends Controller
             $validated['admin_permissions'] = empty($perms) ? null : $perms;
             // Super admin always has '*' – don't store extra perms that confuse hasAdminPermission
             if (($validated['admin_role'] ?? $user->admin_role) === 'super_admin') {
+                $permsIgnored = ! empty($perms);
                 $validated['admin_permissions'] = null;
             }
         }
@@ -186,7 +194,9 @@ class UserController extends Controller
         } catch (\Throwable $e) {}
 
         return redirect()->route('admin.users.show', $user)
-            ->with('success', 'User updated successfully.');
+            ->with($permsIgnored ? 'warning' : 'success', $permsIgnored
+                ? 'Extra permissions were ignored — Super Admin always has full access.'
+                : 'User updated successfully.');
     }
 
     public function toggleStatus(User $user)
