@@ -1,3 +1,16 @@
+let chartLoad = null;
+
+function ensureChart() {
+    if (window.Chart) return Promise.resolve(window.Chart);
+    if (!chartLoad) {
+        chartLoad = import('chart.js/auto').then((mod) => {
+            window.Chart = mod.default ?? mod.Chart ?? mod;
+            return window.Chart;
+        });
+    }
+    return chartLoad;
+}
+
 function dashboardCharts() {
     return {
         revenueChart: null,
@@ -5,7 +18,8 @@ function dashboardCharts() {
         userGrowthChart: null,
         days: 7,
 
-        initRevenue() {
+        async initRevenue() {
+            const Chart = await ensureChart();
             const ctx = this.$refs.revenueChart.getContext('2d');
             const data = window.dashboardData?.dailyRevenue || [];
             this.revenueChart = new Chart(ctx, {
@@ -66,7 +80,8 @@ function dashboardCharts() {
             });
         },
 
-        initOrderStatus() {
+        async initOrderStatus() {
+            const Chart = await ensureChart();
             const ctx = this.$refs.orderStatusChart.getContext('2d');
             const data = window.dashboardData?.orderStatusDistribution || [];
             const statusColors = {
@@ -112,7 +127,8 @@ function dashboardCharts() {
             });
         },
 
-        initUserGrowth() {
+        async initUserGrowth() {
+            const Chart = await ensureChart();
             const ctx = this.$refs.userGrowthChart.getContext('2d');
             const data = window.dashboardData?.dailyUsers || [];
             this.userGrowthChart = new Chart(ctx, {
