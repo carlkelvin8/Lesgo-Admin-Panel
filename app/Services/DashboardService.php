@@ -50,6 +50,12 @@ class DashboardService
     {
         $cached = Cache::get('dashboard:all:'.$days);
         if ($cached !== null && is_array($cached)) {
+            // The three chart datasets are refreshed on every hit: they are cheap
+            // (indexed) and must never be served stale/empty from the combined
+            // payload, otherwise charts render blank even though the page shows.
+            $cached['dailyRevenue']    = $this->fetchDailyRevenue($days);
+            $cached['orderStatusDist'] = $this->fetchOrderStatusDistribution();
+            $cached['dailyUsers']      = $this->fetchDailyUsers($days);
             return $cached;
         }
 
