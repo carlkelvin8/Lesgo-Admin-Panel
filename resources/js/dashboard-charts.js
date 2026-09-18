@@ -1,5 +1,3 @@
-import { Chart } from 'chart.js';
-
 function dashboardCharts() {
     return {
         revenueChart: null,

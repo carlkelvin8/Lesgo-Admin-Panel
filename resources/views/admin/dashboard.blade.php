@@ -357,5 +357,4 @@ window.dashboardData = {
     dailyUsers: @json($dailyUsers)
 };
 </script>
-@vite('resources/js/dashboard-charts.js')
 @endsection
