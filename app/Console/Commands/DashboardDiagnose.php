@@ -16,10 +16,16 @@ class DashboardDiagnose extends Command
 
     protected $description = 'Print the dataset counts behind every dashboard widget to diagnose empty charts.';
 
+    private const PAID_STATUSES = [
+        'paid', 'settled', 'succeeded', 'completed', 'success',
+        'captured', 'approved', 'fulfilled', 'received',
+    ];
+
     public function handle(): int
     {
         $now = Carbon::now();
         $week = $now->copy()->subDays(6)->startOfDay();
+        $paid = self::PAID_STATUSES;
 
         $this->info('Database: '.config('database.connections.'.config('database.default').'.database'));
 
@@ -29,14 +35,16 @@ class DashboardDiagnose extends Command
         $this->show('orders (total)', Order::count());
         $this->show('partners (total)', Partner::count());
         $this->show('orders pending', Order::where('status', 'pending')->count());
-        $this->show('payments paid + sum', Payment::where('status', 'paid')->count().' / '.Payment::where('status', 'paid')->sum('amount'));
+        $this->show('payments paid + sum', Payment::whereIn('status', $paid)->count().' / '.Payment::whereIn('status', $paid)->sum('amount'));
 
         $this->line('');
         $this->line('--- Revenue Overview: paid payments in the last 7 days ---');
-        $this->show('last 7d paid payments', Payment::where('status', 'paid')->where(function ($q) use ($week) {
+        $this->show('last 7d paid payments', Payment::whereIn('status', $paid)->where(function ($q) use ($week) {
             $q->where('paid_at', '>=', $week)->orWhereNull('paid_at')->where('created_at', '>=', $week);
         })->count());
-        $latestPaid = Payment::where('status', 'paid')->max('created_at');
+        $this->show('payments per status', Payment::select('status', DB::raw('count(*) as total'))->groupBy('status')->orderByDesc('total')->get()
+            ->map(fn ($r) => $r->status.'='.$r->total)->implode(', '));
+        $latestPaid = Payment::whereIn('status', $paid)->max('created_at');
         $this->line('       latest paid payment created_at: '.($latestPaid ?? 'none'));
 
         $this->line('');
@@ -55,11 +63,14 @@ class DashboardDiagnose extends Command
 
         $this->line('');
         $this->line('--- Top Partners (via lesbuy_items -> menu_items.partner_id) ---');
+        $partnerExpr = 'COALESCE(orders.partner_id, menu_items.partner_id, menu_categories.partner_id, services.partner_id)';
         $rows = DB::table('orders')
             ->leftJoin('lesbuy_items', 'lesbuy_items.order_id', '=', 'orders.id')
             ->leftJoin('menu_items', 'menu_items.id', '=', 'lesbuy_items.menu_item_id')
-            ->select(DB::raw('COALESCE(orders.partner_id, menu_items.partner_id) as pid'), DB::raw('COUNT(DISTINCT orders.id) as orders'))
-            ->groupBy(DB::raw('COALESCE(orders.partner_id, menu_items.partner_id)'))
+            ->leftJoin('menu_categories', 'menu_categories.id', '=', 'menu_items.menu_category_id')
+            ->leftJoin('services', 'services.id', '=', 'orders.service_id')
+            ->select(DB::raw($partnerExpr.' as pid'), DB::raw('COUNT(DISTINCT orders.id) as orders'))
+            ->groupBy(DB::raw($partnerExpr))
             ->orderByDesc('orders')
             ->limit(5)
             ->get();
@@ -70,7 +81,9 @@ class DashboardDiagnose extends Command
         $this->show('orders with any partner link', DB::table('orders')
             ->leftJoin('lesbuy_items', 'lesbuy_items.order_id', '=', 'orders.id')
             ->leftJoin('menu_items', 'menu_items.id', '=', 'lesbuy_items.menu_item_id')
-            ->whereNotNull(DB::raw('COALESCE(orders.partner_id, menu_items.partner_id)'))
+            ->leftJoin('menu_categories', 'menu_categories.id', '=', 'menu_items.menu_category_id')
+            ->leftJoin('services', 'services.id', '=', 'orders.service_id')
+            ->whereNotNull(DB::raw($partnerExpr))
             ->count(DB::raw('DISTINCT orders.id')));
 
         $this->line('');

@@ -20,6 +20,14 @@ use Throwable;
 
 class DashboardService
 {
+    /**
+     * Statuses treated as successfully paid regardless of provider vocabulary
+     * (xendit/gcash/paymongo may store paid, settled, succeeded, completed, success...).
+     */
+    private const PAID_STATUSES = [
+        'paid', 'settled', 'succeeded', 'completed', 'success',
+        'captured', 'approved', 'fulfilled', 'received',
+    ];
     private function safeRemember(string $key, int $ttl, callable $fetcher): mixed
     {
         $v2 = $key.':v2';
@@ -59,7 +67,7 @@ class DashboardService
             'total_partners' => Partner::count(),
             'total_drivers' => DriverProfile::count(),
             'open_tickets' => SupportTicket::whereIn('status', ['open', 'in_progress', 'waiting_internal'])->count(),
-            'total_revenue' => Payment::where('status', 'paid')->sum('amount'),
+            'total_revenue' => Payment::whereIn('status', self::PAID_STATUSES)->sum('amount'),
             'pending_orders' => Order::where('status', 'pending')->count(),
             'completed_orders' => Order::where('status', 'completed')->count(),
             'active_users' => User::where('is_active', true)->count(),
@@ -83,7 +91,7 @@ class DashboardService
     public function getDailyRevenue(int $days = 7)
     {
         $startDate = Carbon::now()->subDays($days)->startOfDay();
-        return $this->safeRemember("dashboard:daily_revenue:{$days}", 300, fn () => Payment::where('status', 'paid')
+        return $this->safeRemember("dashboard:daily_revenue:{$days}", 300, fn () => Payment::whereIn('status', self::PAID_STATUSES)
             ->where('created_at', '>=', $startDate)
             ->select(DB::raw('DATE(created_at) as date'), DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as count'))
             ->groupBy('date')->orderBy('date')->get());
@@ -92,7 +100,6 @@ class DashboardService
     public function getOrderStatusDistribution()
     {
         return $this->safeRemember('dashboard:order_status_dist', 300, fn () => Order::select('status', DB::raw('count(*) as total'))
-            ->whereIn('status', ['pending', 'accepted', 'in_progress', 'completed', 'cancelled'])
             ->groupBy('status')->get());
     }
 
@@ -110,17 +117,21 @@ class DashboardService
         return $this->safeRemember("dashboard:top_partners:{$days}", 300, function () use ($startDate, $limit) {
             // Partner orders are resolved via menus (orders → lesbuy_items → menu_items.partner_id),
             // since the API never populates orders.partner_id.
+            $partnerExpr = 'COALESCE(orders.partner_id, menu_items.partner_id, menu_categories.partner_id, services.partner_id)';
+
             $rows = Order::query()
                 ->leftJoin('lesbuy_items', 'lesbuy_items.order_id', '=', 'orders.id')
                 ->leftJoin('menu_items', 'menu_items.id', '=', 'lesbuy_items.menu_item_id')
+                ->leftJoin('menu_categories', 'menu_categories.id', '=', 'menu_items.menu_category_id')
+                ->leftJoin('services', 'services.id', '=', 'orders.service_id')
                 ->select(
-                    DB::raw('COALESCE(orders.partner_id, menu_items.partner_id) as partner_id'),
+                    DB::raw($partnerExpr.' as partner_id'),
                     DB::raw('COUNT(DISTINCT orders.id) as order_count'),
                     DB::raw('SUM(COALESCE(orders.actual_fare, orders.estimated_fare, 0)) as revenue')
                 )
                 ->where('orders.created_at', '>=', $startDate)
-                ->whereNotNull(DB::raw('COALESCE(orders.partner_id, menu_items.partner_id)'))
-                ->groupBy(DB::raw('COALESCE(orders.partner_id, menu_items.partner_id)'))
+                ->whereNotNull(DB::raw($partnerExpr))
+                ->groupBy(DB::raw($partnerExpr))
                 ->orderByDesc('order_count')
                 ->limit($limit)
                 ->get()
