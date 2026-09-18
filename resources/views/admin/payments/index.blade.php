@@ -45,7 +45,7 @@
                         </td>
                         <td class="px-6 py-4 text-gray-500 text-xs">{{ $payment->paid_at ? $payment->paid_at->format('M d, Y H:i') : '—' }}</td>
                         <td class="px-6 py-4 text-right">
-                            <a href="{{ route('admin.payments.show', $payment) }}" class="text-blue-600 hover:text-blue-800"><i class="fas fa-eye"></i></a>
+                            <a href="{{ route('admin.payments.show', $payment->id) }}" class="text-blue-600 hover:text-blue-800"><i class="fas fa-eye"></i></a>
                         </td>
                     </tr>
                 @empty

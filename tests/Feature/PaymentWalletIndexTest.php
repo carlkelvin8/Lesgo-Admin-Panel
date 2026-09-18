@@ -43,6 +43,7 @@ class PaymentWalletIndexTest extends TestCase
             'service_id' => $service->id,
             'status' => 'completed',
             'payment_status' => 'paid',
+            'actual_fare' => 250.00,
         ]);
         Payment::create([
             'order_id' => $order->id,

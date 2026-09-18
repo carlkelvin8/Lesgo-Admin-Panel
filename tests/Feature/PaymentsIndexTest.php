@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\Payment;
 use App\Models\Order;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -20,15 +19,9 @@ class PaymentsIndexTest extends TestCase
             'is_active' => true,
         ]);
 
-        $customer = User::factory()->create(['role' => 'customer']);
-        $order = Order::factory()->create();
-        Payment::factory()->create([
-            'order_id' => $order->id,
-            'customer_id' => $customer->id,
-            'amount' => 250.00,
-            'method' => 'cash',
-            'status' => 'paid',
-            'paid_at' => now(),
+        $order = Order::factory()->create([
+            'payment_status' => 'paid',
+            'actual_fare' => 250.00,
         ]);
 
         $this->actingAs($admin)

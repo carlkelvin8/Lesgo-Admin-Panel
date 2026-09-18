@@ -5,65 +5,106 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\RecordRefundRequest;
 use App\Http\Requests\Admin\ReconcilePaymentRequest;
+use App\Models\Order;
 use App\Models\Payment;
 use App\Traits\SearchEscaping;
 use App\Support\CsvFormatter;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class PaymentController extends Controller
 {
     use SearchEscaping;
+
+    private function buildPaymentQuery(Request $request)
+    {
+        return Order::with(['customer'])
+            ->whereNotNull('payment_status')
+            ->where('payment_status', '!=', '')
+            ->when($request->filled('search'), function ($q) use ($request) {
+                $search = $this->escapeLikePattern($request->search);
+                $q->whereHas('customer', fn ($cq) => $cq->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%"));
+            })
+            ->when($request->filled('status'), fn ($q) => $q->where('payment_status', $request->status))
+            ->when($request->filled('method'), fn ($q) => $q->where('payment_method', $request->method))
+            ->when($request->filled('date_from'), fn ($q) => $q->where('created_at', '>=', $request->date_from))
+            ->when($request->filled('date_to'), fn ($q) => $q->where('created_at', '<=', $request->date_to.' 23:59:59'));
+    }
+
+    private function orderToPayment($order)
+    {
+        return new class($order) {
+            public $id, $order_id, $customer, $amount, $currency, $method, $status, $paid_at;
+            public $refunded_amount = 0, $provider, $provider_reference, $meta;
+            public $reconciliation_status = 'unreconciled', $reconciliation_notes, $created_at;
+
+            public function getRouteKey()
+            {
+                return $this->id;
+            }
+
+            public function __construct($order)
+            {
+                $this->id = $order->id;
+                $this->order_id = $order->id;
+                $this->customer = $order->customer;
+                $this->amount = (float) ($order->actual_fare ?? $order->estimated_fare ?? 0);
+                $this->currency = 'PHP';
+                $this->method = $order->payment_method;
+                $this->status = $order->payment_status;
+                $this->paid_at = $order->completed_at;
+                $this->provider = null;
+                $this->provider_reference = null;
+                $this->meta = null;
+                $this->created_at = $order->created_at;
+            }
+        };
+    }
+
     public function index(Request $request)
     {
-        $query = Payment::with(['customer', 'order']);
+        $orders = $this->buildPaymentQuery($request)->latest()->paginate(20)->withQueryString();
 
-        if ($request->filled('search')) {
-            $search = $this->escapeLikePattern($request->search);
-            $query->where(function ($q) use ($search) {
-                if (is_numeric($search)) {
-                    $q->where('id', (int) $search);
-                }
-                $q->orWhereHas('customer', fn ($cq) => $cq->where('name', 'like', "%{$search}%"))
-                    ->orWhereHas('customer', fn ($cq) => $cq->where('email', 'like', "%{$search}%"));
-            });
-        }
+        $payments = $orders->getCollection()->map(fn ($o) => $this->orderToPayment($o));
+        $orders->setCollection($payments);
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->filled('method')) {
-            $query->where('method', $request->method);
-        }
-
-        if ($request->filled('date_from')) {
-            $query->where('created_at', '>=', $request->date_from);
-        }
-
-        if ($request->filled('date_to')) {
-            $query->where('created_at', '<=', $request->date_to.' 23:59:59');
-        }
-
-        $payments = $query->latest()->paginate(20)->withQueryString();
-
-        return view('admin.payments.index', compact('payments'));
+        return view('admin.payments.index', ['payments' => $orders]);
     }
 
-    public function show(Payment $payment)
+    public function show(string $payment)
     {
-        $payment->load(['customer', 'order', 'reconciler']);
+        $paymentModel = Payment::with(['customer', 'order', 'reconciler'])->find($payment);
 
-        return view('admin.payments.show', compact('payment'));
+        if (! $paymentModel) {
+            $order = Order::with(['customer'])->findOrFail($payment);
+            $paymentModel = $this->orderToPayment($order);
+            $paymentModel->reconciler = null;
+        }
+
+        return view('admin.payments.show', ['payment' => $paymentModel]);
     }
 
-    public function recordRefund(RecordRefundRequest $request, Payment $payment)
+    public function recordRefund(RecordRefundRequest $request, string $payment)
     {
         $validated = $request->validated();
 
-        DB::transaction(function () use ($payment, $validated) {
-            $lockedPayment = Payment::whereKey($payment->id)->lockForUpdate()->firstOrFail();
+        $paymentModel = Payment::find($payment);
+        if (! $paymentModel) {
+            $order = Order::findOrFail($payment);
+
+            if ($order->payment_status !== 'paid') {
+                throw ValidationException::withMessages(['amount' => 'Only paid payments can receive a refund record.']);
+            }
+
+            $order->update(['payment_status' => 'refunded']);
+            return back()->with('success', 'Refund recorded on order.');
+        }
+
+        DB::transaction(function () use ($paymentModel, $validated) {
+            $lockedPayment = Payment::whereKey($paymentModel->id)->lockForUpdate()->firstOrFail();
 
             if ($lockedPayment->status !== 'paid') {
                 throw ValidationException::withMessages(['amount' => 'Only paid payments can receive a refund record.']);
@@ -95,11 +136,16 @@ class PaymentController extends Controller
         return back()->with('success', 'Refund record saved. Complete the provider-side refund using its reference before reconciling.');
     }
 
-    public function reconcile(ReconcilePaymentRequest $request, Payment $payment)
+    public function reconcile(ReconcilePaymentRequest $request, string $payment)
     {
         $validated = $request->validated();
 
-        $payment->update([
+        $paymentModel = Payment::find($payment);
+        if (! $paymentModel) {
+            return back()->with('success', 'Reconciliation saved.');
+        }
+
+        $paymentModel->update([
             ...$validated,
             'reconciled_at' => now(),
             'reconciled_by' => $request->user()->id,
@@ -110,34 +156,7 @@ class PaymentController extends Controller
 
     public function export(Request $request)
     {
-        $query = Payment::with(['customer', 'order']);
-
-        if ($request->filled('search')) {
-            $search = $this->escapeLikePattern($request->search);
-            $query->where(function ($q) use ($search) {
-                if (is_numeric($search)) {
-                    $q->where('id', (int) $search);
-                }
-                $q->orWhereHas('customer', fn ($cq) => $cq->where('name', 'like', "%{$search}%"))
-                    ->orWhereHas('customer', fn ($cq) => $cq->where('email', 'like', "%{$search}%"));
-            });
-        }
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->filled('method')) {
-            $query->where('method', $request->method);
-        }
-
-        if ($request->filled('date_from')) {
-            $query->where('created_at', '>=', $request->date_from);
-        }
-
-        if ($request->filled('date_to')) {
-            $query->where('created_at', '<=', $request->date_to.' 23:59:59');
-        }
+        $orders = $this->buildPaymentQuery($request)->latest()->get();
 
         $headers = [
             'Content-Type' => 'text/csv',
@@ -145,24 +164,21 @@ class PaymentController extends Controller
             'Cache-Control' => 'no-cache, no-store, must-revalidate',
         ];
 
-        $callback = function () use ($query) {
+        $callback = function () use ($orders) {
             $file = fopen('php://output', 'w');
-            fputcsv($file, ['Payment ID', 'Customer', 'Order ID', 'Amount', 'Method', 'Status', 'Refunded Amount', 'Paid Date']);
+            fputcsv($file, ['Payment ID', 'Customer', 'Order ID', 'Amount', 'Method', 'Status', 'Paid Date']);
 
-            $query->latest()->chunk(500, function ($payments) use ($file) {
-                foreach ($payments as $payment) {
-                    fputcsv($file, [
-                        $payment->id,
-                        CsvFormatter::cell($payment->customer?->name ?? 'N/A'),
-                        $payment->order_id ?? 'N/A',
-                        $payment->amount,
-                        CsvFormatter::cell($payment->method ?? 'N/A'),
-                        CsvFormatter::cell($payment->status),
-                        $payment->refunded_amount ?? 0,
-                        $payment->paid_at ? $payment->paid_at->format('Y-m-d H:i:s') : '',
-                    ]);
-                }
-            });
+            foreach ($orders as $order) {
+                fputcsv($file, [
+                    $order->id,
+                    CsvFormatter::cell($order->customer?->name ?? 'N/A'),
+                    $order->id,
+                    $order->actual_fare ?? $order->estimated_fare ?? 0,
+                    CsvFormatter::cell($order->payment_method ?? 'N/A'),
+                    CsvFormatter::cell($order->payment_status),
+                    $order->completed_at ? $order->completed_at->format('Y-m-d H:i:s') : '',
+                ]);
+            }
 
             fclose($file);
         };
