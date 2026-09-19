@@ -108,7 +108,37 @@ class ReportController extends Controller
 
     public function daily(Request $request, string $date)
     {
-        $report = DailyReport::where('report_date', $date)->firstOrFail();
+        $start = Carbon::parse($date)->startOfDay();
+        $end = $start->copy()->endOfDay();
+
+        // Always fetch the report's numbers live from orders/users/drivers so
+        // the page (and its PDF) reflects real data, not stale stored values.
+        $orders = Order::whereBetween('created_at', [$start, $end]);
+        [$revenueQuery, $revenueSource] = $this->revenueSource($start, $end);
+
+        $totalOrders = (clone $orders)->count();
+        $completedOrders = (clone $orders)->where('status', 'completed')->count();
+        $cancelledOrders = (clone $orders)->where('status', 'cancelled')->count();
+        $newUsers = User::whereBetween('created_at', [$start, $end])->count();
+        $newDrivers = DriverProfile::whereBetween('created_at', [$start, $end])->count();
+        $totalRevenue = $this->revenueOf($revenueQuery, $revenueSource);
+        $avgFare = (clone $orders)->where('status', 'completed')->avg('actual_fare') ?? 0;
+        $totalDistanceKm = (int) round(((clone $orders)->sum('actual_distance_m') ?? 0) / 1000);
+
+        $stored = DailyReport::where('report_date', $date)->first();
+
+        $report = (object) [
+            'report_date' => Carbon::parse($date),
+            'total_orders' => $totalOrders,
+            'completed_orders' => $completedOrders,
+            'cancelled_orders' => $cancelledOrders,
+            'new_users' => $newUsers,
+            'new_drivers' => $newDrivers,
+            'total_revenue' => $totalRevenue,
+            'avg_fare' => (float) $avgFare,
+            'total_distance_km' => $totalDistanceKm,
+            'meta' => $stored?->meta ?? [],
+        ];
 
         $metrics = DailyMetric::where('date', $date)
             ->get()
@@ -118,6 +148,26 @@ class ReportController extends Controller
             ->select('revenue_type', DB::raw('SUM(amount) as total_amount'), DB::raw('SUM(transaction_count) as total_transactions'))
             ->groupBy('revenue_type')
             ->get();
+
+        if ($revenueDetails->isEmpty() || (float) $revenueDetails->sum('total_amount') == 0) {
+            $revenueDetails = collect([
+                (object) [
+                    'revenue_type' => 'gross',
+                    'total_amount' => $totalRevenue,
+                    'total_transactions' => (clone $revenueQuery)->count(),
+                ],
+            ]);
+        }
+
+        if ($request->boolean('print')) {
+            return view('admin.reports.print', [
+                'report' => $report,
+                'completionRate' => $totalOrders > 0 ? round(($completedOrders / $totalOrders) * 100, 1) : 0,
+                'cancelRate' => $totalOrders > 0 ? round(($cancelledOrders / $totalOrders) * 100, 1) : 0,
+                'otherOrders' => max(0, $totalOrders - $completedOrders - $cancelledOrders),
+                'revenueDetails' => $revenueDetails,
+            ]);
+        }
 
         return view('admin.reports.daily', compact('report', 'metrics', 'revenueDetails'));
     }

@@ -2,6 +2,10 @@
 @section('title', 'Daily Report - LesGo Admin')
 @section('header', 'Daily Report - ' . $report->report_date->format('M d, Y'))
 
+@section('actions')
+<a href="{{ route('admin.reports.daily', [$report->report_date->format('Y-m-d'), 'print' => 1]) }}" target="_blank" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm"><i class="fas fa-print mr-1"></i> Print / PDF</a>
+@endsection
+
 @section('content')
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
     <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-green-500">
