@@ -49,10 +49,64 @@ class ReportController extends Controller
     public function generate(Request $request)
     {
         $validated = $request->validate([
-            'report_date' => 'required|date|before_or_equal:today',
+            // Legacy single-date input (kept for backward compatibility).
+            'report_date' => 'nullable|date|before_or_equal:today|required_without:date_from',
+            // Range inputs.
+            'date_from' => 'nullable|date|before_or_equal:today|required_without:report_date',
+            'date_to' => 'nullable|date|before_or_equal:today|after_or_equal:date_from',
         ]);
 
-        $date = $validated['report_date'];
+        if (! empty($validated['report_date']) && empty($validated['date_from'])) {
+            $from = Carbon::parse($validated['report_date'])->startOfDay();
+            $to = $from->copy()->endOfDay();
+            $isRange = false;
+        } else {
+            $from = Carbon::parse($validated['date_from'])->startOfDay();
+            // A missing "to" means "just this one day".
+            $to = isset($validated['date_to'])
+                ? Carbon::parse($validated['date_to'])->endOfDay()
+                : $from->copy()->endOfDay();
+            $isRange = $from->toDateString() !== $to->toDateString();
+        }
+
+        // Cap the range so a huge window can't time out the request.
+        if ($from->diffInDays($to) > 62) {
+            return back()->withErrors([
+                'date_to' => 'Date range is too large. Please generate at most 62 days at a time.',
+            ])->withInput();
+        }
+
+        $days = [];
+        for ($day = $from->copy(); $day->toDateString() <= $to->toDateString(); $day->addDay()) {
+            $days[] = $day->toDateString();
+        }
+
+        DB::transaction(function () use ($days) {
+            foreach ($days as $date) {
+                $this->storeDayReport($date);
+            }
+        });
+
+        if (! $isRange) {
+            $date = $days[0];
+
+            return redirect()->route('admin.reports.daily', $date)
+                ->with('success', "Report for {$date} generated successfully.");
+        }
+
+        return redirect()->route('admin.reports.index', [
+                'date_from' => $days[0],
+                'date_to' => end($days),
+            ])
+            ->with('success', count($days)." daily reports generated ({$days[0]} to ".end($days).').');
+    }
+
+    /**
+     * Compute and persist the DailyReport + DailyMetric + RevenueAnalytics
+     * rows for a single calendar date (Y-m-d).
+     */
+    private function storeDayReport(string $date): void
+    {
         $start = Carbon::parse($date)->startOfDay();
         $end = $start->copy()->endOfDay();
 
@@ -70,40 +124,35 @@ class ReportController extends Controller
             'total_distance_km' => (int) round(((clone $orders)->sum('actual_distance_m') ?? 0) / 1000),
         ];
 
-        DB::transaction(function () use ($date, $values, $revenueQuery) {
-            DailyReport::updateOrCreate(
-                ['report_date' => $date],
-                [...$values, 'meta' => ['generated_by' => auth()->id(), 'generated_at' => now()->toIso8601String()]]
+        DailyReport::updateOrCreate(
+            ['report_date' => $date],
+            [...$values, 'meta' => ['generated_by' => auth()->id(), 'generated_at' => now()->toIso8601String()]]
+        );
+
+        foreach ([
+            'total_orders' => $values['total_orders'],
+            'completed_orders' => $values['completed_orders'],
+            'cancelled_orders' => $values['cancelled_orders'],
+            'new_users' => $values['new_users'],
+            'new_drivers' => $values['new_drivers'],
+            'total_revenue' => $values['total_revenue'],
+        ] as $key => $value) {
+            DailyMetric::updateOrCreate(
+                ['date' => $date, 'metric_type' => str_contains($key, 'revenue') ? 'revenue' : 'operations', 'metric_category' => 'daily', 'metric_key' => $key],
+                ['metric_value' => $value]
             );
+        }
 
-            foreach ([
-                'total_orders' => $values['total_orders'],
-                'completed_orders' => $values['completed_orders'],
-                'cancelled_orders' => $values['cancelled_orders'],
-                'new_users' => $values['new_users'],
-                'new_drivers' => $values['new_drivers'],
-                'total_revenue' => $values['total_revenue'],
-            ] as $key => $value) {
-                DailyMetric::updateOrCreate(
-                    ['date' => $date, 'metric_type' => str_contains($key, 'revenue') ? 'revenue' : 'operations', 'metric_category' => 'daily', 'metric_key' => $key],
-                    ['metric_value' => $value]
-                );
-            }
-
-            $transactionCount = (clone $revenueQuery)->count();
-            RevenueAnalytics::updateOrCreate(
-                ['date' => $date, 'revenue_type' => 'gross', 'revenue_source' => 'orders', 'service_id' => null, 'partner_id' => null],
-                [
-                    'amount' => $values['total_revenue'],
-                    'currency' => 'PHP',
-                    'transaction_count' => $transactionCount,
-                    'average_transaction_value' => $transactionCount > 0 ? $values['total_revenue'] / $transactionCount : 0,
-                ]
-            );
-        });
-
-        return redirect()->route('admin.reports.daily', $date)
-            ->with('success', "Report for {$date} generated successfully.");
+        $transactionCount = (clone $revenueQuery)->count();
+        RevenueAnalytics::updateOrCreate(
+            ['date' => $date, 'revenue_type' => 'gross', 'revenue_source' => 'orders', 'service_id' => null, 'partner_id' => null],
+            [
+                'amount' => $values['total_revenue'],
+                'currency' => 'PHP',
+                'transaction_count' => $transactionCount,
+                'average_transaction_value' => $transactionCount > 0 ? $values['total_revenue'] / $transactionCount : 0,
+            ]
+        );
     }
 
     public function daily(Request $request, string $date)
