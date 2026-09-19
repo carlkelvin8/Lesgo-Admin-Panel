@@ -349,23 +349,29 @@ class ReportController extends Controller
     }
 
     /**
-     * Revenue source query. When paid orders exist we read revenue from the
-     * orders table (payment_status = 'paid'); otherwise we fall back to the
-     * legacy payments table. The prod payments table is empty, while orders
-     * carry the real paid amounts — so orders is the primary source.
+     * Revenue source query.
+     *
+     * Primary: completed orders (covers both cash and online-paid orders — cash
+     * orders never trigger a webhook so payment_status stays 'pending' even after
+     * delivery; using status = 'completed' is the correct signal).
+     *
+     * Fallback: payments table (legacy / online-only environments).
      *
      * @return array{0: Builder, 1: string}  [query, 'orders'|'payments']
      */
     private function revenueSource(?\Carbon\Carbon $from = null, ?\Carbon\Carbon $to = null): array
     {
-        if (Order::where('payment_status', 'paid')->exists()) {
-            $query = Order::where('payment_status', 'paid')
+        // Use completed orders as revenue source — this captures cash orders
+        // (which never set payment_status='paid') and online-paid orders alike.
+        if (Order::where('status', 'completed')->exists()) {
+            $query = Order::where('status', 'completed')
                 ->when($from, fn ($q) => $q->where('created_at', '>=', $from))
                 ->when($to, fn ($q) => $q->where('created_at', '<=', $to));
 
             return [$query, 'orders'];
         }
 
+        // Fallback: legacy payments table (prod payments table is typically empty).
         $query = Payment::where('status', 'paid')
             ->when($from || $to, function ($q) use ($from, $to) {
                 if ($from && $to) {

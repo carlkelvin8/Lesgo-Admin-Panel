@@ -168,9 +168,9 @@ class DashboardService
                 (SELECT COUNT(*)  FROM ratings_reviews
                     WHERE status IN ('pending','flagged'))                                         AS pending_reviews,
                 (SELECT COUNT(*)  FROM security_events WHERE is_resolved = false)                 AS open_security_events,
-                (SELECT COUNT(*)  FROM orders WHERE payment_status = 'paid')                      AS paid_order_count,
+                (SELECT COUNT(*)  FROM orders WHERE status = 'completed')                         AS paid_order_count,
                 (SELECT COALESCE(SUM(COALESCE(actual_fare, estimated_fare, 0)), 0)
-                    FROM orders WHERE payment_status = 'paid')                                    AS paid_order_revenue,
+                    FROM orders WHERE status = 'completed')                                       AS paid_order_revenue,
                 (SELECT COALESCE(SUM(amount), 0)
                     FROM payments WHERE status IN ({$paymentStatuses}))                           AS payment_revenue
         ");
@@ -212,7 +212,7 @@ class DashboardService
         $startDate = Carbon::now()->subDays($days)->startOfDay();
 
         if ($this->usesOrdersForRevenue()) {
-            return Order::where('payment_status', 'paid')
+            return Order::where('status', 'completed')
                 ->where('created_at', '>=', $startDate)
                 ->select(
                     DB::raw('DATE(created_at) as date'),
@@ -373,6 +373,6 @@ class DashboardService
      */
     private function usesOrdersForRevenue(): bool
     {
-        return $this->revenueSource ??= Order::where('payment_status', 'paid')->exists();
+        return $this->revenueSource ??= Order::where('status', 'completed')->exists();
     }
 }

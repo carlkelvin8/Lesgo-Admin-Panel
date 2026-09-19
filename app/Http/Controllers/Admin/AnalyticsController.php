@@ -108,15 +108,19 @@ class AnalyticsController extends Controller
     }
 
     /**
-     * Revenue source query: paid orders first, legacy payments table as fallback.
+     * Revenue source query.
+     *
+     * Uses completed orders as the primary source — covers both cash orders
+     * (payment_status stays 'pending' after delivery) and online-paid orders.
+     * Falls back to the payments table in legacy environments.
      *
      * @return array{0: Builder, 1: string}  [query, 'orders'|'payments']
      */
     private function revenueSource(?\Carbon\Carbon $from = null): array
     {
-        if (Order::where('payment_status', 'paid')->exists()) {
+        if (Order::where('status', 'completed')->exists()) {
             return [
-                Order::where('payment_status', 'paid')->when($from, fn ($q) => $q->where('created_at', '>=', $from)),
+                Order::where('status', 'completed')->when($from, fn ($q) => $q->where('created_at', '>=', $from)),
                 'orders',
             ];
         }
