@@ -129,3 +129,63 @@ Alpine.data('tabs', (defaultTab = '') => ({
 }));
 
 Alpine.start();
+
+/* ── Chart.js theme sync ────────────────────────────────────────────
+   Chart instances use hardcoded light tick/grid colors. Keep them
+   readable in dark mode by re-tinting on toggle + for charts created
+   after load (dashboard charts lazy-load Chart.js). */
+const CHART_LIGHT_TICK = '#6b7280';
+const CHART_LIGHT_GRID = 'rgba(0,0,0,0.05)';
+const CHART_LIGHT_GRID_ALT = 'rgba(107,114,128,0.1)';
+
+function isDarkTheme() {
+    return document.documentElement.classList.contains('dark');
+}
+
+function applyChartTheme() {
+    if (!window.Chart) return;
+    const dark = isDarkTheme();
+    const tick = dark ? '#9ca3af' : CHART_LIGHT_TICK;
+    const grid = dark ? 'rgba(255,255,255,0.08)' : CHART_LIGHT_GRID;
+    const gridAlt = dark ? 'rgba(255,255,255,0.08)' : CHART_LIGHT_GRID_ALT;
+    if (window.Chart.defaults) window.Chart.defaults.color = tick;
+    document.querySelectorAll('canvas').forEach((canvas) => {
+        let chart = null;
+        try {
+            chart = window.Chart.getChart ? window.Chart.getChart(canvas) : null;
+        } catch (e) { chart = null; }
+        if (!chart || !chart.options) return;
+        const scales = chart.options.scales || {};
+        Object.values(scales).forEach((scale) => {
+            if (!scale) return;
+            if (scale.ticks && (scale.ticks.color === CHART_LIGHT_TICK || scale.ticks.color === '#9ca3af')) {
+                scale.ticks.color = tick;
+            }
+            if (scale.grid) {
+                if (scale.grid.color === CHART_LIGHT_GRID || scale.grid.color === 'rgba(255,255,255,0.08)') {
+                    scale.grid.color = grid;
+                } else if (scale.grid.color === CHART_LIGHT_GRID_ALT) {
+                    scale.grid.color = gridAlt;
+                }
+            }
+        });
+        const legendLabels = chart.options.plugins?.legend?.labels;
+        if (legendLabels && (legendLabels.color === CHART_LIGHT_TICK || legendLabels.color === '#9ca3af')) {
+            legendLabels.color = tick;
+        }
+        try { chart.update('none'); } catch (e) {}
+    });
+}
+
+window.addEventListener('theme-changed', applyChartTheme);
+document.addEventListener('DOMContentLoaded', () => {
+    applyChartTheme();
+    // Charts may be created lazily (dynamic import) — re-apply shortly after load.
+    setTimeout(applyChartTheme, 1500);
+    // Also observe class flips from any other toggle path.
+    try {
+        new MutationObserver((mutations) => {
+            if (mutations.some((m) => m.attributeName === 'class')) applyChartTheme();
+        }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    } catch (e) {}
+});

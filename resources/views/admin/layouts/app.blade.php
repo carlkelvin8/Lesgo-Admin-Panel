@@ -1,9 +1,20 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth" x-data="{ darkMode: localStorage.getItem('darkMode') === 'true' }" :class="{ 'dark': darkMode }">
+<html lang="en" class="scroll-smooth" x-data="{ darkMode: document.documentElement.classList.contains('dark') }" :class="{ 'dark': darkMode }">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
     <title>@yield('title', 'LesGo Admin')</title>
+    {{-- Apply the saved theme before first paint to avoid a light→dark flash. --}}
+    <script>
+        (function () {
+            try {
+                var saved = localStorage.getItem('darkMode');
+                var dark = saved === 'true' || (saved === null && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                document.documentElement.classList.toggle('dark', dark);
+            } catch (e) {}
+        })();
+    </script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
@@ -292,7 +303,7 @@
                         </div>
                     </div>
                     @endif
-                    <button @click="darkMode = !darkMode; localStorage.setItem('darkMode', darkMode)" class="text-gray-400 hover:text-yellow-400 transition" title="Toggle dark mode">
+                    <button @click="darkMode = !darkMode; try { localStorage.setItem('darkMode', String(darkMode)); } catch (e) {} window.dispatchEvent(new CustomEvent('theme-changed', { detail: { dark: darkMode } }))" class="text-gray-400 hover:text-yellow-400 dark:hover:text-yellow-300 transition" title="Toggle dark mode">
                         <i class="fas" :class="darkMode ? 'fa-sun' : 'fa-moon'"></i>
                     </button>
                     @yield('actions')

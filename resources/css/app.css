@@ -3,6 +3,10 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
+/* Class-based dark mode (driven by the `.dark` class on <html> via the
+   topbar toggle), NOT the OS prefers-color-scheme media query. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
@@ -31,10 +35,47 @@
 }
 
 @layer base {
+    :root {
+        color-scheme: light;
+    }
+    :root.dark {
+        color-scheme: dark;
+    }
     [x-cloak] { display: none !important; }
     ::selection {
         background: #d2aae9;
         color: #30103f;
+    }
+
+    /* Smooth light ⇄ dark transition for color-only properties.
+       Lives in `base` so explicit `transition-*` utilities (utilities
+       layer) still win where they are used, and Alpine's inline
+       opacity/transform transitions are untouched. */
+    *,
+    *::before,
+    *::after {
+        transition-property: background-color, border-color, text-decoration-color, outline-color, fill, stroke;
+        transition-duration: 0.25s;
+        transition-timing-function: ease;
+    }
+
+    .dark ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+    .dark ::-webkit-scrollbar-track {
+        background: #111827;
+    }
+    .dark ::-webkit-scrollbar-thumb {
+        background: #374151;
+        border-radius: 8px;
+        border: 2px solid #111827;
+    }
+    .dark ::-webkit-scrollbar-thumb:hover {
+        background: #4b5563;
+    }
+    .dark {
+        scrollbar-color: #374151 #111827;
     }
 }
 
@@ -459,20 +500,156 @@
         line-height: 1;
     }
 
-    /* Dark mode support */
-    .dark body,
-    .dark .admin-shell {
-        background: #111827 !important;
-        color: #e5e7eb;
-    }
-    .dark .bg-white { background: #1f2937; }
-    .dark .bg-gray-50 { background: #111827; }
-    .dark .text-gray-800 { color: #f3f4f6; }
-    .dark .text-gray-700 { color: #d1d5db; }
-    .dark .text-gray-600 { color: #9ca3af; }
-    .dark .text-gray-500 { color: #9ca3af; }
-    .dark .border-gray-300 { border-color: #4b5563; }
-    .dark .border-gray-100 { border-color: #374151; }
-    .dark .hover\:bg-gray-50:hover { background: #374151; }
-    .dark .admin-topbar { background: rgba(17,24,39,0.92); border-color: #374151; }
-}
+} /* end @layer components */
+
+/* ── Dark mode ────────────────────────────────────────────────────────
+   Comprehensive class-based dark theme. Lives in the `utilities`
+   layer (same layer Tailwind emits utilities into) so `.dark .x`
+   reliably overrides the matching light utility, while explicit
+   `dark:` classes elsewhere keep working (values below mirror the
+   gray-900/800/700 scale used across the views). */
+@layer utilities {
+        .dark body,
+        .dark .admin-shell {
+            background:
+                radial-gradient(circle at 92% 3%, rgba(151, 78, 184, 0.12), transparent 24rem),
+                linear-gradient(145deg, #14101d 0%, #12101a 48%, #0f0d16 100%);
+            color: #e5e7eb;
+        }
+
+        /* Surfaces */
+        .dark .bg-white { background-color: #1f2937; }
+        .dark .bg-gray-50 { background-color: #111827; }
+        .dark .bg-gray-100 { background-color: #374151; }
+        .dark .bg-gray-200 { background-color: #4b5563; }
+        .dark .bg-gray-300 { background-color: #4b5563; }
+        .dark .hover\:bg-gray-50:hover { background-color: #374151; }
+        .dark .hover\:bg-gray-100:hover { background-color: #4b5563; }
+        .dark .hover\:bg-gray-200:hover { background-color: #4b5563; }
+        .dark .bg-gray-800 { background-color: #1f2937; }
+
+        /* Soft tint backgrounds (alerts, unread rows, icon chips) */
+        .dark .bg-green-50 { background-color: rgba(34, 197, 94, 0.12); }
+        .dark .bg-red-50 { background-color: rgba(239, 68, 68, 0.12); }
+        .dark .bg-yellow-50 { background-color: rgba(234, 179, 8, 0.12); }
+        .dark .bg-blue-50 { background-color: rgba(151, 78, 184, 0.14); }
+        .dark .bg-purple-50 { background-color: rgba(168, 85, 247, 0.14); }
+        .dark .bg-teal-50 { background-color: rgba(45, 212, 191, 0.12); }
+
+        /* Badge backgrounds */
+        .dark .bg-green-100 { background-color: rgba(34, 197, 94, 0.16); }
+        .dark .bg-red-100 { background-color: rgba(239, 68, 68, 0.16); }
+        .dark .bg-red-200 { background-color: rgba(239, 68, 68, 0.28); }
+        .dark .bg-yellow-100 { background-color: rgba(234, 179, 8, 0.16); }
+        .dark .bg-blue-100 { background-color: rgba(151, 78, 184, 0.20); }
+        .dark .bg-purple-100 { background-color: rgba(168, 85, 247, 0.18); }
+        .dark .bg-orange-100 { background-color: rgba(249, 115, 22, 0.16); }
+        .dark .bg-indigo-100 { background-color: rgba(129, 140, 248, 0.18); }
+
+        /* Gray text scale */
+        .dark .text-gray-900 { color: #f9fafb; }
+        .dark .text-gray-800 { color: #f3f4f6; }
+        .dark .text-gray-700 { color: #e5e7eb; }
+        .dark .text-gray-600 { color: #d1d5db; }
+        .dark .text-gray-500 { color: #9ca3af; }
+        .dark .text-gray-400 { color: #9ca3af; }
+        .dark .text-gray-300 { color: #d1d5db; }
+        .dark .text-gray-200 { color: #e5e7eb; }
+
+        /* Colored text → lighter variants (blue = LesGo plum scale) */
+        .dark .text-green-600, .dark .text-green-700 { color: #4ade80; }
+        .dark .text-green-800 { color: #86efac; }
+        .dark .text-red-500 { color: #f87171; }
+        .dark .text-red-600, .dark .text-red-700, .dark .text-red-800 { color: #fca5a5; }
+        .dark .text-blue-500 { color: #b878d5; }
+        .dark .text-blue-600, .dark .text-blue-700, .dark .text-blue-800 { color: #d2aae9; }
+        .dark .text-yellow-500, .dark .text-yellow-600 { color: #facc15; }
+        .dark .text-yellow-700, .dark .text-yellow-800 { color: #fde047; }
+        .dark .text-purple-600, .dark .text-purple-700 { color: #c084fc; }
+        .dark .text-orange-600, .dark .text-orange-700 { color: #fb923c; }
+        .dark .text-teal-600 { color: #2dd4bf; }
+        .dark .text-indigo-700 { color: #a5b4fc; }
+        .dark .hover\:text-gray-700:hover { color: #e5e7eb; }
+        .dark .hover\:text-gray-600:hover { color: #d1d5db; }
+        .dark .hover\:text-gray-900:hover { color: #f9fafb; }
+        .dark .hover\:text-blue-800:hover { color: #d2aae9; }
+        .dark .hover\:text-blue-600:hover { color: #d2aae9; }
+        .dark .hover\:text-blue-500:hover { color: #d2aae9; }
+        .dark .hover\:text-blue-300:hover { color: #d2aae9; }
+        .dark .hover\:text-red-800:hover { color: #fca5a5; }
+        .dark .hover\:text-red-700:hover { color: #fca5a5; }
+        .dark .hover\:text-red-400:hover { color: #fca5a5; }
+        .dark .hover\:text-yellow-800:hover { color: #fde047; }
+        .dark .hover\:text-orange-800:hover { color: #fb923c; }
+        .dark .hover\:text-green-800:hover { color: #86efac; }
+        .dark .focus\:border-blue-500:focus { border-color: #b878d5; }
+
+        /* Borders & dividers */
+        .dark .border-gray-50 { border-color: #374151; }
+        .dark .border-gray-100 { border-color: #374151; }
+        .dark .border-gray-200 { border-color: #374151; }
+        .dark .border-gray-300 { border-color: #4b5563; }
+        .dark .divide-gray-50 > :not([hidden]) ~ :not([hidden]) { border-color: #374151; }
+        .dark .divide-gray-100 > :not([hidden]) ~ :not([hidden]) { border-color: #374151; }
+        .dark .divide-gray-200 > :not([hidden]) ~ :not([hidden]) { border-color: #374151; }
+        .dark .border-green-300 { border-color: rgba(34, 197, 94, 0.4); }
+        .dark .border-red-300 { border-color: rgba(239, 68, 68, 0.4); }
+        .dark .border-amber-300 { border-color: rgba(245, 158, 11, 0.4); }
+        .dark .border-green-200 { border-color: rgba(34, 197, 94, 0.35); }
+        .dark .border-yellow-200 { border-color: rgba(234, 179, 8, 0.35); }
+        .dark .border-red-200 { border-color: rgba(239, 68, 68, 0.35); }
+        .dark .border-purple-100 { border-color: rgba(168, 85, 247, 0.35); }
+        .dark .border-purple-200 { border-color: rgba(168, 85, 247, 0.4); }
+
+        /* Shadows read softer on dark */
+        .dark .shadow-sm { box-shadow: 0 1px 2px rgba(0, 0, 0, 0.45); }
+
+        /* Form controls */
+        .dark input:not([type='checkbox']):not([type='radio']):not([type='button']):not([type='submit']),
+        .dark select,
+        .dark textarea {
+            background-color: #111827;
+            border-color: #4b5563;
+            color: #f3f4f6;
+        }
+        .dark input::placeholder,
+        .dark textarea::placeholder {
+            color: #6b7280;
+        }
+        .dark select option {
+            background-color: #1f2937;
+            color: #f3f4f6;
+        }
+
+        /* Shell */
+        .dark .admin-topbar {
+            background: rgba(17, 24, 39, 0.92);
+            border-color: #374151;
+            box-shadow: 0 5px 24px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Small components */
+        .dark .kbd {
+            background: #374151;
+            border-color: #4b5563;
+            box-shadow: 0 1px 0 #4b5563;
+            color: #d1d5db;
+        }
+        .dark .skeleton {
+            background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
+            background-size: 200% 100%;
+        }
+        .dark .breadcrumb-separator::before {
+            color: #4b5563;
+        }
+        .dark .responsive-table tbody tr {
+            background: #1f2937;
+            border-color: #374151;
+        }
+        .dark .responsive-table tbody td {
+            border-color: #374151;
+        }
+        .dark .responsive-table tbody td::before {
+            color: #9ca3af;
+        }
+} /* end dark-mode utilities */

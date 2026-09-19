@@ -2,7 +2,7 @@
 
 @php
     $tag = $href ? 'a' : 'div';
-    $classes = 'bg-white rounded-xl shadow-sm p-6';
+    $classes = 'bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6';
     if ($border) $classes .= ' border-l-4 border-' . $border;
     if ($hover && $href) $classes .= ' hover:shadow-md transition-shadow';
 @endphp

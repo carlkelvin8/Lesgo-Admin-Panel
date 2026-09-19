@@ -4,9 +4,9 @@
     <div class="empty-state-icon {{ $iconBg }}">
         <i class="fas {{ $icon }} {{ $iconColor }}"></i>
     </div>
-    <h3 class="text-lg font-medium text-gray-600 mb-1">{{ $title }}</h3>
+    <h3 class="text-lg font-medium text-gray-600 dark:text-gray-300 mb-1">{{ $title }}</h3>
     @if($description)
-        <p class="text-sm text-gray-400 mb-4 max-w-sm mx-auto">{{ $description }}</p>
+        <p class="text-sm text-gray-400 dark:text-gray-500 mb-4 max-w-sm mx-auto">{{ $description }}</p>
     @endif
     {{ $slot }}
     @if($actionLabel && $actionUrl)

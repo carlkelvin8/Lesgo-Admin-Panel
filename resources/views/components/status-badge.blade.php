@@ -57,10 +57,21 @@
         'unverified' => 'bg-yellow-100 text-yellow-700',
     ];
     $color = $colors[$status] ?? 'bg-gray-100 text-gray-700';
+    // Dark-mode translucent backgrounds + lighter text per base hue.
+    $darkColor = match (true) {
+        str_contains($color, 'green') => 'dark:bg-green-500/15 dark:text-green-300',
+        str_contains($color, 'red') => 'dark:bg-red-500/15 dark:text-red-300',
+        str_contains($color, 'yellow') => 'dark:bg-yellow-500/15 dark:text-yellow-300',
+        str_contains($color, 'blue') => 'dark:bg-blue-500/15 dark:text-blue-300',
+        str_contains($color, 'purple') => 'dark:bg-purple-500/15 dark:text-purple-300',
+        str_contains($color, 'orange') => 'dark:bg-orange-500/15 dark:text-orange-300',
+        str_contains($color, 'indigo') => 'dark:bg-indigo-500/20 dark:text-indigo-300',
+        default => 'dark:bg-gray-500/20 dark:text-gray-300',
+    };
     $displayLabel = $label ?: str_replace('_', ' ', ucfirst($status));
 @endphp
 
-<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium {{ $color }}">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium {{ $color }} {{ $darkColor }}">
     @if($dot)
         <span class="w-1.5 h-1.5 rounded-full {{ str_contains($color, 'green') ? 'bg-green-500' : (str_contains($color, 'red') ? 'bg-red-500' : (str_contains($color, 'yellow') ? 'bg-yellow-500' : (str_contains($color, 'blue') ? 'bg-blue-500' : (str_contains($color, 'purple') ? 'bg-purple-500' : (str_contains($color, 'orange') ? 'bg-orange-500' : (str_contains($color, 'indigo') ? 'bg-indigo-500' : 'bg-gray-500')))))) }}"></span>
     @endif

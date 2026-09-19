@@ -2,12 +2,12 @@
 
 <div class="space-y-4">
     @forelse ($entries as $entry)
-        <div class="relative pl-8 transition-colors duration-150 hover:bg-gray-50 rounded-lg p-3 group">
+        <div class="relative pl-8 transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg p-3 group">
             {{-- Timeline line --}}
-            <div class="absolute left-3 top-0 bottom-0 w-px bg-gray-200 group-last:hidden"></div>
+            <div class="absolute left-3 top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-700 group-last:hidden"></div>
 
             {{-- Colored dot --}}
-            <div class="absolute left-1.5 top-4 w-3 h-3 rounded-full border-2 border-white shadow
+            <div class="absolute left-1.5 top-4 w-3 h-3 rounded-full border-2 border-white dark:border-gray-800 shadow
                 {{ match($entry->risk_level ?? 'safe') {
                     'high' => 'bg-red-500',
                     'low' => 'bg-yellow-400',
@@ -46,7 +46,7 @@
                         </svg>
                         View changes
                     </button>
-                    <div x-show="open" x-collapse class="mt-2 text-xs bg-gray-50 rounded p-2 font-mono space-y-1">
+                    <div x-show="open" x-collapse class="mt-2 text-xs bg-gray-50 dark:bg-gray-900 rounded p-2 font-mono space-y-1">
                         @if ($entry->old_values)
                             <div>
                                 <span class="text-red-600 font-semibold">Old:</span>
