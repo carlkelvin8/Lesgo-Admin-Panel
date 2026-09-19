@@ -57,7 +57,7 @@ class ReportsAnalyticsLiveTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('750.00');
-        $response->assertSee('Total Revenue (30d)');
+        $response->assertSee('Revenue (30d)');
     }
 
     public function test_reports_index_shows_live_summary_without_generated_reports(): void

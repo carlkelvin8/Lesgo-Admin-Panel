@@ -340,20 +340,26 @@ class ReportController extends Controller
         $count = (int) (clone $paid)->count();
 
         if ($source === 'orders') {
-            $byDate = (clone $paid)
-                ->select(
-                    DB::raw('DATE(created_at) as date'),
-                    DB::raw('SUM(COALESCE(actual_fare, estimated_fare, 0)) as total_amount'),
-                    DB::raw('COUNT(*) as total_transactions')
-                )
-                ->groupBy(DB::raw('DATE(created_at)'))
-                ->orderBy('date')
+            // DB-agnostic: DATE() is MySQL-only and fatals on Postgres
+            // (laravel.cloud), so aggregate in PHP.
+            $grouped = [];
+            (clone $paid)->select('created_at', 'actual_fare', 'estimated_fare')
                 ->get()
-                ->map(fn ($row) => (object) [
-                    'date' => Carbon::parse($row->date),
-                    'total_amount' => $row->total_amount,
-                    'total_transactions' => $row->total_transactions,
-                ]);
+                ->each(function ($row) use (&$grouped) {
+                    if (! $row->created_at) {
+                        return;
+                    }
+                    $key = Carbon::parse($row->created_at)->toDateString();
+                    $grouped[$key] ??= ['total_amount' => 0.0, 'total_transactions' => 0];
+                    $grouped[$key]['total_amount'] += (float) ($row->actual_fare ?? $row->estimated_fare ?? 0);
+                    $grouped[$key]['total_transactions']++;
+                });
+            ksort($grouped);
+            $byDate = collect($grouped)->map(fn ($v, $date) => (object) [
+                'date' => Carbon::parse($date),
+                'total_amount' => $v['total_amount'],
+                'total_transactions' => $v['total_transactions'],
+            ])->values();
 
             $bySource = (clone $paid)
                 ->select('payment_method as revenue_source', DB::raw('SUM(COALESCE(actual_fare, estimated_fare, 0)) as total_amount'), DB::raw('COUNT(*) as total_transactions'), DB::raw('AVG(actual_fare) as avg_transaction'))
@@ -361,20 +367,27 @@ class ReportController extends Controller
                 ->orderByDesc('total_amount')
                 ->get();
         } else {
-            $byDate = (clone $paid)
-                ->select(
-                    DB::raw('DATE(COALESCE(paid_at, created_at)) as date'),
-                    DB::raw('SUM(amount) as total_amount'),
-                    DB::raw('COUNT(*) as total_transactions')
-                )
-                ->groupBy(DB::raw('DATE(COALESCE(paid_at, created_at))'))
-                ->orderBy('date')
+            // DB-agnostic: DATE() is MySQL-only and fatals on Postgres
+            // (laravel.cloud), so aggregate in PHP.
+            $grouped = [];
+            (clone $paid)->select('paid_at', 'created_at', 'amount')
                 ->get()
-                ->map(fn ($row) => (object) [
-                    'date' => Carbon::parse($row->date),
-                    'total_amount' => $row->total_amount,
-                    'total_transactions' => $row->total_transactions,
-                ]);
+                ->each(function ($row) use (&$grouped) {
+                    $ts = $row->paid_at ?? $row->created_at;
+                    if (! $ts) {
+                        return;
+                    }
+                    $key = Carbon::parse($ts)->toDateString();
+                    $grouped[$key] ??= ['total_amount' => 0.0, 'total_transactions' => 0];
+                    $grouped[$key]['total_amount'] += (float) ($row->amount ?? 0);
+                    $grouped[$key]['total_transactions']++;
+                });
+            ksort($grouped);
+            $byDate = collect($grouped)->map(fn ($v, $date) => (object) [
+                'date' => Carbon::parse($date),
+                'total_amount' => $v['total_amount'],
+                'total_transactions' => $v['total_transactions'],
+            ])->values();
 
             $bySource = (clone $paid)
                 ->select('method as revenue_source', DB::raw('SUM(amount) as total_amount'), DB::raw('COUNT(*) as total_transactions'), DB::raw('AVG(amount) as avg_transaction'))

@@ -209,31 +209,56 @@ class DashboardService
 
     private function fetchDailyRevenue(int $days = 7)
     {
+        // DB-agnostic: DATE() is MySQL-only and fatals on Postgres
+        // (laravel.cloud), so aggregate in PHP. Same shape as before:
+        // only days with data, ascending, {date, total, count}.
         $startDate = Carbon::now()->subDays($days)->startOfDay();
 
-        if ($this->usesOrdersForRevenue()) {
-            return Order::where('status', 'completed')
-                ->where('created_at', '>=', $startDate)
-                ->select(
-                    DB::raw('DATE(created_at) as date'),
-                    DB::raw('SUM(COALESCE(actual_fare, estimated_fare, 0)) as total'),
-                    DB::raw('COUNT(*) as count')
-                )
-                ->groupBy('date')
-                ->orderBy('date')
-                ->get();
+        try {
+            if ($this->usesOrdersForRevenue()) {
+                $rows = Order::where('status', 'completed')
+                    ->where('created_at', '>=', $startDate)
+                    ->select('created_at', 'actual_fare', 'estimated_fare')
+                    ->get();
+                $grouped = [];
+                foreach ($rows as $row) {
+                    if (! $row->created_at) {
+                        continue;
+                    }
+                    $key = Carbon::parse($row->created_at)->toDateString();
+                    $grouped[$key] ??= ['total' => 0.0, 'count' => 0];
+                    $grouped[$key]['total'] += (float) ($row->actual_fare ?? $row->estimated_fare ?? 0);
+                    $grouped[$key]['count']++;
+                }
+            } else {
+                $rows = Payment::whereIn('status', self::PAID_STATUSES)
+                    ->where('created_at', '>=', $startDate)
+                    ->select('created_at', 'amount')
+                    ->get();
+                $grouped = [];
+                foreach ($rows as $row) {
+                    if (! $row->created_at) {
+                        continue;
+                    }
+                    $key = Carbon::parse($row->created_at)->toDateString();
+                    $grouped[$key] ??= ['total' => 0.0, 'count' => 0];
+                    $grouped[$key]['total'] += (float) ($row->amount ?? 0);
+                    $grouped[$key]['count']++;
+                }
+            }
+        } catch (Throwable $e) {
+            report($e);
+
+            return collect();
         }
 
-        return Payment::whereIn('status', self::PAID_STATUSES)
-            ->where('created_at', '>=', $startDate)
-            ->select(
-                DB::raw('DATE(created_at) as date'),
-                DB::raw('SUM(amount) as total'),
-                DB::raw('COUNT(*) as count')
-            )
-            ->groupBy('date')
-            ->orderBy('date')
-            ->get();
+        ksort($grouped);
+
+        return collect($grouped)->map(fn ($v, $date) => (object) [
+            'date' => $date,
+            'total' => $v['total'],
+            'count' => $v['count'],
+        ])->values();
     }
 
     private function fetchOrderStatusDistribution()
@@ -245,13 +270,34 @@ class DashboardService
 
     private function fetchDailyUsers(int $days = 7)
     {
+        // DB-agnostic: DATE() is MySQL-only and fatals on Postgres
+        // (laravel.cloud), so aggregate in PHP. Same shape as before:
+        // only days with data, ascending, {date, total}.
         $startDate = Carbon::now()->subDays($days)->startOfDay();
 
-        return User::where('created_at', '>=', $startDate)
-            ->select(DB::raw('DATE(created_at) as date'), DB::raw('COUNT(*) as total'))
-            ->groupBy('date')
-            ->orderBy('date')
-            ->get();
+        try {
+            $grouped = [];
+            User::where('created_at', '>=', $startDate)
+                ->pluck('created_at')
+                ->each(function ($ts) use (&$grouped) {
+                    if ($ts === null) {
+                        return;
+                    }
+                    $key = Carbon::parse($ts)->toDateString();
+                    $grouped[$key] = ($grouped[$key] ?? 0) + 1;
+                });
+        } catch (Throwable $e) {
+            report($e);
+
+            return collect();
+        }
+
+        ksort($grouped);
+
+        return collect($grouped)->map(fn ($total, $date) => (object) [
+            'date' => $date,
+            'total' => (int) $total,
+        ])->values();
     }
 
     /**

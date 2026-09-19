@@ -45,21 +45,32 @@ return new class extends Migration
             });
         }
 
-        // Repair path: an earlier failed MySQL run may have left the table without its unique index.
-        if (Schema::getConnection()->getDriverName() === 'mysql' && Schema::hasTable('driver_missions')) {
-            $indexes = collect(DB::select(
-                "SELECT index_name FROM information_schema.statistics
-                 WHERE table_schema = DATABASE() AND table_name = 'driver_missions'"
-            ))->pluck('index_name');
+        // Repair path: an earlier failed run may have left the table without its
+        // unique index (or with the old long-named one). Driver-agnostic via
+        // Schema::getIndexes(), and tolerant of races/stale state so migrate
+        // never fatals with "Duplicate key name".
+        if (Schema::hasTable('driver_missions')) {
+            try {
+                $indexes = collect(Schema::getIndexes('driver_missions'))->pluck('name');
+            } catch (\Throwable) {
+                $indexes = collect();
+            }
             if ($indexes->contains('driver_missions_driver_profile_id_mission_template_id_mission_date_unique')) {
-                Schema::table('driver_missions', function (Blueprint $table) {
-                    $table->dropUnique('driver_missions_driver_profile_id_mission_template_id_mission_date_unique');
-                });
+                try {
+                    Schema::table('driver_missions', function (Blueprint $table) {
+                        $table->dropUnique('driver_missions_driver_profile_id_mission_template_id_mission_date_unique');
+                    });
+                } catch (\Throwable) {
+                }
             }
             if (! $indexes->contains('drv_mission_daily')) {
-                Schema::table('driver_missions', function (Blueprint $table) {
-                    $table->unique(['driver_profile_id', 'mission_template_id', 'mission_date'], 'drv_mission_daily');
-                });
+                try {
+                    Schema::table('driver_missions', function (Blueprint $table) {
+                        $table->unique(['driver_profile_id', 'mission_template_id', 'mission_date'], 'drv_mission_daily');
+                    });
+                } catch (\Throwable) {
+                    // Index already exists (stale/parallel state) — safe to ignore.
+                }
             }
         }
     }
