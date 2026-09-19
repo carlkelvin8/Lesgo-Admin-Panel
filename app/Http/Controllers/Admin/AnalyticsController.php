@@ -13,10 +13,27 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class AnalyticsController extends Controller
 {
     public function index()
+    {
+        try {
+            return $this->renderIndex();
+        } catch (Throwable $e) {
+            Log::error('AnalyticsController@index failed', [
+                'message' => $e->getMessage(),
+                'file'    => $e->getFile(),
+                'line'    => $e->getLine(),
+                'trace'   => collect($e->getTrace())->take(8)->map(fn ($f) => ($f['file'] ?? '?').':'.($f['line'] ?? '?').' '.$f['function'])->implode("\n"),
+            ]);
+            throw $e;
+        }
+    }
+
+    private function renderIndex()
     {
         $today           = now()->toDateString();
         $thirtyDaysAgo   = now()->subDays(30)->toDateString();
@@ -161,7 +178,7 @@ class AnalyticsController extends Controller
             'dailyUserLabels', 'dailyUserValues',
             'trendLabels', 'trendRevenue', 'trendOrders'
         ));
-    }
+    } // end renderIndex()
 
     /**
      * Revenue source query.
