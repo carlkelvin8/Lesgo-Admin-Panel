@@ -115,6 +115,6 @@ class DashboardTopPartnersTest extends TestCase
         $this->get(route('admin.dashboard'))
             ->assertOk()
             ->assertSee('Render Eatery')
-            ->assertSee('$100.00');
+            ->assertSee('₱100.00');
     }
 }

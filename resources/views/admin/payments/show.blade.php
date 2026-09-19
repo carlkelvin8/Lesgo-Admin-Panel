@@ -45,7 +45,7 @@
             <div class="bg-white rounded-xl shadow-sm p-6">
                 <h3 class="font-semibold text-gray-800">Record Provider Refund</h3>
                 <p class="mt-1 text-xs text-amber-700">This records an externally completed refund; it does not call the payment gateway.</p>
-                <form method="POST" action="{{ route('admin.payments.refund', $payment) }}" class="mt-4 space-y-3" onsubmit="return confirm('Record this refund amount?')">@csrf
+                <form method="POST" action="{{ route('admin.payments.refund', $payment->id) }}" class="mt-4 space-y-3" onsubmit="return confirm('Record this refund amount?')">@csrf
                     <div><label class="mb-1 block text-xs font-medium">Refund amount</label><input type="number" name="amount" min="0.01" max="{{ max(0, (float) $payment->amount - (float) $payment->refunded_amount) }}" step="0.01" required class="w-full rounded-lg border px-3 py-2"></div>
                     <div><label class="mb-1 block text-xs font-medium">Reason</label><textarea name="reason" rows="3" minlength="10" required class="w-full rounded-lg border px-3 py-2"></textarea></div>
                     <button class="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white">Record refund</button>
@@ -55,7 +55,7 @@
 
             <div class="bg-white rounded-xl shadow-sm p-6">
                 <h3 class="font-semibold text-gray-800">Reconcile Payment</h3>
-                <form method="POST" action="{{ route('admin.payments.reconcile', $payment) }}" class="mt-4 space-y-3">@csrf
+                <form method="POST" action="{{ route('admin.payments.reconcile', $payment->id) }}" class="mt-4 space-y-3">@csrf
                     <div><label class="mb-1 block text-xs font-medium">Result</label><select name="reconciliation_status" required class="w-full rounded-lg border px-3 py-2">@foreach(['matched'=>'Matched','discrepancy'=>'Discrepancy','needs_review'=>'Needs review'] as $value => $label)<option value="{{ $value }}" @selected($payment->reconciliation_status === $value)>{{ $label }}</option>@endforeach</select></div>
                     <div><label class="mb-1 block text-xs font-medium">Notes</label><textarea name="reconciliation_notes" rows="3" minlength="5" required class="w-full rounded-lg border px-3 py-2">{{ $payment->reconciliation_notes }}</textarea></div>
                     <button class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white">Save reconciliation</button>

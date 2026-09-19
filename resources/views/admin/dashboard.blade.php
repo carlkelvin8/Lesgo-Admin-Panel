@@ -201,7 +201,7 @@
                                 <span class="font-medium text-gray-900 dark:text-white">{{ $orderCount }}</span>
                             </td>
                             <td class="px-4 py-4" data-label="Revenue">
-                                <span class="font-medium text-gray-900 dark:text-white">${{ number_format((float) $revenue, 2) }}</span>
+                                <span class="font-medium text-gray-900 dark:text-white">₱{{ number_format((float) $revenue, 2) }}</span>
                             </td>
                         </tr>
                     @empty
@@ -250,7 +250,7 @@
                                     </div>
                                 </td>
                                 <td class="px-4 py-4" data-label="Total">
-                                    <span class="font-medium text-gray-900 dark:text-white">${{ number_format((float) data_get($order, 'total', 0), 2) }}</span>
+                                    <span class="font-medium text-gray-900 dark:text-white">₱{{ number_format((float) data_get($order, 'total', 0), 2) }}</span>
                                 </td>
                                 <td class="px-4 py-4" data-label="Status">
                                     <x-status-badge :status="data_get($order, 'status', 'unknown')" />

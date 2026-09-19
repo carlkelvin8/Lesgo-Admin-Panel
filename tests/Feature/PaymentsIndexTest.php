@@ -44,4 +44,25 @@ class PaymentsIndexTest extends TestCase
             ->assertOk()
             ->assertSee('No payments found');
     }
+
+    public function test_payment_detail_renders_for_an_order_without_payment_record(): void
+    {
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'admin_role' => 'super_admin',
+            'is_active' => true,
+        ]);
+
+        $order = Order::factory()->create([
+            'payment_status' => 'paid',
+            'actual_fare' => 250.00,
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.payments.show', $order->id))
+            ->assertOk()
+            ->assertSee('Record Provider Refund')
+            ->assertSee(route('admin.payments.refund', $order->id), false)
+            ->assertSee(route('admin.payments.reconcile', $order->id), false);
+    }
 }

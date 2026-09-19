@@ -40,6 +40,7 @@ class PaymentController extends Controller
             public $id, $order_id, $customer, $amount, $currency, $method, $status, $paid_at;
             public $refunded_amount = 0, $provider, $provider_reference, $meta;
             public $reconciliation_status = 'unreconciled', $reconciliation_notes, $created_at;
+            public $reconciler = null;
 
             public function getRouteKey()
             {
@@ -81,7 +82,6 @@ class PaymentController extends Controller
         if (! $paymentModel) {
             $order = Order::with(['customer'])->findOrFail($payment);
             $paymentModel = $this->orderToPayment($order);
-            $paymentModel->reconciler = null;
         }
 
         return view('admin.payments.show', ['payment' => $paymentModel]);

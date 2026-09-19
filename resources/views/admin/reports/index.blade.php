@@ -5,6 +5,7 @@
 @section('actions')
 <form method="POST" action="{{ route('admin.reports.generate') }}" class="flex gap-2">@csrf<input type="date" name="report_date" value="{{ now()->subDay()->toDateString() }}" max="{{ now()->toDateString() }}" required class="border rounded-lg px-3 py-2 text-sm"><button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"><i class="fas fa-rotate mr-1"></i> Generate</button></form>
 <a href="{{ route('admin.reports.export', request()->only(['date_from', 'date_to'])) }}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm"><i class="fas fa-download mr-1"></i> Export CSV</a>
+<a href="{{ route('admin.reports.revenue') }}" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm"><i class="fas fa-chart-line mr-1"></i> Revenue Analytics</a>
 @endsection
 
 @section('content')
