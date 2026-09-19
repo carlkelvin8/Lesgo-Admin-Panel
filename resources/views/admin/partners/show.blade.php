@@ -97,6 +97,9 @@
                 @if($registrationFee->application_status !== 'approved')
                 <form method="POST" action="{{ route('admin.registration-fees.approve', $registrationFee) }}">@csrf<button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm" onclick="return confirm('Approve? Will only activate if fee PAID. Approval does not bypass fee.')">Approve Application</button></form>
                 @endif
+                @if(!$registrationFee->isFeeSatisfied() && !$registrationFee->is_grandfathered)
+                <form method="POST" action="{{ route('admin.registration-fees.waive', $registrationFee) }}" class="flex gap-2">@csrf<input name="reason" maxlength="1000" placeholder="Waiver reason (optional)" class="rounded border px-3 py-2 text-sm"><button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm" onclick="return confirm('Waive the fee, approve this merchant, and activate the account?')">Waive &amp; Activate</button></form>
+                @endif
                 @if($registrationFee->application_status !== 'rejected')
                 <form method="POST" action="{{ route('admin.registration-fees.reject', $registrationFee) }}">@csrf<button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm">Reject Application</button></form>
                 @endif
