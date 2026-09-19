@@ -10,6 +10,7 @@ use App\Models\Order;
 use App\Models\Payment;
 use App\Models\RevenueAnalytics;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -20,18 +21,13 @@ class AnalyticsController extends Controller
         $today = now()->toDateString();
         $thirtyDaysAgo = now()->subDays(30)->toDateString();
         $sevenDaysAgo = now()->subDays(7)->toDateString();
+        $thirtyDaysStart = now()->subDays(30)->startOfDay();
 
-        $paidPayments = fn (string $from) => Payment::where('status', 'paid')
-            ->where(function ($query) use ($from) {
-                $query->whereDate('paid_at', '>=', $from)
-                    ->orWhere(fn ($fallback) => $fallback->whereNull('paid_at')->whereDate('created_at', '>=', $from));
-            });
+        // Revenue comes from paid orders (the prod payments table is empty).
+        [$revenue30, $srcName] = $this->revenueSource($thirtyDaysStart);
 
-        $paid30 = $paidPayments($thirtyDaysAgo);
-        $paid7 = $paidPayments($sevenDaysAgo);
-
-        $liveRevenue = (clone $paid30)->sum('amount');
-        $liveTransactions = (clone $paid30)->count();
+        $liveRevenue = $this->revenueOf($revenue30, $srcName);
+        $liveTransactions = (clone $revenue30)->count();
         $liveOrders = Order::whereDate('created_at', '>=', $thirtyDaysAgo)->count();
         $liveNewUsers = User::whereDate('created_at', '>=', $thirtyDaysAgo)->count();
 
@@ -48,14 +44,14 @@ class AnalyticsController extends Controller
             ->groupBy('revenue_type')
             ->get();
 
-        if ($tableRevenue->isNotEmpty()) {
+        $storedRevenueTotal = (float) $tableRevenue->sum('total_amount');
+
+        if ($tableRevenue->isNotEmpty() && $storedRevenueTotal > 0) {
             $revenueByType = $tableRevenue;
-            $totalRevenue = (float) $tableRevenue->sum('total_amount');
+            $totalRevenue = $storedRevenueTotal;
             $totalTransactions = (int) $tableRevenue->sum('total_transactions');
         } else {
-            $revenueByType = collect([
-                (object) ['revenue_type' => 'gross', 'total_amount' => $liveRevenue, 'total_transactions' => $liveTransactions],
-            ]);
+            $revenueByType = $this->revenueByTypeLive($revenue30, $srcName);
             $totalRevenue = $liveRevenue;
             $totalTransactions = $liveTransactions;
         }
@@ -65,28 +61,18 @@ class AnalyticsController extends Controller
             ->orderBy('report_date')
             ->get();
 
-        if ($tableTrend->isNotEmpty()) {
+        $storedTrendTotal = (float) $tableTrend->sum('total_revenue');
+
+        if ($tableTrend->isNotEmpty() && $storedTrendTotal > 0) {
             $dailyRevenueTrend = $tableTrend;
         } else {
-            $dailyRevenueTrend = (clone $paid7)
-                ->select(
-                    DB::raw('DATE(COALESCE(paid_at, created_at)) as report_date'),
-                    DB::raw('SUM(amount) as total_revenue'),
-                    DB::raw('COUNT(*) as total_orders')
-                )
-                ->groupBy(DB::raw('DATE(COALESCE(paid_at, created_at))'))
-                ->orderBy('report_date')
-                ->get()
-                ->map(fn ($row) => (object) [
-                    'report_date' => Carbon::parse($row->report_date),
-                    'total_revenue' => $row->total_revenue,
-                    'total_orders' => $row->total_orders,
-                ]);
+            $dailyRevenueTrend = $this->dailyTrendLive(7);
         }
 
         if ($todayMetrics->isEmpty()) {
             $todayOrders = Order::whereDate('created_at', $today)->count();
-            $todayRevenue = (clone $paidPayments($today))->sum('amount');
+            [$todayRev, $todaySrc] = $this->revenueSource(now()->startOfDay());
+            $todayRevenue = $this->revenueOf($todayRev, $todaySrc);
             $todayUsers = User::whereDate('created_at', $today)->count();
 
             $todayMetrics = collect([
@@ -119,5 +105,74 @@ class AnalyticsController extends Controller
             'stats', 'todayMetrics', 'recentReports', 'revenueByType',
             'dailyRevenueTrend', 'eventStats'
         ));
+    }
+
+    /**
+     * Revenue source query: paid orders first, legacy payments table as fallback.
+     *
+     * @return array{0: Builder, 1: string}  [query, 'orders'|'payments']
+     */
+    private function revenueSource(?\Carbon\Carbon $from = null): array
+    {
+        if (Order::where('payment_status', 'paid')->exists()) {
+            return [
+                Order::where('payment_status', 'paid')->when($from, fn ($q) => $q->where('created_at', '>=', $from)),
+                'orders',
+            ];
+        }
+
+        return [
+            Payment::where('status', 'paid')->when($from, fn ($q) => $q->where('paid_at', '>=', $from)),
+            'payments',
+        ];
+    }
+
+    private function revenueOf(Builder $query, string $source): float
+    {
+        $expression = $source === 'orders'
+            ? DB::raw('COALESCE(actual_fare, estimated_fare, 0)')
+            : DB::raw('amount');
+
+        return (float) (clone $query)->sum($expression);
+    }
+
+    private function revenueByTypeLive(Builder $query, string $source): \Illuminate\Support\Collection
+    {
+        return collect([
+            (object) [
+                'revenue_type' => 'gross',
+                'total_amount' => $this->revenueOf($query, $source),
+                'total_transactions' => (clone $query)->count(),
+            ],
+        ]);
+    }
+
+    private function dailyTrendLive(int $days): \Illuminate\Support\Collection
+    {
+        $from = now()->subDays($days)->startOfDay();
+        [$query, $source] = $this->revenueSource($from);
+
+        $select = $source === 'orders'
+            ? [
+                DB::raw('DATE(created_at) as report_date'),
+                DB::raw('SUM(COALESCE(actual_fare, estimated_fare, 0)) as total_revenue'),
+                DB::raw('COUNT(*) as total_orders'),
+            ]
+            : [
+                DB::raw('DATE(COALESCE(paid_at, created_at)) as report_date'),
+                DB::raw('SUM(amount) as total_revenue'),
+                DB::raw('COUNT(*) as total_orders'),
+            ];
+
+        return (clone $query)
+            ->select($select)
+            ->groupBy('report_date')
+            ->orderBy('report_date')
+            ->get()
+            ->map(fn ($row) => (object) [
+                'report_date' => Carbon::parse($row->report_date),
+                'total_revenue' => $row->total_revenue,
+                'total_orders' => $row->total_orders,
+            ]);
     }
 }
