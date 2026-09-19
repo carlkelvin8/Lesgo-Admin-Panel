@@ -10,6 +10,7 @@ use App\Models\Order;
 use App\Models\Payment;
 use App\Models\RevenueAnalytics;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -32,16 +33,12 @@ class ReportController extends Controller
 
         $since = now()->subDays(30)->startOfDay();
 
-        $paidPayments = Payment::where('status', 'paid')
-            ->where(function ($query) use ($since) {
-                $query->where('paid_at', '>=', $since)
-                    ->orWhere(fn ($fallback) => $fallback->whereNull('paid_at')->where('created_at', '>=', $since));
-            });
+        [$revenueQuery, $revenueSource] = $this->revenueSource($since);
 
         $liveSummary = [
             'orders_30d' => Order::where('created_at', '>=', $since)->count(),
-            'revenue_30d' => (clone $paidPayments)->sum('amount'),
-            'transactions_30d' => (clone $paidPayments)->count(),
+            'revenue_30d' => $this->revenueOf($revenueQuery, $revenueSource),
+            'transactions_30d' => (clone $revenueQuery)->count(),
             'new_users_30d' => User::where('created_at', '>=', $since)->count(),
             'new_drivers_30d' => DriverProfile::where('created_at', '>=', $since)->count(),
         ];
@@ -60,11 +57,7 @@ class ReportController extends Controller
         $end = $start->copy()->endOfDay();
 
         $orders = Order::whereBetween('created_at', [$start, $end]);
-        $payments = Payment::where('status', 'paid')
-            ->where(function ($query) use ($start, $end) {
-                $query->whereBetween('paid_at', [$start, $end])
-                    ->orWhere(fn ($fallback) => $fallback->whereNull('paid_at')->whereBetween('created_at', [$start, $end]));
-            });
+        [$revenueQuery, $revenueSource] = $this->revenueSource($start, $end);
 
         $values = [
             'total_orders' => (clone $orders)->count(),
@@ -72,12 +65,12 @@ class ReportController extends Controller
             'cancelled_orders' => (clone $orders)->where('status', 'cancelled')->count(),
             'new_users' => User::whereBetween('created_at', [$start, $end])->count(),
             'new_drivers' => DriverProfile::whereBetween('created_at', [$start, $end])->count(),
-            'total_revenue' => (clone $payments)->sum('amount'),
+            'total_revenue' => $this->revenueOf($revenueQuery, $revenueSource),
             'avg_fare' => (clone $orders)->where('status', 'completed')->avg('actual_fare') ?? 0,
             'total_distance_km' => (int) round(((clone $orders)->sum('actual_distance_m') ?? 0) / 1000),
         ];
 
-        DB::transaction(function () use ($date, $values, $payments) {
+        DB::transaction(function () use ($date, $values, $revenueQuery) {
             DailyReport::updateOrCreate(
                 ['report_date' => $date],
                 [...$values, 'meta' => ['generated_by' => auth()->id(), 'generated_at' => now()->toIso8601String()]]
@@ -97,7 +90,7 @@ class ReportController extends Controller
                 );
             }
 
-            $transactionCount = (clone $payments)->count();
+            $transactionCount = (clone $revenueQuery)->count();
             RevenueAnalytics::updateOrCreate(
                 ['date' => $date, 'revenue_type' => 'gross', 'revenue_source' => 'orders', 'service_id' => null, 'partner_id' => null],
                 [
@@ -160,6 +153,13 @@ class ReportController extends Controller
                 DB::raw('COUNT(DISTINCT date) as days_with_data')
             )
             ->first();
+
+        // A stored analytics row that is all zeros is not real data (e.g. it was
+        // written when the empty payments table was the revenue source). Fall
+        // back to live revenue so the page always shows real numbers.
+        if (! $summary || (float) $summary->total_revenue == 0) {
+            return $this->liveRevenue($request);
+        }
 
         $byType = (clone $query)
             ->select('revenue_type', DB::raw('SUM(amount) as total_amount'), DB::raw('SUM(transaction_count) as total_transactions'))
@@ -235,35 +235,54 @@ class ReportController extends Controller
         $from = $request->filled('date_from') ? Carbon::parse($request->date_from)->startOfDay() : now()->subDays(30)->startOfDay();
         $to = $request->filled('date_to') ? Carbon::parse($request->date_to)->endOfDay() : now()->endOfDay();
 
-        $paidPayments = Payment::where('status', 'paid')
-            ->where(function ($query) use ($from, $to) {
-                $query->whereBetween('paid_at', [$from, $to])
-                    ->orWhere(fn ($fallback) => $fallback->whereNull('paid_at')->whereBetween('created_at', [$from, $to]));
-            });
+        [$paid, $source] = $this->revenueSource($from, $to);
 
-        $total = (float) (clone $paidPayments)->sum('amount');
-        $count = (int) (clone $paidPayments)->count();
+        $total = $this->revenueOf($paid, $source);
+        $count = (int) (clone $paid)->count();
 
-        $byDate = (clone $paidPayments)
-            ->select(
-                DB::raw('DATE(COALESCE(paid_at, created_at)) as date'),
-                DB::raw('SUM(amount) as total_amount'),
-                DB::raw('COUNT(*) as total_transactions')
-            )
-            ->groupBy(DB::raw('DATE(COALESCE(paid_at, created_at))'))
-            ->orderBy('date')
-            ->get()
-            ->map(fn ($row) => (object) [
-                'date' => Carbon::parse($row->date),
-                'total_amount' => $row->total_amount,
-                'total_transactions' => $row->total_transactions,
-            ]);
+        if ($source === 'orders') {
+            $byDate = (clone $paid)
+                ->select(
+                    DB::raw('DATE(created_at) as date'),
+                    DB::raw('SUM(COALESCE(actual_fare, estimated_fare, 0)) as total_amount'),
+                    DB::raw('COUNT(*) as total_transactions')
+                )
+                ->groupBy(DB::raw('DATE(created_at)'))
+                ->orderBy('date')
+                ->get()
+                ->map(fn ($row) => (object) [
+                    'date' => Carbon::parse($row->date),
+                    'total_amount' => $row->total_amount,
+                    'total_transactions' => $row->total_transactions,
+                ]);
 
-        $bySource = (clone $paidPayments)
-            ->select('method as revenue_source', DB::raw('SUM(amount) as total_amount'), DB::raw('COUNT(*) as total_transactions'), DB::raw('AVG(amount) as avg_transaction'))
-            ->groupBy('method')
-            ->orderByDesc('total_amount')
-            ->get();
+            $bySource = (clone $paid)
+                ->select('payment_method as revenue_source', DB::raw('SUM(COALESCE(actual_fare, estimated_fare, 0)) as total_amount'), DB::raw('COUNT(*) as total_transactions'), DB::raw('AVG(actual_fare) as avg_transaction'))
+                ->groupBy('payment_method')
+                ->orderByDesc('total_amount')
+                ->get();
+        } else {
+            $byDate = (clone $paid)
+                ->select(
+                    DB::raw('DATE(COALESCE(paid_at, created_at)) as date'),
+                    DB::raw('SUM(amount) as total_amount'),
+                    DB::raw('COUNT(*) as total_transactions')
+                )
+                ->groupBy(DB::raw('DATE(COALESCE(paid_at, created_at))'))
+                ->orderBy('date')
+                ->get()
+                ->map(fn ($row) => (object) [
+                    'date' => Carbon::parse($row->date),
+                    'total_amount' => $row->total_amount,
+                    'total_transactions' => $row->total_transactions,
+                ]);
+
+            $bySource = (clone $paid)
+                ->select('method as revenue_source', DB::raw('SUM(amount) as total_amount'), DB::raw('COUNT(*) as total_transactions'), DB::raw('AVG(amount) as avg_transaction'))
+                ->groupBy('method')
+                ->orderByDesc('total_amount')
+                ->get();
+        }
 
         $byType = collect([
             (object) ['revenue_type' => 'gross', 'total_amount' => $total, 'total_transactions' => $count],
@@ -277,5 +296,49 @@ class ReportController extends Controller
         ];
 
         return view('admin.reports.revenue', compact('summary', 'byType', 'bySource', 'byDate'));
+    }
+
+    /**
+     * Revenue source query. When paid orders exist we read revenue from the
+     * orders table (payment_status = 'paid'); otherwise we fall back to the
+     * legacy payments table. The prod payments table is empty, while orders
+     * carry the real paid amounts — so orders is the primary source.
+     *
+     * @return array{0: Builder, 1: string}  [query, 'orders'|'payments']
+     */
+    private function revenueSource(?\Carbon\Carbon $from = null, ?\Carbon\Carbon $to = null): array
+    {
+        if (Order::where('payment_status', 'paid')->exists()) {
+            $query = Order::where('payment_status', 'paid')
+                ->when($from, fn ($q) => $q->where('created_at', '>=', $from))
+                ->when($to, fn ($q) => $q->where('created_at', '<=', $to));
+
+            return [$query, 'orders'];
+        }
+
+        $query = Payment::where('status', 'paid')
+            ->when($from || $to, function ($q) use ($from, $to) {
+                if ($from && $to) {
+                    $q->whereBetween('paid_at', [$from, $to])
+                        ->orWhere(fn ($fb) => $fb->whereNull('paid_at')->whereBetween('created_at', [$from, $to]));
+                } elseif ($from) {
+                    $q->where('paid_at', '>=', $from)
+                        ->orWhere(fn ($fb) => $fb->whereNull('paid_at')->where('created_at', '>=', $from));
+                } else {
+                    $q->where('paid_at', '<=', $to)
+                        ->orWhere(fn ($fb) => $fb->whereNull('paid_at')->where('created_at', '<=', $to));
+                }
+            });
+
+        return [$query, 'payments'];
+    }
+
+    private function revenueOf(Builder $query, string $source): float
+    {
+        $expression = $source === 'orders'
+            ? DB::raw('COALESCE(actual_fare, estimated_fare, 0)')
+            : DB::raw('amount');
+
+        return (float) (clone $query)->sum($expression);
     }
 }
