@@ -8,7 +8,7 @@
 
 @section('content')
 
-{{-- ── KPI Cards ─────────────────────────────────────────────────────────── --}}
+{{-- ── KPI Cards ────────────────────────────────────────────────────────────── --}}
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
     <div class="bg-white rounded-xl shadow-sm p-5 border-l-4 border-green-500">
         <p class="text-xs text-gray-500 mb-1">Revenue (30d)</p>
@@ -40,20 +40,18 @@
 {{-- ── Row 1: Revenue trend + Order status ─────────────────────────────────── --}}
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
 
-    {{-- Revenue trend (30d) --}}
     <div class="lg:col-span-2 bg-white rounded-xl shadow-sm p-6">
         <div class="flex items-center justify-between mb-4">
-            <h3 class="font-semibold text-gray-800">Revenue & Orders — 30 Days</h3>
+            <h3 class="font-semibold text-gray-800">Revenue &amp; Orders — 30 Days</h3>
             <span class="text-xs text-gray-400">daily completed orders</span>
         </div>
-        @if($dailyRevenueTrend->count())
+        @if(count($trendLabels))
         <div class="h-64"><canvas id="revenueTrendChart"></canvas></div>
         @else
         <div class="h-64 flex items-center justify-center text-gray-400 text-sm">No trend data yet.</div>
         @endif
     </div>
 
-    {{-- Order status donut --}}
     <div class="bg-white rounded-xl shadow-sm p-6">
         <h3 class="font-semibold text-gray-800 mb-4">Order Status (30d)</h3>
         @if($orderStatusDist->count())
@@ -68,20 +66,18 @@
 {{-- ── Row 2: New users + Hourly heatmap ───────────────────────────────────── --}}
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
 
-    {{-- New users (30d) --}}
     <div class="bg-white rounded-xl shadow-sm p-6">
         <div class="flex items-center justify-between mb-4">
             <h3 class="font-semibold text-gray-800">New User Registrations</h3>
             <span class="text-xs text-gray-400">30 days</span>
         </div>
-        @if($dailyNewUsers->count())
+        @if(count($dailyUserLabels))
         <div class="h-48"><canvas id="newUsersChart"></canvas></div>
         @else
         <div class="h-48 flex items-center justify-center text-gray-400 text-sm">No signups yet.</div>
         @endif
     </div>
 
-    {{-- Hourly heatmap --}}
     <div class="lg:col-span-2 bg-white rounded-xl shadow-sm p-6">
         <div class="flex items-center justify-between mb-4">
             <h3 class="font-semibold text-gray-800">Peak Order Hours</h3>
@@ -94,7 +90,6 @@
 {{-- ── Row 3: Services + Payment methods + Revenue by type ────────────────── --}}
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
 
-    {{-- Orders by service --}}
     <div class="bg-white rounded-xl shadow-sm p-6">
         <h3 class="font-semibold text-gray-800 mb-4">Orders by Service (30d)</h3>
         @if($ordersByService->count())
@@ -104,7 +99,6 @@
         @endif
     </div>
 
-    {{-- Payment methods --}}
     <div class="bg-white rounded-xl shadow-sm p-6">
         <h3 class="font-semibold text-gray-800 mb-4">Payment Methods (30d)</h3>
         @if($paymentMethods->count())
@@ -114,7 +108,6 @@
         @endif
     </div>
 
-    {{-- Revenue by type --}}
     <div class="bg-white rounded-xl shadow-sm p-6">
         <h3 class="font-semibold text-gray-800 mb-4">Revenue by Type (30d)</h3>
         @forelse($revenueByType as $type)
@@ -179,22 +172,22 @@
 @if($eventStats->count())
 <div class="bg-white rounded-xl shadow-sm p-6">
     <h3 class="font-semibold text-gray-800 mb-4"><i class="fas fa-mouse-pointer mr-2 text-gray-400"></i>Top Events (7d)</h3>
+    @php $maxEvent = $eventStats->max('count'); @endphp
     <div class="overflow-x-auto">
         <table class="responsive-table w-full text-sm">
             <thead class="bg-gray-50 border-b">
                 <tr>
                     <th class="text-left px-6 py-3 text-gray-500 font-medium">Event</th>
                     <th class="text-right px-6 py-3 text-gray-500 font-medium">Count</th>
-                    <th class="px-6 py-3"></th>
+                    <th class="px-6 py-3 w-40"></th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
-                @php $maxEvent = $eventStats->max('count'); @endphp
                 @foreach($eventStats as $event)
                 <tr class="hover:bg-gray-50">
                     <td class="px-6 py-3 text-gray-700 capitalize">{{ str_replace('_', ' ', $event->event_type) }}</td>
                     <td class="px-6 py-3 text-right font-semibold text-gray-800">{{ number_format($event->count) }}</td>
-                    <td class="px-6 py-3 w-40">
+                    <td class="px-6 py-3">
                         <div class="w-full bg-gray-100 rounded-full h-2">
                             <div class="bg-purple-500 h-2 rounded-full" style="width: {{ $maxEvent > 0 ? round(($event->count / $maxEvent) * 100) : 0 }}%"></div>
                         </div>
@@ -211,148 +204,83 @@
 
 @section('scripts')
 <script>
-// ── Chart defaults ─────────────────────────────────────────────────────────
-Chart.defaults.font.family = "'Inter', 'ui-sans-serif', system-ui, sans-serif";
+Chart.defaults.font.family = "'Inter','ui-sans-serif',system-ui,sans-serif";
 Chart.defaults.font.size   = 12;
 Chart.defaults.color       = '#6b7280';
 Chart.defaults.plugins.legend.display = false;
 
-const PURPLE  = '#7c3aed';
-const PURPLE2 = '#a78bfa';
-const BLUE    = '#3b82f6';
-const GREEN   = '#22c55e';
-const ORANGE  = '#f97316';
-const PINK    = '#ec4899';
-const TEAL    = '#14b8a6';
-const YELLOW  = '#eab308';
+const PURPLE = '#7c3aed', BLUE = '#3b82f6', GREEN = '#22c55e',
+      ORANGE = '#f97316', PINK = '#ec4899', TEAL = '#14b8a6',
+      YELLOW = '#eab308';
+const PALETTE = [PURPLE,BLUE,GREEN,ORANGE,PINK,TEAL,YELLOW,'#6366f1','#f43f5e','#84cc16'];
+const TIP = { backgroundColor:'rgba(17,24,39,0.92)', titleColor:'#f9fafb', bodyColor:'#d1d5db', padding:10, cornerRadius:8 };
 
-// Palette for multi-dataset charts
-const PALETTE = [PURPLE, BLUE, GREEN, ORANGE, PINK, TEAL, YELLOW, '#6366f1', '#f43f5e', '#84cc16'];
-
-function tooltipBg(chart) {
-    return {
-        plugins: {
-            tooltip: {
-                backgroundColor: 'rgba(17,24,39,0.92)',
-                titleColor: '#f9fafb',
-                bodyColor: '#d1d5db',
-                padding: 10,
-                cornerRadius: 8,
-            }
-        }
-    };
-}
-
-// ── 1. Revenue + Orders trend (30d) ────────────────────────────────────────
-@if($dailyRevenueTrend->count())
-(function() {
-    const labels  = @json($dailyRevenueTrend->map(fn($r) => \Carbon\Carbon::parse($r->report_date)->format('M d')));
-    const revenue = @json($dailyRevenueTrend->map(fn($r) => round((float)$r->total_revenue, 2)));
-    const orders  = @json($dailyRevenueTrend->map(fn($r) => (int)$r->total_orders));
-
-    new Chart(document.getElementById('revenueTrendChart'), {
-        data: {
-            labels,
-            datasets: [
-                {
-                    type: 'line',
-                    label: 'Revenue (₱)',
-                    data: revenue,
-                    borderColor: PURPLE,
-                    backgroundColor: 'rgba(124,58,237,0.08)',
-                    borderWidth: 2.5,
-                    pointRadius: 3,
-                    pointHoverRadius: 5,
-                    fill: true,
-                    tension: 0.4,
-                    yAxisID: 'y',
-                },
-                {
-                    type: 'bar',
-                    label: 'Orders',
-                    data: orders,
-                    backgroundColor: 'rgba(59,130,246,0.18)',
-                    borderColor: BLUE,
-                    borderWidth: 1,
-                    borderRadius: 4,
-                    yAxisID: 'y2',
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
-            plugins: {
-                legend: { display: true, position: 'top', labels: { boxWidth: 12, padding: 16 } },
-                tooltip: {
-                    backgroundColor: 'rgba(17,24,39,0.92)',
-                    titleColor: '#f9fafb',
-                    bodyColor: '#d1d5db',
-                    padding: 10,
-                    cornerRadius: 8,
-                    callbacks: {
-                        label: ctx => ctx.datasetIndex === 0
-                            ? ' ₱' + ctx.parsed.y.toLocaleString('en-PH', {minimumFractionDigits: 2})
-                            : ' ' + ctx.parsed.y + ' orders'
-                    }
-                }
+// ── 1. Revenue + Orders trend ─────────────────────────────────────────────
+@if(count($trendLabels))
+new Chart(document.getElementById('revenueTrendChart'), {
+    data: {
+        labels: @json($trendLabels),
+        datasets: [
+            {
+                type:'line', label:'Revenue (₱)',
+                data: @json($trendRevenue),
+                borderColor:PURPLE, backgroundColor:'rgba(124,58,237,0.08)',
+                borderWidth:2.5, pointRadius:3, pointHoverRadius:5,
+                fill:true, tension:0.4, yAxisID:'y',
             },
-            scales: {
-                x: { grid: { display: false }, ticks: { maxTicksLimit: 10 } },
-                y: {
-                    position: 'left',
-                    grid: { color: 'rgba(0,0,0,0.05)' },
-                    ticks: { callback: v => '₱' + v.toLocaleString() }
-                },
-                y2: {
-                    position: 'right',
-                    grid: { drawOnChartArea: false },
-                    ticks: { stepSize: 1 }
-                }
+            {
+                type:'bar', label:'Orders',
+                data: @json($trendOrders),
+                backgroundColor:'rgba(59,130,246,0.18)', borderColor:BLUE,
+                borderWidth:1, borderRadius:4, yAxisID:'y2',
             }
+        ]
+    },
+    options: {
+        responsive:true, maintainAspectRatio:false,
+        interaction:{ mode:'index', intersect:false },
+        plugins:{
+            legend:{ display:true, position:'top', labels:{ boxWidth:12, padding:16 } },
+            tooltip:{ ...TIP, callbacks:{
+                label: ctx => ctx.datasetIndex===0
+                    ? ' \u20b1'+ctx.parsed.y.toLocaleString('en-PH',{minimumFractionDigits:2})
+                    : ' '+ctx.parsed.y+' orders'
+            }}
+        },
+        scales:{
+            x:{ grid:{display:false}, ticks:{maxTicksLimit:10} },
+            y:{ position:'left', grid:{color:'rgba(0,0,0,0.05)'}, ticks:{callback:v=>'₱'+v.toLocaleString()} },
+            y2:{ position:'right', grid:{drawOnChartArea:false}, ticks:{stepSize:1} }
         }
-    });
-})();
+    }
+});
 @endif
 
 // ── 2. Order status donut ─────────────────────────────────────────────────
 @if($orderStatusDist->count())
-(function() {
+(function(){
     const statusColors = {
-        completed: GREEN, cancelled: '#ef4444', pending: YELLOW,
-        searching_driver: BLUE, accepted: TEAL, picked_up: ORANGE,
-        in_progress: PURPLE, driver_arrived_at_pickup: PINK,
+        completed:GREEN, cancelled:'#ef4444', pending:YELLOW,
+        searching_driver:BLUE, accepted:TEAL, picked_up:ORANGE,
+        in_progress:PURPLE, driver_arrived_at_pickup:PINK,
     };
     const labels = @json($orderStatusDist->pluck('status'));
     const data   = @json($orderStatusDist->pluck('total'));
-    const colors = labels.map(l => statusColors[l] || '#94a3b8');
+    const colors = labels.map(l => statusColors[l]||'#94a3b8');
 
-    new Chart(document.getElementById('orderStatusChart'), {
-        type: 'doughnut',
-        data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: '#fff', hoverOffset: 6 }] },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '68%',
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: 'rgba(17,24,39,0.92)',
-                    titleColor: '#f9fafb',
-                    bodyColor: '#d1d5db',
-                    padding: 10,
-                    cornerRadius: 8,
-                }
-            }
+    new Chart(document.getElementById('orderStatusChart'),{
+        type:'doughnut',
+        data:{ labels, datasets:[{ data, backgroundColor:colors, borderWidth:2, borderColor:'#fff', hoverOffset:6 }] },
+        options:{
+            responsive:true, maintainAspectRatio:false, cutout:'68%',
+            plugins:{ legend:{display:false}, tooltip:TIP }
         }
     });
 
-    // Build legend
     const legend = document.getElementById('statusLegend');
-    const total  = data.reduce((a, b) => a + b, 0);
-    labels.forEach((l, i) => {
-        const pct = total > 0 ? ((data[i] / total) * 100).toFixed(1) : 0;
+    const total  = data.reduce((a,b)=>a+b,0);
+    labels.forEach((l,i)=>{
+        const pct = total>0?((data[i]/total)*100).toFixed(1):0;
         legend.innerHTML += `<div class="flex items-center justify-between text-xs text-gray-600">
             <span class="flex items-center gap-1.5">
                 <span class="w-2.5 h-2.5 rounded-full inline-block" style="background:${colors[i]}"></span>
@@ -364,175 +292,83 @@ function tooltipBg(chart) {
 })();
 @endif
 
-// ── 3. New users bar (30d) ────────────────────────────────────────────────
-@if($dailyNewUsers->count())
-(function() {
-    const labels = @json($dailyNewUsers->map(fn($r) => \Carbon\Carbon::parse($r->date)->format('M d')));
-    const data   = @json($dailyNewUsers->pluck('total'));
-
-    new Chart(document.getElementById('newUsersChart'), {
-        type: 'bar',
-        data: {
-            labels,
-            datasets: [{
-                data,
-                backgroundColor: 'rgba(249,115,22,0.75)',
-                borderColor: ORANGE,
-                borderWidth: 1,
-                borderRadius: 4,
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                tooltip: {
-                    backgroundColor: 'rgba(17,24,39,0.92)',
-                    titleColor: '#f9fafb',
-                    bodyColor: '#d1d5db',
-                    padding: 10,
-                    cornerRadius: 8,
-                    callbacks: { label: ctx => ' ' + ctx.parsed.y + ' new users' }
-                }
-            },
-            scales: {
-                x: { grid: { display: false }, ticks: { maxTicksLimit: 8 } },
-                y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { stepSize: 1 } }
-            }
-        }
-    });
-})();
+// ── 3. New users bar ──────────────────────────────────────────────────────
+@if(count($dailyUserLabels))
+new Chart(document.getElementById('newUsersChart'),{
+    type:'bar',
+    data:{
+        labels: @json($dailyUserLabels),
+        datasets:[{ data: @json($dailyUserValues),
+            backgroundColor:'rgba(249,115,22,0.75)', borderColor:ORANGE,
+            borderWidth:1, borderRadius:4 }]
+    },
+    options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ tooltip:{ ...TIP, callbacks:{ label:ctx=>' '+ctx.parsed.y+' new users' }} },
+        scales:{ x:{grid:{display:false},ticks:{maxTicksLimit:8}}, y:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{stepSize:1}} }
+    }
+});
 @endif
 
-// ── 4. Hourly order heatmap (bar) ─────────────────────────────────────────
-(function() {
-    const hours = @json($hourlyData->pluck('hour')->map(fn($h) => str_pad($h, 2, '0', STR_PAD_LEFT) . ':00'));
-    const data  = @json($hourlyData->pluck('total'));
-    const max   = Math.max(...data, 1);
+// ── 4. Hourly heatmap ─────────────────────────────────────────────────────
+(function(){
+    const hours  = @json($hourlyLabels);
+    const data   = @json($hourlyValues);
+    const maxVal = Math.max(...data,1);
+    const colors = data.map(v=>`rgba(124,58,237,${(0.15+((v/maxVal)*0.75)).toFixed(2)})`);
 
-    // Color each bar by intensity
-    const colors = data.map(v => {
-        const ratio = v / max;
-        return `rgba(124,58,237,${0.15 + ratio * 0.75})`;
-    });
-
-    new Chart(document.getElementById('hourlyChart'), {
-        type: 'bar',
-        data: {
-            labels: hours,
-            datasets: [{
-                data,
-                backgroundColor: colors,
-                borderColor: colors.map(c => c.replace(/[\d.]+\)$/, '1)')),
-                borderWidth: 1,
-                borderRadius: 3,
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                tooltip: {
-                    backgroundColor: 'rgba(17,24,39,0.92)',
-                    titleColor: '#f9fafb',
-                    bodyColor: '#d1d5db',
-                    padding: 10,
-                    cornerRadius: 8,
-                    callbacks: { label: ctx => ' ' + ctx.parsed.y + ' orders' }
-                }
-            },
-            scales: {
-                x: { grid: { display: false }, ticks: { maxRotation: 45 } },
-                y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { stepSize: 1 } }
-            }
+    new Chart(document.getElementById('hourlyChart'),{
+        type:'bar',
+        data:{ labels:hours, datasets:[{ data, backgroundColor:colors, borderWidth:1, borderRadius:3 }] },
+        options:{
+            responsive:true, maintainAspectRatio:false,
+            plugins:{ tooltip:{ ...TIP, callbacks:{ label:ctx=>' '+ctx.parsed.y+' orders' }} },
+            scales:{ x:{grid:{display:false},ticks:{maxRotation:45}}, y:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{stepSize:1}} }
         }
     });
 })();
 
 // ── 5. Orders by service (horizontal bar) ────────────────────────────────
 @if($ordersByService->count())
-(function() {
+(function(){
     const labels = @json($ordersByService->pluck('service_name'));
     const data   = @json($ordersByService->pluck('total'));
-    const colors = labels.map((_, i) => PALETTE[i % PALETTE.length]);
+    const colors = labels.map((_,i)=>PALETTE[i%PALETTE.length]);
 
-    new Chart(document.getElementById('serviceChart'), {
-        type: 'bar',
-        data: {
-            labels,
-            datasets: [{
-                data,
-                backgroundColor: colors.map(c => c + '99'),
-                borderColor: colors,
-                borderWidth: 1.5,
-                borderRadius: 4,
-            }]
+    new Chart(document.getElementById('serviceChart'),{
+        type:'bar',
+        data:{ labels, datasets:[{ data,
+            backgroundColor:colors.map(c=>c+'99'), borderColor:colors,
+            borderWidth:1.5, borderRadius:4 }]
         },
-        options: {
-            indexAxis: 'y',
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                tooltip: {
-                    backgroundColor: 'rgba(17,24,39,0.92)',
-                    titleColor: '#f9fafb',
-                    bodyColor: '#d1d5db',
-                    padding: 10,
-                    cornerRadius: 8,
-                    callbacks: { label: ctx => ' ' + ctx.parsed.x + ' orders' }
-                }
-            },
-            scales: {
-                x: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { stepSize: 1 } },
-                y: { grid: { display: false } }
-            }
+        options:{
+            indexAxis:'y', responsive:true, maintainAspectRatio:false,
+            plugins:{ tooltip:{ ...TIP, callbacks:{ label:ctx=>' '+ctx.parsed.x+' orders' }} },
+            scales:{ x:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{stepSize:1}}, y:{grid:{display:false}} }
         }
     });
 })();
 @endif
 
-// ── 6. Payment methods (pie) ──────────────────────────────────────────────
+// ── 6. Payment methods pie ────────────────────────────────────────────────
 @if($paymentMethods->count())
-(function() {
+(function(){
     const labels = @json($paymentMethods->pluck('payment_method'));
     const data   = @json($paymentMethods->pluck('total'));
-    const colors = labels.map((_, i) => PALETTE[i % PALETTE.length]);
+    const colors = labels.map((_,i)=>PALETTE[i%PALETTE.length]);
 
-    new Chart(document.getElementById('paymentMethodChart'), {
-        type: 'pie',
-        data: {
-            labels,
-            datasets: [{
-                data,
-                backgroundColor: colors,
-                borderColor: '#fff',
-                borderWidth: 2,
-                hoverOffset: 6,
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'bottom',
-                    labels: { boxWidth: 12, padding: 10, font: { size: 11 } }
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(17,24,39,0.92)',
-                    titleColor: '#f9fafb',
-                    bodyColor: '#d1d5db',
-                    padding: 10,
-                    cornerRadius: 8,
-                    callbacks: {
-                        label: ctx => {
-                            const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
-                            const pct = total > 0 ? ((ctx.parsed / total) * 100).toFixed(1) : 0;
-                            return ` ${ctx.parsed} orders (${pct}%)`;
-                        }
-                    }
-                }
+    new Chart(document.getElementById('paymentMethodChart'),{
+        type:'pie',
+        data:{ labels, datasets:[{ data, backgroundColor:colors, borderColor:'#fff', borderWidth:2, hoverOffset:6 }] },
+        options:{
+            responsive:true, maintainAspectRatio:false,
+            plugins:{
+                legend:{ display:true, position:'bottom', labels:{ boxWidth:12, padding:10, font:{size:11} } },
+                tooltip:{ ...TIP, callbacks:{ label:ctx=>{
+                    const total=ctx.dataset.data.reduce((a,b)=>a+b,0);
+                    const pct=total>0?((ctx.parsed/total)*100).toFixed(1):0;
+                    return ` ${ctx.parsed} orders (${pct}%)`;
+                }}}
             }
         }
     });
