@@ -3,6 +3,25 @@ import './dashboard-charts';
 
 window.Alpine = Alpine;
 
+function sanitizeHref(href) {
+    if (typeof href !== 'string') return href;
+    let clean = href.trim();
+    clean = clean.replace(/^"+|"+$/g, '');
+    return clean === href ? href : clean;
+}
+
+function repairInvalidLinks(root = document) {
+    root.querySelectorAll('a[href]').forEach((a) => {
+        const fixed = sanitizeHref(a.getAttribute('href'));
+        if (fixed !== a.getAttribute('href')) {
+            a.setAttribute('href', fixed);
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => repairInvalidLinks());
+window.addEventListener('alpine:init', () => repairInvalidLinks());
+
 Alpine.store('toast', {
     items: [],
     success(message) { this.add(message, 'success'); },
