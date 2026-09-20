@@ -122,30 +122,37 @@
 <script>
     (() => {
         const button = document.getElementById('toggle-all-permissions');
-        const checkboxes = [...document.querySelectorAll('.permission-checkbox:not(:disabled)')];
         const liveCount = document.getElementById('live-selected-count');
+        const getCheckboxes = () => [...document.querySelectorAll('.permission-checkbox:not(:disabled)')];
 
         const refresh = () => {
-            const checked = checkboxes.filter(c => c.checked).length + 1; // +1 for required (disabled checked)
+            const boxes = getCheckboxes();
+            const checked = boxes.filter(c => c.checked).length + 1; // +1 for required (disabled checked)
             if (liveCount) liveCount.textContent = checked;
-            const allSelected = checkboxes.length > 0 && checkboxes.every((checkbox) => checkbox.checked);
+            const allSelected = boxes.length > 0 && boxes.every(c => c.checked);
             if (button) button.innerHTML = allSelected
                 ? '<i class="fas fa-xmark"></i> Clear optional'
                 : '<i class="fas fa-check-double"></i> Select all';
         };
 
         button?.addEventListener('click', () => {
-            const shouldSelect = !checkboxes.every((checkbox) => checkbox.checked);
-            checkboxes.forEach((checkbox) => checkbox.checked = shouldSelect);
+            const boxes = getCheckboxes();
+            const shouldSelect = !boxes.every(c => c.checked);
+            boxes.forEach(c => c.checked = shouldSelect);
             refresh();
         });
 
-        checkboxes.forEach((checkbox) => checkbox.addEventListener('change', refresh));
+        document.addEventListener('change', (e) => {
+            if (e.target.classList.contains('permission-checkbox')) refresh();
+        });
         refresh();
-        // Debug: log submit payload
-        document.querySelector('form')?.addEventListener('submit', () => {
-            const vals = [...document.querySelectorAll('input[name=\"permissions[]\"]')].map(i => i.value + (i.checked || i.type==='hidden' ? ':checked/hidden' : ':unchecked')).join(', ');
-            console.log('Submitting permissions[]:', vals);
+        // Debug submit
+        document.querySelector('form')?.addEventListener('submit', (e) => {
+            const boxes = getCheckboxes();
+            const vals = [...document.querySelectorAll('input[name=\"permissions[]\"]')].filter(i => i.type==='hidden' || i.checked).map(i => i.value);
+            console.log('Submitting', vals.length, vals);
+            // Ensure at least the live count matches
+            if (liveCount) liveCount.textContent = vals.length;
         });
     })();
 </script>
