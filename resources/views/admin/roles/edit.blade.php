@@ -49,9 +49,15 @@
             <p>Super Admin always has full access. Its permissions are protected to make sure the system cannot lose its highest-level administrator.</p>
         </div>
     @else
-        <div class="flex items-center justify-between rounded-xl border {{ count($selectedPermissions) <= 1 ? 'border-amber-200 bg-amber-50 text-amber-800' : 'border-blue-100 bg-blue-50 text-blue-700' }} px-4 py-3 text-sm">
-            <span><i class="fas fa-circle-info mr-2"></i>DB has <strong>{{ count($dbPerms) }} of {{ count($permissionGroups->collapse()) }} permissions</strong> — checked on page: <strong id="live-selected-count">{{ count($selectedPermissions) }}</strong></span>
-            <span class="text-xs opacity-70">If only 1 is checked, use Select all then Save</span>
+        <div class="flex flex-col gap-2 rounded-xl border {{ count($selectedPermissions) <= 1 ? 'border-amber-200 bg-amber-50 text-amber-800' : 'border-blue-100 bg-blue-50 text-blue-700' }} px-4 py-3 text-sm">
+            <div class="flex items-center justify-between">
+                <span><i class="fas fa-circle-info mr-2"></i>DB has <strong>{{ count($dbPerms) }} of {{ count($permissionGroups->collapse()) }} permissions</strong> — checked on page: <strong id="live-selected-count">{{ count($selectedPermissions) }}</strong></span>
+                <span class="text-xs opacity-70">If only 1 is checked, use Select all then Save</span>
+            </div>
+            <details class="text-xs opacity-80">
+                <summary class="cursor-pointer">Debug: show raw DB permissions</summary>
+                <pre class="mt-2 bg-white p-2 rounded border overflow-auto max-h-32">{{ json_encode($dbPerms, JSON_PRETTY_PRINT) }}</pre>
+            </details>
         </div>
     @endif
 
