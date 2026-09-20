@@ -4,12 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 class AdminRole extends Model
 {
     private static ?Collection $resolvedDefinitions = null;
+
+    private const DEFINITIONS_CACHE_KEY = 'admin:role_definitions:v2';
 
     protected $table = 'admin_access_roles';
 
@@ -44,11 +47,22 @@ class AdminRole extends Model
             return static::$resolvedDefinitions;
         }
 
+        // Shared cache so Octane/long-lived workers see updates immediately.
+        try {
+            $cached = Cache::get(self::DEFINITIONS_CACHE_KEY);
+            if ($cached instanceof Collection && $cached->isNotEmpty()) {
+                return static::$resolvedDefinitions = $cached;
+            }
+        } catch (Throwable $exception) {
+            report($exception);
+        }
+
         try {
             if (Schema::hasTable('admin_access_roles')) {
                 $roles = static::query()->get()->keyBy('key');
 
                 if ($roles->isNotEmpty()) {
+                    try { Cache::put(self::DEFINITIONS_CACHE_KEY, $roles, 300); } catch (Throwable $e) { report($e); }
                     return static::$resolvedDefinitions = $roles;
                 }
             }
@@ -67,6 +81,7 @@ class AdminRole extends Model
     public static function forgetDefinitionCache(): void
     {
         static::$resolvedDefinitions = null;
+        try { Cache::forget(self::DEFINITIONS_CACHE_KEY); } catch (Throwable $e) { report($e); }
     }
 
     public function getRouteKeyName(): string

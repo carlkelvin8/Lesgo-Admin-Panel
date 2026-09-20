@@ -79,25 +79,42 @@ class RolePermissionController extends Controller
         ));
 
         $old = $adminRole->permissions ?? [];
-        $adminRole->update(['permissions' => $permissions]);
-        // Force cache bust for all workers
+        // Use direct DB update so a stale Eloquent snapshot can never hide the write.
+        \Illuminate\Support\Facades\DB::table('admin_access_roles')
+            ->where('key', $adminRole->getKey())
+            ->update(['permissions' => json_encode($permissions), 'updated_at' => now()]);
+        $adminRole->refresh();
+        // Force cache bust for all workers (static + shared) and stale config cache
         AdminRole::forgetDefinitionCache();
-        // Clear config cache if cached (ensures hasAdminPermission sees new perms immediately)
+        try { \Illuminate\Support\Facades\Cache::forget('admin:role_definitions:v2'); } catch (\Throwable $e) {}
         try { \Illuminate\Support\Facades\Artisan::call('config:clear'); } catch (\Throwable $e) {}
+        \Illuminate\Support\Facades\Log::info('Role permissions updated', [
+            'role' => $adminRole->getKey(),
+            'old' => $old,
+            'new' => $permissions,
+            'count' => count($permissions),
+            'by' => $request->user()?->id,
+        ]);
 
-        // Audit log max level
+        // Audit log — correct columns for this app's audit_logs table
         try {
             \App\Models\AuditLog::create([
                 'user_id' => $request->user()?->id,
+                'event_type' => 'admin_action',
+                'event_category' => 'role_permissions',
                 'action' => 'update_role_permissions',
-                'auditable_type' => AdminRole::class,
-                'auditable_id' => $adminRole->getKey(),
-                'old_values' => ['permissions' => $old],
-                'new_values' => ['permissions' => $permissions],
+                'description' => "Updated {$adminRole->label} permissions from ".count($old)." to ".count($permissions),
+                'resource_type' => 'AdminRole',
+                'resource_id' => null,
+                'old_values' => ['permissions' => $old, 'role' => $adminRole->getKey()],
+                'new_values' => ['permissions' => $permissions, 'role' => $adminRole->getKey()],
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
+                'occurred_at' => now(),
             ]);
-        } catch (\Throwable $e) {}
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Role permissions audit failed', ['error' => $e->getMessage()]);
+        }
 
         return redirect()
             ->route('admin.roles.index')
