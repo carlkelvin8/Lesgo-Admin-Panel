@@ -137,6 +137,7 @@ class RolePermissionController extends Controller
         ]);
 
         $raw = $validated['permissions'] ?? [];
+        \Illuminate\Support\Facades\Log::info('Role permissions raw input', ['role' => $adminRole->getKey(), 'raw_count' => count($raw), 'raw' => $raw, 'all_input' => $request->all()]);
         // Log any invalid keys for debugging but don't fail
         $invalid = array_diff($raw, $permissionKeys);
         if (!empty($invalid)) {
