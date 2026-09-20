@@ -137,7 +137,11 @@ class RolePermissionController extends Controller
         ]);
 
         $raw = $validated['permissions'] ?? [];
-        \Illuminate\Support\Facades\Log::info('Role permissions raw input', ['role' => $adminRole->getKey(), 'raw_count' => count($raw), 'raw' => $raw, 'all_input' => $request->all()]);
+        $selectAll = $request->input('select_all_flag') === '1' || $request->boolean('select_all_flag');
+        if ($selectAll) {
+            $raw = $permissionKeys; // Select all was clicked — trust it even if JS failed to check boxes
+        }
+        \Illuminate\Support\Facades\Log::info('Role permissions raw input', ['role' => $adminRole->getKey(), 'raw_count' => count($raw), 'raw' => $raw, 'select_all' => $selectAll, 'all_input' => $request->all()]);
         // Log any invalid keys for debugging but don't fail
         $invalid = array_diff($raw, $permissionKeys);
         if (!empty($invalid)) {

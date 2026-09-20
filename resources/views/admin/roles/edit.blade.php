@@ -61,9 +61,10 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ route('admin.roles.update', $adminRole) }}" class="space-y-5">
+    <form method="POST" action="{{ route('admin.roles.update', $adminRole) }}" class="space-y-5" id="permissions-form">
         @csrf
         @method('PUT')
+        <input type="hidden" name="select_all_flag" id="select-all-flag" value="0">
 
         @foreach($permissionGroups as $group => $permissions)
             <section class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
@@ -123,6 +124,8 @@
     (() => {
         const button = document.getElementById('toggle-all-permissions');
         const liveCount = document.getElementById('live-selected-count');
+        const flag = document.getElementById('select-all-flag');
+        const form = document.getElementById('permissions-form');
         const getCheckboxes = () => [...document.querySelectorAll('.permission-checkbox:not(:disabled)')];
 
         const refresh = () => {
@@ -133,12 +136,14 @@
             if (button) button.innerHTML = allSelected
                 ? '<i class="fas fa-xmark"></i> Clear optional'
                 : '<i class="fas fa-check-double"></i> Select all';
+            if (flag) flag.value = allSelected ? '1' : '0';
         };
 
         button?.addEventListener('click', () => {
             const boxes = getCheckboxes();
             const shouldSelect = !boxes.every(c => c.checked);
-            boxes.forEach(c => c.checked = shouldSelect);
+            boxes.forEach(c => { c.checked = shouldSelect; c.dispatchEvent(new Event('change', {bubbles:true})); });
+            if (flag) flag.value = shouldSelect ? '1' : '0';
             refresh();
         });
 
@@ -146,13 +151,11 @@
             if (e.target.classList.contains('permission-checkbox')) refresh();
         });
         refresh();
-        // Debug submit
-        document.querySelector('form')?.addEventListener('submit', (e) => {
+        form?.addEventListener('submit', () => {
             const boxes = getCheckboxes();
             const vals = [...document.querySelectorAll('input[name=\"permissions[]\"]')].filter(i => i.type==='hidden' || i.checked).map(i => i.value);
             console.log('Submitting', vals.length, vals);
-            // Ensure at least the live count matches
-            if (liveCount) liveCount.textContent = vals.length;
+            if (flag) flag.value = boxes.every(c => c.checked) ? '1' : '0';
         });
     })();
 </script>
