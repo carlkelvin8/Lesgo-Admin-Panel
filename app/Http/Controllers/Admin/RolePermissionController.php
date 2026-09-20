@@ -44,8 +44,6 @@ class RolePermissionController extends Controller
         $old = $adminRole->permissions ?? [];
         $adminRole->forceFill(['permissions' => $permissions])->save();
         $adminRole->refresh();
-        AdminRole::forgetDefinitionCache();
-        try { \Illuminate\Support\Facades\Cache::forget('admin:role_definitions:v2'); } catch (\Throwable $e) {}
         \Illuminate\Support\Facades\Log::info('Role permissions repaired to defaults', ['role' => $adminRole->getKey(), 'old' => $old, 'new' => $permissions, 'by' => auth()->id()]);
         return back()->with('success', "{$adminRole->label} repaired to defaults (".count($permissions)." permissions). You can now edit again.");
     }
@@ -76,10 +74,6 @@ class RolePermissionController extends Controller
     public function update(Request $request, AdminRole $adminRole)
     {
         abort_if($adminRole->is_protected, 403, 'Protected administrator roles cannot be changed.');
-
-        // Ensure we read fresh config, not a stale bootstrap/cache/config.php
-        try { \Illuminate\Support\Facades\Artisan::call('config:clear'); } catch (\Throwable $e) {}
-        AdminRole::forgetDefinitionCache();
 
         $permissionKeys = array_keys(config('admin.permissions', []));
 
@@ -117,9 +111,6 @@ class RolePermissionController extends Controller
         // Use Eloquent so the `array` cast correctly handles Postgres json/jsonb
         $adminRole->forceFill(['permissions' => $permissions])->save();
         $adminRole->refresh();
-        // Force cache bust for all workers (static + shared) and stale config cache
-        AdminRole::forgetDefinitionCache();
-        try { \Illuminate\Support\Facades\Cache::forget('admin:role_definitions:v2'); } catch (\Throwable $e) {}
         \Illuminate\Support\Facades\Log::info('Role permissions updated', [
             'role' => $adminRole->getKey(),
             'old' => $old,

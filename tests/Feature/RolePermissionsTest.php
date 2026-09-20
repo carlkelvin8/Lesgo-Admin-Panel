@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\AdminRole;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class RolePermissionsTest extends TestCase
@@ -107,6 +108,59 @@ class RolePermissionsTest extends TestCase
         $this->get(route('admin.roles.edit', $operations))->assertOk();
 
         $this->assertSame(['dashboard.view'], $operations->fresh()->permissions);
+    }
+
+    public function test_role_count_reflects_a_change_made_by_another_worker(): void
+    {
+        $superAdmin = User::factory()->create([
+            'role' => 'admin',
+            'admin_role' => 'super_admin',
+            'is_active' => true,
+        ]);
+        $operations = AdminRole::query()->findOrFail('operations');
+        $operations->update(['permissions' => ['dashboard.view']]);
+
+        $this->actingAs($superAdmin)
+            ->get(route('admin.roles.index'))
+            ->assertSee('1 of 24 permissions');
+
+        // A separate worker writes directly to the shared database.
+        DB::table('admin_access_roles')->where('key', 'operations')->update([
+            'permissions' => json_encode(['dashboard.view', 'users.view', 'orders.view']),
+        ]);
+
+        $this->get(route('admin.roles.index'))
+            ->assertOk()
+            ->assertSee('3 of 24 permissions');
+        $this->get(route('admin.roles.edit', $operations))
+            ->assertOk()
+            ->assertSee('3</strong> of 24 permissions selected', false);
+    }
+
+    public function test_saving_three_permissions_from_required_only_updates_the_count(): void
+    {
+        $superAdmin = User::factory()->create([
+            'role' => 'admin',
+            'admin_role' => 'super_admin',
+            'is_active' => true,
+        ]);
+        $operations = AdminRole::query()->findOrFail('operations');
+        $operations->update(['permissions' => ['dashboard.view']]);
+
+        $this->actingAs($superAdmin)
+            ->put(route('admin.roles.update', $operations), [
+                'permissions' => ['dashboard.view', 'users.view', 'orders.view'],
+                'select_all_flag' => '0',
+            ])
+            ->assertRedirect(route('admin.roles.index'));
+
+        $this->get(route('admin.roles.index'))
+            ->assertOk()
+            ->assertSee('3 of 24 permissions');
+        $this->assertSame(
+            ['dashboard.view', 'users.view', 'orders.view'],
+            $operations->fresh()->permissions,
+        );
     }
 
     public function test_super_admin_permissions_cannot_be_changed(): void

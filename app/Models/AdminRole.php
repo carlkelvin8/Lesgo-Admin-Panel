@@ -4,16 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 class AdminRole extends Model
 {
-    private static ?Collection $resolvedDefinitions = null;
-
-    private const DEFINITIONS_CACHE_KEY = 'admin:role_definitions:v2';
-
     protected $table = 'admin_access_roles';
 
     protected $primaryKey = 'key';
@@ -35,42 +30,21 @@ class AdminRole extends Model
         ];
     }
 
-    protected static function booted(): void
-    {
-        static::saved(fn () => static::forgetDefinitionCache());
-        static::deleted(fn () => static::forgetDefinitionCache());
-    }
-
     public static function definitions(): Collection
     {
-        if (static::$resolvedDefinitions instanceof Collection) {
-            return static::$resolvedDefinitions;
-        }
-
-        // Shared cache so Octane/long-lived workers see updates immediately.
-        try {
-            $cached = Cache::get(self::DEFINITIONS_CACHE_KEY);
-            if ($cached instanceof Collection && $cached->isNotEmpty()) {
-                return static::$resolvedDefinitions = $cached;
-            }
-        } catch (Throwable $exception) {
-            report($exception);
-        }
-
         try {
             if (Schema::hasTable('admin_access_roles')) {
                 $roles = static::query()->get()->keyBy('key');
 
                 if ($roles->isNotEmpty()) {
-                    try { Cache::put(self::DEFINITIONS_CACHE_KEY, $roles, 300); } catch (Throwable $e) { report($e); }
-                    return static::$resolvedDefinitions = $roles;
+                    return $roles;
                 }
             }
         } catch (Throwable $exception) {
             report($exception);
         }
 
-        return static::$resolvedDefinitions = static::configuredDefinitions();
+        return static::configuredDefinitions();
     }
 
     public static function definition(?string $key): ?self
@@ -80,8 +54,7 @@ class AdminRole extends Model
 
     public static function forgetDefinitionCache(): void
     {
-        static::$resolvedDefinitions = null;
-        try { Cache::forget(self::DEFINITIONS_CACHE_KEY); } catch (Throwable $e) { report($e); }
+        // Kept for callers on older deployments; definitions are read fresh now.
     }
 
     public function getRouteKeyName(): string
