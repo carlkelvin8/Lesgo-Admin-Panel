@@ -109,6 +109,9 @@
         @unless($adminRole->is_protected)
             <div class="sticky bottom-4 flex flex-col-reverse gap-3 rounded-xl border border-gray-200 bg-white/95 p-4 shadow-lg backdrop-blur sm:flex-row sm:items-center sm:justify-end">
                 <a href="{{ route('admin.roles.index') }}" class="inline-flex items-center justify-center rounded-lg px-5 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50">Cancel</a>
+                <button type="submit" name="select_all_flag" value="1" class="inline-flex items-center justify-center gap-2 rounded-lg bg-purple-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-purple-700" title="Save with all 24 permissions (bypasses JS)">
+                    <i class="fas fa-check-double"></i> Select all & Save
+                </button>
                 <button type="submit" class="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700">
                     <i class="fas fa-save"></i> Save permissions
                 </button>

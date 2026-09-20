@@ -154,8 +154,13 @@ class RolePermissionController extends Controller
             $permissionKeys,
             array_unique([...$required, ...$selected]),
         ));
-
+        // MAX LEVEL: Prevent accidental truncation to 1 when the role previously had many
         $old = $adminRole->permissions ?? [];
+        if (count($permissions) <= 1 && count($old) > 1 && !$selectAll) {
+            \Illuminate\Support\Facades\Log::warning('Prevented accidental truncation to 1 permission', ['role' => $adminRole->getKey(), 'old' => $old, 'raw' => $raw, 'permissions' => $permissions]);
+            return back()->withErrors(['permissions' => 'No permissions were selected. Please tick at least one permission or use Select all. Previous permissions were kept.'])->withInput();
+        }
+
         // Use Eloquent so the `array` cast correctly handles Postgres json/jsonb
         $adminRole->forceFill(['permissions' => $permissions])->save();
         $adminRole->refresh();
