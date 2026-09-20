@@ -68,6 +68,7 @@ Route::prefix('admin')->name('admin.')->middleware(['admin', 'admin.audit'])->gr
         Route::get('/roles-permissions', [RolePermissionController::class, 'index'])->name('roles.index');
         Route::get('/roles-permissions/{adminRole}/edit', [RolePermissionController::class, 'edit'])->name('roles.edit');
         Route::put('/roles-permissions/{adminRole}', [RolePermissionController::class, 'update'])->name('roles.update');
+        Route::post('/roles-permissions/{adminRole}/repair', [RolePermissionController::class, 'repair'])->name('roles.repair');
     });
 
     // Users

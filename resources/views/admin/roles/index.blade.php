@@ -60,11 +60,19 @@
                     </ul>
                 </div>
 
-                <div class="mt-auto pt-5">
+                <div class="mt-auto pt-5 flex flex-col gap-2">
                     <a href="{{ route('admin.roles.edit', $role) }}" class="inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium {{ $role->is_protected ? 'border border-gray-200 text-gray-700 hover:bg-gray-50' : 'bg-blue-600 text-white hover:bg-blue-700' }}">
                         <i class="fas {{ $role->is_protected ? 'fa-eye' : 'fa-pen' }}"></i>
                         {{ $role->is_protected ? 'View permissions' : 'Edit permissions' }}
                     </a>
+                    @if(!$role->is_protected && count($role->permissions ?? []) <= 1)
+                        <form method="POST" action="{{ route('admin.roles.repair', $role) }}">
+                            @csrf
+                            <button type="submit" class="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-xs font-medium text-amber-700 hover:bg-amber-100" title="Reset to defaults from config/admin.php">
+                                <i class="fas fa-wrench"></i> Repair (reset to defaults)
+                            </button>
+                        </form>
+                    @endif
                 </div>
             </article>
         @endforeach

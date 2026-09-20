@@ -12,6 +12,10 @@ class RolePermissionController extends Controller
 {
     public function index()
     {
+        // Auto-repair truncated roles (e.g. stuck at 1 of 24 after a bad save)
+        // so the UI recovers without manual re-selection.
+        $this->repairTruncatedRolesIfNeeded();
+
         $roles = $this->orderedRoles();
         $roleCounts = User::query()
             ->where('role', 'admin')
@@ -29,6 +33,52 @@ class RolePermissionController extends Controller
             'adminsByRole' => $adminsByRole,
             'permissionCount' => count(config('admin.permissions', [])),
         ]);
+    }
+
+    public function repair(AdminRole $adminRole)
+    {
+        abort_if($adminRole->is_protected, 403, 'Protected role cannot be repaired.');
+        $defaults = config("admin.roles.{$adminRole->getKey()}.permissions");
+        if (!is_array($defaults) || empty($defaults)) {
+            return back()->with('error', 'No default permissions defined for '.$adminRole->label.'.');
+        }
+        // Keep the same filtering/sorting as update so count is reliable
+        $permissionKeys = array_keys(config('admin.permissions', []));
+        $permissions = array_values(array_intersect($permissionKeys, $defaults));
+        $old = $adminRole->permissions ?? [];
+        $adminRole->forceFill(['permissions' => $permissions])->save();
+        $adminRole->refresh();
+        AdminRole::forgetDefinitionCache();
+        try { \Illuminate\Support\Facades\Cache::forget('admin:role_definitions:v2'); } catch (\Throwable $e) {}
+        \Illuminate\Support\Facades\Log::info('Role permissions repaired to defaults', ['role' => $adminRole->getKey(), 'old' => $old, 'new' => $permissions, 'by' => auth()->id()]);
+        return back()->with('success', "{$adminRole->label} repaired to defaults (".count($permissions)." permissions). You can now edit again.");
+    }
+
+    private function repairTruncatedRolesIfNeeded(): void
+    {
+        try {
+            $roles = AdminRole::query()->get();
+            $permissionKeys = array_keys(config('admin.permissions', []));
+            foreach ($roles as $role) {
+                if ($role->is_protected) continue;
+                $perms = $role->permissions ?? [];
+                // Truncated = 0 or 1 permission (only dashboard.view) but defaults expect more
+                $defaults = config("admin.roles.{$role->getKey()}.permissions", []);
+                if (count($perms) <= 1 && is_array($defaults) && count($defaults) > 1) {
+                    $repaired = array_values(array_intersect($permissionKeys, $defaults));
+                    if (count($repaired) > count($perms)) {
+                        $role->forceFill(['permissions' => $repaired])->save();
+                        \Illuminate\Support\Facades\Log::warning('Auto-repaired truncated role on index', ['role' => $role->getKey(), 'old' => $perms, 'new' => $repaired]);
+                    }
+                }
+            }
+            if (isset($repaired)) {
+                AdminRole::forgetDefinitionCache();
+                try { \Illuminate\Support\Facades\Cache::forget('admin:role_definitions:v2'); } catch (\Throwable $e) {}
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Auto-repair check failed', ['error' => $e->getMessage()]);
+        }
     }
 
     public function edit(AdminRole $adminRole)
@@ -56,6 +106,10 @@ class RolePermissionController extends Controller
     {
         abort_if($adminRole->is_protected, 403, 'Protected administrator roles cannot be changed.');
 
+        // Ensure we read fresh config, not a stale bootstrap/cache/config.php
+        try { \Illuminate\Support\Facades\Artisan::call('config:clear'); } catch (\Throwable $e) {}
+        AdminRole::forgetDefinitionCache();
+
         $permissionKeys = array_keys(config('admin.permissions', []));
 
         // MAX LEVEL: permissive validation — never throw "permissions.0 is invalid", just filter
@@ -79,15 +133,12 @@ class RolePermissionController extends Controller
         ));
 
         $old = $adminRole->permissions ?? [];
-        // Use direct DB update so a stale Eloquent snapshot can never hide the write.
-        \Illuminate\Support\Facades\DB::table('admin_access_roles')
-            ->where('key', $adminRole->getKey())
-            ->update(['permissions' => json_encode($permissions), 'updated_at' => now()]);
+        // Use Eloquent so the `array` cast correctly handles Postgres json/jsonb
+        $adminRole->forceFill(['permissions' => $permissions])->save();
         $adminRole->refresh();
         // Force cache bust for all workers (static + shared) and stale config cache
         AdminRole::forgetDefinitionCache();
         try { \Illuminate\Support\Facades\Cache::forget('admin:role_definitions:v2'); } catch (\Throwable $e) {}
-        try { \Illuminate\Support\Facades\Artisan::call('config:clear'); } catch (\Throwable $e) {}
         \Illuminate\Support\Facades\Log::info('Role permissions updated', [
             'role' => $adminRole->getKey(),
             'old' => $old,
