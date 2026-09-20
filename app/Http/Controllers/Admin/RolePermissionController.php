@@ -83,6 +83,10 @@ class RolePermissionController extends Controller
 
     public function edit(AdminRole $adminRole)
     {
+        // Auto-repair here too so direct /operations/edit links also show correct checked boxes
+        $this->repairTruncatedRolesIfNeeded();
+        $adminRole->refresh();
+
         $roleUserCount = User::query()
             ->where('role', 'admin')
             ->when(
