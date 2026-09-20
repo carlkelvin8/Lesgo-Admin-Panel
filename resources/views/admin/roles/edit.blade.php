@@ -10,7 +10,10 @@
 
 @section('content')
 @php
-    $selectedPermissions = old('permissions', $adminRole->permissions ?? []);
+    // Prefer fresh DB value; ignore stale old() if it was truncated to 1
+    $dbPerms = $adminRole->permissions ?? [];
+    $oldPerms = old('permissions');
+    $selectedPermissions = is_array($oldPerms) && count($oldPerms) > 1 ? $oldPerms : $dbPerms;
     $hasFullAccess = in_array('*', $selectedPermissions, true);
 @endphp
 
@@ -44,6 +47,11 @@
         <div class="flex items-start gap-3 rounded-xl border border-purple-200 bg-purple-50 px-4 py-3 text-sm text-purple-800">
             <i class="fas fa-lock mt-0.5"></i>
             <p>Super Admin always has full access. Its permissions are protected to make sure the system cannot lose its highest-level administrator.</p>
+        </div>
+    @else
+        <div class="flex items-center justify-between rounded-xl border {{ count($selectedPermissions) <= 1 ? 'border-amber-200 bg-amber-50 text-amber-800' : 'border-blue-100 bg-blue-50 text-blue-700' }} px-4 py-3 text-sm">
+            <span><i class="fas fa-circle-info mr-2"></i>DB has <strong>{{ count($dbPerms) }} of {{ count($permissionGroups->collapse()) }} permissions</strong> — checked on page: <strong id="live-selected-count">{{ count($selectedPermissions) }}</strong></span>
+            <span class="text-xs opacity-70">If only 1 is checked, use Select all then Save</span>
         </div>
     @endif
 
@@ -109,10 +117,13 @@
     (() => {
         const button = document.getElementById('toggle-all-permissions');
         const checkboxes = [...document.querySelectorAll('.permission-checkbox:not(:disabled)')];
+        const liveCount = document.getElementById('live-selected-count');
 
-        const refreshButton = () => {
+        const refresh = () => {
+            const checked = checkboxes.filter(c => c.checked).length + 1; // +1 for required (disabled checked)
+            if (liveCount) liveCount.textContent = checked;
             const allSelected = checkboxes.length > 0 && checkboxes.every((checkbox) => checkbox.checked);
-            button.innerHTML = allSelected
+            if (button) button.innerHTML = allSelected
                 ? '<i class="fas fa-xmark"></i> Clear optional'
                 : '<i class="fas fa-check-double"></i> Select all';
         };
@@ -120,11 +131,16 @@
         button?.addEventListener('click', () => {
             const shouldSelect = !checkboxes.every((checkbox) => checkbox.checked);
             checkboxes.forEach((checkbox) => checkbox.checked = shouldSelect);
-            refreshButton();
+            refresh();
         });
 
-        checkboxes.forEach((checkbox) => checkbox.addEventListener('change', refreshButton));
-        refreshButton();
+        checkboxes.forEach((checkbox) => checkbox.addEventListener('change', refresh));
+        refresh();
+        // Debug: log submit payload
+        document.querySelector('form')?.addEventListener('submit', () => {
+            const vals = [...document.querySelectorAll('input[name=\"permissions[]\"]')].map(i => i.value + (i.checked || i.type==='hidden' ? ':checked/hidden' : ':unchecked')).join(', ');
+            console.log('Submitting permissions[]:', vals);
+        });
     })();
 </script>
 @endsection
