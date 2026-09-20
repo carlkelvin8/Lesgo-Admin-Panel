@@ -59,20 +59,34 @@ class RolePermissionController extends Controller
         try {
             $roles = AdminRole::query()->get();
             $permissionKeys = array_keys(config('admin.permissions', []));
+            $didRepair = false;
             foreach ($roles as $role) {
                 if ($role->is_protected) continue;
                 $perms = $role->permissions ?? [];
-                // Truncated = 0 or 1 permission (only dashboard.view) but defaults expect more
                 $defaults = config("admin.roles.{$role->getKey()}.permissions", []);
-                if (count($perms) <= 1 && is_array($defaults) && count($defaults) > 1) {
-                    $repaired = array_values(array_intersect($permissionKeys, $defaults));
-                    if (count($repaired) > count($perms)) {
-                        $role->forceFill(['permissions' => $repaired])->save();
-                        \Illuminate\Support\Facades\Log::warning('Auto-repaired truncated role on index', ['role' => $role->getKey(), 'old' => $perms, 'new' => $repaired]);
+                if (!is_array($defaults) || empty($defaults)) continue;
+                $expected = array_values(array_intersect($permissionKeys, $defaults));
+                // Repair if count is wrong OR contains invalid keys OR missing required
+                $invalid = array_diff($perms, $permissionKeys);
+                $missingRequired = array_diff(config('admin.required_permissions', []), $perms);
+                $needsRepair = !empty($invalid) || !empty($missingRequired) || count($perms) !== count($expected) || count($perms) <= 1;
+                // More precise: if perms is subset of expected but smaller, repair
+                if ($needsRepair && count($perms) < count($expected)) {
+                    $repaired = $expected;
+                    $role->forceFill(['permissions' => $repaired])->save();
+                    \Illuminate\Support\Facades\Log::warning('Auto-repaired truncated role', ['role' => $role->getKey(), 'old_count' => count($perms), 'new_count' => count($repaired), 'old' => $perms, 'new' => $repaired]);
+                    $didRepair = true;
+                } elseif (!empty($invalid) || !empty($missingRequired)) {
+                    // Just filter invalid and add missing required, keep user's custom selections
+                    $cleaned = array_values(array_intersect($permissionKeys, array_unique([...config('admin.required_permissions', []), ...$perms])));
+                    if ($cleaned !== $perms) {
+                        $role->forceFill(['permissions' => $cleaned])->save();
+                        \Illuminate\Support\Facades\Log::warning('Auto-cleaned role permissions', ['role' => $role->getKey(), 'old' => $perms, 'new' => $cleaned]);
+                        $didRepair = true;
                     }
                 }
             }
-            if (isset($repaired)) {
+            if ($didRepair) {
                 AdminRole::forgetDefinitionCache();
                 try { \Illuminate\Support\Facades\Cache::forget('admin:role_definitions:v2'); } catch (\Throwable $e) {}
             }

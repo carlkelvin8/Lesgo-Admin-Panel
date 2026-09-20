@@ -77,7 +77,7 @@
                             $isChecked = $hasFullAccess || in_array($key, $selectedPermissions, true) || $isRequired;
                             $isDisabled = $adminRole->is_protected || $isRequired;
                         @endphp
-                        <label for="permission-{{ str_replace('.', '-', $key) }}" class="flex gap-3 bg-white p-5 {{ $isDisabled ? 'cursor-default' : 'cursor-pointer hover:bg-blue-50/40' }}">
+                        <label class="flex gap-3 bg-white p-5 {{ $isDisabled ? 'cursor-default' : 'cursor-pointer hover:bg-blue-50/40' }}">
                             <input
                                 id="permission-{{ str_replace('.', '-', $key) }}"
                                 type="checkbox"
