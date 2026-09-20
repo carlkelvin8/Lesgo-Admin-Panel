@@ -64,6 +64,51 @@ class RolePermissionsTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_six_selected_permissions_remain_six_after_viewing_roles(): void
+    {
+        $superAdmin = User::factory()->create([
+            'role' => 'admin',
+            'admin_role' => 'super_admin',
+            'is_active' => true,
+        ]);
+        $operations = AdminRole::query()->findOrFail('operations');
+        $selected = [
+            'dashboard.view', 'users.view', 'partners.view',
+            'orders.view', 'tickets.manage', 'reports.view',
+        ];
+
+        $this->actingAs($superAdmin)
+            ->put(route('admin.roles.update', $operations), ['permissions' => $selected])
+            ->assertRedirect(route('admin.roles.index'));
+
+        $this->get(route('admin.roles.index'))
+            ->assertOk()
+            ->assertSee('6 of 24 permissions');
+        $this->get(route('admin.roles.edit', $operations))
+            ->assertOk()
+            ->assertSee('6</strong> of 24 permissions selected', false);
+        $this->assertSame($selected, $operations->fresh()->permissions);
+    }
+
+    public function test_required_only_role_is_not_reset_to_defaults_on_page_view(): void
+    {
+        $superAdmin = User::factory()->create([
+            'role' => 'admin',
+            'admin_role' => 'super_admin',
+            'is_active' => true,
+        ]);
+        $operations = AdminRole::query()->findOrFail('operations');
+        $operations->update(['permissions' => ['dashboard.view']]);
+
+        $this->actingAs($superAdmin)
+            ->get(route('admin.roles.index'))
+            ->assertOk()
+            ->assertSee('1 of 24 permissions');
+        $this->get(route('admin.roles.edit', $operations))->assertOk();
+
+        $this->assertSame(['dashboard.view'], $operations->fresh()->permissions);
+    }
+
     public function test_super_admin_permissions_cannot_be_changed(): void
     {
         $superAdmin = User::factory()->create([

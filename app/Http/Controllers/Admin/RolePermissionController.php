@@ -12,10 +12,6 @@ class RolePermissionController extends Controller
 {
     public function index()
     {
-        // Auto-repair truncated roles (e.g. stuck at 1 of 24 after a bad save)
-        // so the UI recovers without manual re-selection.
-        $this->repairTruncatedRolesIfNeeded();
-
         $roles = $this->orderedRoles();
         $roleCounts = User::query()
             ->where('role', 'admin')
@@ -54,51 +50,8 @@ class RolePermissionController extends Controller
         return back()->with('success', "{$adminRole->label} repaired to defaults (".count($permissions)." permissions). You can now edit again.");
     }
 
-    private function repairTruncatedRolesIfNeeded(): void
-    {
-        try {
-            $roles = AdminRole::query()->get();
-            $permissionKeys = array_keys(config('admin.permissions', []));
-            $didRepair = false;
-            foreach ($roles as $role) {
-                if ($role->is_protected) continue;
-                $perms = $role->permissions ?? [];
-                $defaults = config("admin.roles.{$role->getKey()}.permissions", []);
-                if (!is_array($defaults) || empty($defaults)) continue;
-                $expected = array_values(array_intersect($permissionKeys, $defaults));
-                // Only auto-repair truly broken states: invalid keys, missing required, or stuck at 1
-                $invalid = array_diff($perms, $permissionKeys);
-                $missingRequired = array_diff(config('admin.required_permissions', []), $perms);
-                $isTruncated = count($perms) <= 1;
-                $needsRepair = !empty($invalid) || !empty($missingRequired) || $isTruncated;
-                if ($isTruncated && count($perms) < count($expected)) {
-                    $repaired = $expected;
-                    $role->forceFill(['permissions' => $repaired])->save();
-                    \Illuminate\Support\Facades\Log::warning('Auto-repaired truncated role', ['role' => $role->getKey(), 'old_count' => count($perms), 'new_count' => count($repaired), 'old' => $perms, 'new' => $repaired]);
-                    $didRepair = true;
-                } elseif (!empty($invalid) || !empty($missingRequired)) {
-                    // Just filter invalid and add missing required, keep user's custom selections
-                    $cleaned = array_values(array_intersect($permissionKeys, array_unique([...config('admin.required_permissions', []), ...$perms])));
-                    if ($cleaned !== $perms) {
-                        $role->forceFill(['permissions' => $cleaned])->save();
-                        \Illuminate\Support\Facades\Log::warning('Auto-cleaned role permissions', ['role' => $role->getKey(), 'old' => $perms, 'new' => $cleaned]);
-                        $didRepair = true;
-                    }
-                }
-            }
-            if ($didRepair) {
-                AdminRole::forgetDefinitionCache();
-                try { \Illuminate\Support\Facades\Cache::forget('admin:role_definitions:v2'); } catch (\Throwable $e) {}
-            }
-        } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning('Auto-repair check failed', ['error' => $e->getMessage()]);
-        }
-    }
-
     public function edit(AdminRole $adminRole)
     {
-        // Auto-repair here too so direct /operations/edit links also show correct checked boxes
-        $this->repairTruncatedRolesIfNeeded();
         $adminRole->refresh();
 
         $roleUserCount = User::query()
