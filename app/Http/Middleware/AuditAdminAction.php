@@ -45,7 +45,7 @@ class AuditAdminAction
                 'action'          => $action,
                 'description'     => $resolved['description'],
                 'resource_type'   => $resource ? class_basename($resource) : $request->segment(2),
-                'resource_id'     => $resource?->getKey(),
+                'resource_id'     => $resource && ctype_digit((string) $resource->getKey()) ? $resource->getKey() : null,
                 'old_values'      => $oldSnapshot,
                 'new_values'      => $newValues,
                 'ip_address'      => $request->ip(),

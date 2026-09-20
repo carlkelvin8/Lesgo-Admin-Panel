@@ -48,7 +48,7 @@
             </div>
 
             @php
-                $permissionGroups = collect(config('admin.permissions', []))->groupBy('group');
+                $permissionGroups = collect(config('admin.permissions', []))->groupBy('group', preserveKeys: true);
                 $selectedPerms = old('admin_permissions', $user->admin_permissions ?? []);
                 if (!is_array($selectedPerms)) $selectedPerms = [];
             @endphp

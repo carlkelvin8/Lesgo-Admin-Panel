@@ -163,6 +163,48 @@ class RolePermissionsTest extends TestCase
         );
     }
 
+    public function test_role_editor_submits_permission_names_not_group_positions(): void
+    {
+        $superAdmin = User::factory()->create([
+            'role' => 'admin',
+            'admin_role' => 'super_admin',
+            'is_active' => true,
+        ]);
+        $operations = AdminRole::query()->findOrFail('operations');
+
+        $html = $this->actingAs($superAdmin)
+            ->get(route('admin.roles.edit', $operations))
+            ->assertOk()
+            ->getContent();
+
+        preg_match_all('/name="permissions\[\]"\s+value="([^"]+)"/', $html, $matches);
+        $this->assertSame(
+            array_keys(config('admin.permissions')),
+            array_values(array_unique($matches[1])),
+        );
+    }
+
+    public function test_invalid_permission_values_do_not_silently_clear_a_role(): void
+    {
+        $superAdmin = User::factory()->create([
+            'role' => 'admin',
+            'admin_role' => 'super_admin',
+            'is_active' => true,
+        ]);
+        $operations = AdminRole::query()->findOrFail('operations');
+        $before = $operations->permissions;
+
+        $this->actingAs($superAdmin)
+            ->from(route('admin.roles.edit', $operations))
+            ->put(route('admin.roles.update', $operations), [
+                'permissions' => ['0', '2'],
+            ])
+            ->assertRedirect(route('admin.roles.edit', $operations))
+            ->assertSessionHasErrors('permissions');
+
+        $this->assertSame($before, $operations->fresh()->permissions);
+    }
+
     public function test_super_admin_permissions_cannot_be_changed(): void
     {
         $superAdmin = User::factory()->create([

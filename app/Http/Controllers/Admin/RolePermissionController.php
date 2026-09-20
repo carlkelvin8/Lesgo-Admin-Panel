@@ -65,7 +65,7 @@ class RolePermissionController extends Controller
 
         return view('admin.roles.edit', [
             'adminRole' => $adminRole,
-            'permissionGroups' => collect(config('admin.permissions', []))->groupBy('group'),
+            'permissionGroups' => collect(config('admin.permissions', []))->groupBy('group', preserveKeys: true),
             'requiredPermissions' => config('admin.required_permissions', []),
             'roleUserCount' => $roleUserCount,
         ]);
@@ -77,7 +77,6 @@ class RolePermissionController extends Controller
 
         $permissionKeys = array_keys(config('admin.permissions', []));
 
-        // MAX LEVEL: permissive validation — never throw "permissions.0 is invalid", just filter
         $validated = $request->validate([
             'permissions' => ['nullable', 'array'],
             'permissions.*' => ['string', 'max:100'],
@@ -89,10 +88,11 @@ class RolePermissionController extends Controller
             $raw = $permissionKeys; // Select all was clicked — trust it even if JS failed to check boxes
         }
         \Illuminate\Support\Facades\Log::info('Role permissions raw input', ['role' => $adminRole->getKey(), 'raw_count' => count($raw), 'raw' => $raw, 'select_all' => $selectAll, 'all_input' => $request->all()]);
-        // Log any invalid keys for debugging but don't fail
+        // Never report success if the form submitted keys the server cannot save.
         $invalid = array_diff($raw, $permissionKeys);
         if (!empty($invalid)) {
-            \Illuminate\Support\Facades\Log::warning('Role permissions: ignoring invalid keys', ['role' => $adminRole->getKey(), 'invalid' => $invalid, 'validKeys' => $permissionKeys]);
+            \Illuminate\Support\Facades\Log::warning('Role permissions: invalid keys rejected', ['role' => $adminRole->getKey(), 'invalid' => $invalid]);
+            return back()->withErrors(['permissions' => 'Some selected permissions were invalid. Reload the page and try again.'])->withInput();
         }
         $selected = array_values(array_intersect($permissionKeys, $raw));
         $required = config('admin.required_permissions', []);
