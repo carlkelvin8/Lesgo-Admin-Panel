@@ -12,7 +12,7 @@ class SessionAnomalyDetector
     /**
      * Check for session anomalies on login.
      */
-    public function detect(array $currentLogin, array $previousLogin = null): array
+    public function detect(array $currentLogin, ?array $previousLogin = null): array
     {
         $anomalies = [];
 
