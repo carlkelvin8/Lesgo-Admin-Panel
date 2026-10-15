@@ -78,8 +78,6 @@ Route::prefix('admin')->name('admin.')->middleware(['admin', 'admin.audit'])->gr
         Route::post('/users', [UserController::class, 'store'])->name('users.store');
         Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
         Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
-        Route::post('/users/{user}/password-reset-otp', [UserController::class, 'sendPasswordResetOtp'])
-            ->middleware('throttle:3,1')->name('users.password-reset-otp');
         Route::post('/users/{user}/toggle', [UserController::class, 'toggleStatus'])->name('users.toggle');
         Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
         Route::delete('/users', [UserController::class, 'bulkDestroy'])->name('users.bulk-destroy');

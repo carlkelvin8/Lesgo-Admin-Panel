@@ -2,17 +2,6 @@
 @section('title', 'Edit User - LesGo Admin')
 @section('header', 'Edit User')
 
-@section('actions')
-@if(auth()->user()->hasAdminPermission('users.manage') && ! $user->isAdmin())
-<form method="POST" action="{{ route('admin.users.password-reset-otp', $user) }}" class="inline" onsubmit="return confirm(@js('Send a password reset code to '.$user->email.'? The code will go to the user’s registered email and expire after 10 minutes.'))">
-    @csrf
-    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm">
-        <i class="fas fa-key mr-1"></i> Send Password Reset OTP
-    </button>
-</form>
-@endif
-@endsection
-
 @section('content')
 <div class="max-w-2xl">
     <div class="bg-white rounded-xl shadow-sm p-6">
