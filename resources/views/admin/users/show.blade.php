@@ -5,6 +5,14 @@
 @section('actions')
 @if(auth()->user()->hasAdminPermission('users.manage'))
 <a href="{{ route('admin.users.edit', $user) }}" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm"><i class="fas fa-edit mr-1"></i> Edit</a>
+@unless($user->isAdmin())
+<form method="POST" action="{{ route('admin.users.password-reset-otp', $user) }}" class="inline" onsubmit="return confirm(@js('Send a password reset code to '.$user->email.'? The code will go to the user’s registered email and expire after 10 minutes.'))">
+    @csrf
+    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm">
+        <i class="fas fa-key mr-1"></i> Send Password Reset OTP
+    </button>
+</form>
+@endunless
 @unless($user->is(auth()->user()))
 <button type="button" class="bg-{{ $user->is_active ? 'red' : 'green' }}-500 hover:bg-{{ $user->is_active ? 'red' : 'green' }}-600 text-white px-4 py-2 rounded-lg text-sm"
     x-data

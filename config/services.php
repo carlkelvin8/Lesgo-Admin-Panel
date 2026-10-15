@@ -2,6 +2,11 @@
 
 return [
 
+    'lesgo_api' => [
+        // Must point to the API environment that shares this admin panel's database.
+        'base_url' => env('LESGO_API_BASE_URL'),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Third Party Services

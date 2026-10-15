@@ -9,6 +9,8 @@ use App\Models\AdminRole;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use App\Traits\SearchEscaping;
 use App\Support\CsvFormatter;
@@ -56,6 +58,52 @@ class UserController extends Controller
         }]);
 
         return view('admin.users.show', compact('user'));
+    }
+
+    public function sendPasswordResetOtp(User $user)
+    {
+        if ($user->isAdmin()) {
+            return back()->withErrors(['password_reset' => 'Admin accounts must use the admin password recovery flow.']);
+        }
+
+        if (! filled($user->email)) {
+            return back()->withErrors(['password_reset' => 'This account does not have an email address for password recovery.']);
+        }
+
+        $apiBaseUrl = rtrim((string) config('services.lesgo_api.base_url'), '/');
+        if ($apiBaseUrl === '') {
+            return back()->withErrors(['password_reset' => 'Password reset is not configured. Set LESGO_API_BASE_URL to the API for this environment.']);
+        }
+
+        try {
+            $response = Http::acceptJson()
+                ->asJson()
+                ->connectTimeout(5)
+                ->timeout(15)
+                ->post($apiBaseUrl.'/v1/auth/forgot-password/send-otp', [
+                    'email' => $user->email,
+                ]);
+        } catch (\Throwable $exception) {
+            Log::warning('Admin-triggered password reset OTP request failed.', [
+                'target_user_id' => $user->id,
+                'admin_user_id' => request()->user()?->id,
+                'exception' => $exception::class,
+            ]);
+
+            return back()->withErrors(['password_reset' => 'Could not contact the password recovery service. Please try again later.']);
+        }
+
+        if (! $response->successful() || $response->json('success') !== true) {
+            Log::warning('Admin-triggered password reset OTP was rejected by the API.', [
+                'target_user_id' => $user->id,
+                'admin_user_id' => request()->user()?->id,
+                'status' => $response->status(),
+            ]);
+
+            return back()->withErrors(['password_reset' => 'The password recovery service could not send a code right now. Please try again later.']);
+        }
+
+        return back()->with('success', 'If this email is registered, a password reset code has been sent to '.$user->email.'.');
     }
 
     public function create()
