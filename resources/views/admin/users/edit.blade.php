@@ -32,6 +32,26 @@
                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">
             </div>
 
+            @unless($user->isAdmin())
+            <div class="mb-4 rounded-lg border border-indigo-100 bg-indigo-50 p-4">
+                <p class="text-sm font-medium text-gray-800">Set a new password</p>
+                <p class="mt-1 text-xs text-gray-600">Leave both fields blank to keep the current password. The user will need to sign in again on their devices.</p>
+                <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                    <div>
+                        <label for="password" class="mb-1 block text-sm font-medium text-gray-700">New Password</label>
+                        <input id="password" type="password" name="password" minlength="8" autocomplete="new-password"
+                               class="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="password_confirmation" class="mb-1 block text-sm font-medium text-gray-700">Confirm New Password</label>
+                        <input id="password_confirmation" type="password" name="password_confirmation" minlength="8" autocomplete="new-password"
+                               class="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500">
+                    </div>
+                </div>
+                @error('password') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
+            </div>
+            @endunless
+
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
                 <input type="text" name="phone_number" value="{{ old('phone_number', $user->phone_number) }}"

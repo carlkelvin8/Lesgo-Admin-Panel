@@ -8,9 +8,11 @@ use App\Http\Requests\Admin\UpdateUserRequest;
 use App\Models\AdminRole;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use App\Traits\SearchEscaping;
 use App\Support\CsvFormatter;
@@ -166,6 +168,22 @@ class UserController extends Controller
     public function update(UpdateUserRequest $request, User $user)
     {
         $validated = $request->validated();
+        $newPassword = $validated['password'] ?? null;
+        unset($validated['password']);
+
+        if (filled($newPassword) && ($user->isAdmin() || $validated['role'] === 'admin')) {
+            return back()->withInput($request->except(['password', 'password_confirmation']))->withErrors([
+                'password' => 'Use the administrator password recovery flow for admin accounts.',
+            ]);
+        }
+
+        $passwordChanged = filled($newPassword);
+        if ($passwordChanged) {
+            $validated['password'] = Hash::make($newPassword);
+            if (Schema::hasColumn('users', 'password_changed_at')) {
+                $validated['password_changed_at'] = now();
+            }
+        }
 
         $permsIgnored = false;
 
@@ -215,15 +233,39 @@ class UserController extends Controller
         unset($validated['remove_profile_picture'], $validated['cropped_profile_picture']);
 
         if ($user->is($request->user()) && ($validated['role'] !== 'admin' || ! $request->boolean('is_active'))) {
-            return back()->withInput()->withErrors(['role' => 'You cannot remove your own admin access or deactivate your own account.']);
+            return back()->withInput($request->except(['password', 'password_confirmation']))
+                ->withErrors(['role' => 'You cannot remove your own admin access or deactivate your own account.']);
         }
 
         if ($this->wouldRemoveLastSuperAdmin($user, $validated['role'], $validated['admin_role'], $request->boolean('is_active'))) {
-            return back()->withInput()->withErrors(['admin_role' => 'At least one active super administrator must remain.']);
+            return back()->withInput($request->except(['password', 'password_confirmation']))
+                ->withErrors(['admin_role' => 'At least one active super administrator must remain.']);
         }
 
         $oldPerms = $user->admin_permissions;
         $user->update($validated);
+
+        if ($passwordChanged) {
+            $user->forceFill(['remember_token' => null])->save();
+
+            if (Schema::hasTable('personal_access_tokens')) {
+                DB::table('personal_access_tokens')
+                    ->where('tokenable_type', User::class)
+                    ->where('tokenable_id', $user->id)
+                    ->delete();
+            }
+
+            if (Schema::hasTable('refresh_tokens')) {
+                DB::table('refresh_tokens')
+                    ->where('user_id', $user->id)
+                    ->whereNull('revoked_at')
+                    ->update(['revoked_at' => now()]);
+            }
+
+            if (Schema::hasTable('sessions') && Schema::hasColumn('sessions', 'user_id')) {
+                DB::table('sessions')->where('user_id', $user->id)->delete();
+            }
+        }
 
         // Audit max level
         try {
