@@ -36,6 +36,13 @@ class AdminFunctionalWorkflowsTest extends TestCase
         $this->actingAs(User::factory()->create(['role' => 'admin', 'admin_role' => 'super_admin', 'is_active' => true]));
     }
 
+    public function test_roles_page_counts_assigned_administrators_by_effective_role(): void
+    {
+        $this->get(route('admin.roles.index'))
+            ->assertOk()
+            ->assertSee('1 administrator assigned');
+    }
+
     public function test_wallet_adjustment_without_optional_reference_creates_a_ledger_entry(): void
     {
         $wallet = Wallet::factory()->create(['balance' => 100]);

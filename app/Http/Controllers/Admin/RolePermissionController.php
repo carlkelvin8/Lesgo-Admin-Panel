@@ -15,7 +15,7 @@ class RolePermissionController extends Controller
         $roles = $this->orderedRoles();
         $roleCounts = User::query()
             ->where('role', 'admin')
-            ->get(['admin_role'])
+            ->get(['role', 'admin_role'])
             ->countBy(fn (User $user) => $user->effectiveAdminRole());
 
         return view('admin.roles.index', [
