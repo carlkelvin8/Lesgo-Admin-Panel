@@ -35,7 +35,7 @@ class DriverController extends Controller
             $query->where('package_tier', $request->package_tier);
         }
 
-        $drivers = $query->latest()->paginate(20)->withQueryString();
+        $drivers = $query->latest()->orderByDesc('id')->paginate(20)->withQueryString();
 
         return view('admin.drivers.index', compact('drivers'));
     }

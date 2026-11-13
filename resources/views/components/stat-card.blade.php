@@ -26,7 +26,7 @@
         </div>
         @if($icon)
         <div class="w-12 h-12 {{ $c['bg'] }} rounded-full flex items-center justify-center">
-            <i class="fas {{ str_starts_with($icon, 'fa-') ? $icon : 'fa-'.$icon }} {{ $c['text'] }}"></i>
+            <i aria-hidden="true" class="fas {{ str_starts_with($icon, 'fa-') ? $icon : 'fa-'.$icon }} {{ $c['text'] }}"></i>
         </div>
         @endif
     </div>

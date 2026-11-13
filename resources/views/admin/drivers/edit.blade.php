@@ -10,8 +10,8 @@
             @method('PUT')
 
             <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <select name="status" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1" for="field-status">Status</label>
+                <select id="field-status" name="status" class="w-full border border-gray-300 rounded-lg px-3 py-2">
                     @foreach(['pending','active','inactive','suspended'] as $s)
                         <option value="{{ $s }}" {{ old('status', $driver->status) === $s ? 'selected' : '' }}>{{ ucfirst($s) }}</option>
                     @endforeach
@@ -20,23 +20,23 @@
 
             <div class="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">License Number</label>
-                    <input type="text" name="license_number" value="{{ old('license_number', $driver->license_number) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1" for="field-license_number">License Number</label>
+                    <input id="field-license_number" type="text" name="license_number" value="{{ old('license_number', $driver->license_number) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Package Tier</label>
-                    <input type="text" name="package_tier" value="{{ old('package_tier', $driver->package_tier) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1" for="field-package_tier">Package Tier</label>
+                    <input id="field-package_tier" type="text" name="package_tier" value="{{ old('package_tier', $driver->package_tier) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
                 </div>
             </div>
 
             <div class="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Vehicle Type</label>
-                    <input type="text" name="vehicle_type" value="{{ old('vehicle_type', $driver->vehicle_type) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1" for="field-vehicle_type">Vehicle Type</label>
+                    <input id="field-vehicle_type" type="text" name="vehicle_type" value="{{ old('vehicle_type', $driver->vehicle_type) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Plate Number</label>
-                    <input type="text" name="plate_number" value="{{ old('plate_number', $driver->plate_number) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1" for="field-plate_number">Plate Number</label>
+                    <input id="field-plate_number" type="text" name="plate_number" value="{{ old('plate_number', $driver->plate_number) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
                 </div>
             </div>
 

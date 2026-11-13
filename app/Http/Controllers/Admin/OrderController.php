@@ -47,7 +47,7 @@ class OrderController extends Controller
             $query->where('created_at', '<=', $request->date_to.' 23:59:59');
         }
 
-        $orders = $query->latest()->paginate(20)->withQueryString();
+        $orders = $query->latest()->orderByDesc('id')->paginate(20)->withQueryString();
 
         return view('admin.orders.index', compact('orders'));
     }

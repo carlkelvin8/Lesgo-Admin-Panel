@@ -38,7 +38,7 @@ class TicketController extends Controller
             $query->where('category', $request->category);
         }
 
-        $tickets = $query->latest()->paginate(20)->withQueryString();
+        $tickets = $query->latest()->orderByDesc('id')->paginate(20)->withQueryString();
 
         return view('admin.tickets.index', compact('tickets'));
     }

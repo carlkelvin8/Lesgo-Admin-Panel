@@ -5,7 +5,7 @@
         <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="open = false"></div>
         <div class="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-6" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
             <div class="flex items-center gap-3 mb-4">
-                <div class="w-10 h-10 rounded-full flex items-center justify-center {{ $iconBg }}"><i class="{{ $iconClass }}"></i></div>
+                <div class="w-10 h-10 rounded-full flex items-center justify-center {{ $iconBg }}"><i aria-hidden="true" class="{{ $iconClass }}"></i></div>
                 <h3 class="text-lg font-semibold text-gray-800">{{ $title }}</h3>
             </div>
             <p class="text-gray-600 text-sm mb-6">{{ $message }}</p>

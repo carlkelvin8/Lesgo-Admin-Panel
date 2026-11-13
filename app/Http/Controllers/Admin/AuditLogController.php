@@ -48,7 +48,7 @@ class AuditLogController extends Controller
             $query->where('occurred_at', '<=', $request->date_to.' 23:59:59');
         }
 
-        $logs = $query->latest('occurred_at')->paginate(20)->withQueryString();
+        $logs = $query->latest('occurred_at')->orderByDesc('id')->paginate(20)->withQueryString();
 
         return view('admin.audit-logs.index', compact('logs'));
     }

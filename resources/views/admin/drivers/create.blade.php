@@ -9,8 +9,8 @@
             @csrf
 
             <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-1">User</label>
-                <select name="user_id" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">
+                <label class="block text-sm font-medium text-gray-700 mb-1" for="field-user_id">User</label>
+                <select id="field-user_id" name="user_id" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">
                     <option value="">Select User</option>
                     @foreach($users as $user)
                         <option value="{{ $user->id }}" {{ old('user_id') == $user->id ? 'selected' : '' }}>{{ $user->name }} ({{ $user->email }})</option>
@@ -19,8 +19,8 @@
             </div>
 
             <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Partner</label>
-                <select name="partner_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">
+                <label class="block text-sm font-medium text-gray-700 mb-1" for="field-partner_id">Partner</label>
+                <select id="field-partner_id" name="partner_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">
                     <option value="">None</option>
                     @foreach($partners as $partner)
                         <option value="{{ $partner->id }}" {{ old('partner_id') == $partner->id ? 'selected' : '' }}>{{ $partner->name }}</option>
@@ -30,23 +30,23 @@
 
             <div class="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">License Number</label>
-                    <input type="text" name="license_number" value="{{ old('license_number') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">
+                    <label class="block text-sm font-medium text-gray-700 mb-1" for="field-license_number">License Number</label>
+                    <input id="field-license_number" type="text" name="license_number" value="{{ old('license_number') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Vehicle Type</label>
-                    <input type="text" name="vehicle_type" value="{{ old('vehicle_type') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">
+                    <label class="block text-sm font-medium text-gray-700 mb-1" for="field-vehicle_type">Vehicle Type</label>
+                    <input id="field-vehicle_type" type="text" name="vehicle_type" value="{{ old('vehicle_type') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">
                 </div>
             </div>
 
             <div class="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Plate Number</label>
-                    <input type="text" name="plate_number" value="{{ old('plate_number') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">
+                    <label class="block text-sm font-medium text-gray-700 mb-1" for="field-plate_number">Plate Number</label>
+                    <input id="field-plate_number" type="text" name="plate_number" value="{{ old('plate_number') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Package Tier</label>
-                    <select name="package_tier" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">
+                    <label class="block text-sm font-medium text-gray-700 mb-1" for="field-package_tier">Package Tier</label>
+                    <select id="field-package_tier" name="package_tier" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">
                         <option value="">None</option>
                         @foreach(['basic', 'premium', 'elite'] as $tier)
                             <option value="{{ $tier }}" {{ old('package_tier') === $tier ? 'selected' : '' }}>{{ ucfirst($tier) }}</option>

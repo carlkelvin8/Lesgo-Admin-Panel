@@ -1,5 +1,7 @@
 <div
     x-data="commandPalette()"
+    role="dialog" aria-modal="true" aria-label="Command palette" tabindex="-1"
+    x-effect="syncAdminDialog($el, open)" @admin-dialog-close="open = false"
     x-show="open"
     x-transition:enter="transition ease-out duration-200"
     x-transition:enter-start="opacity-0"
@@ -22,7 +24,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
             </svg>
             <input
-                x-ref="searchInput"
+                x-ref="searchInput" aria-label="Search commands"
                 x-model="query"
                 @keydown.arrow-down.prevent="moveDown()"
                 @keydown.arrow-up.prevent="moveUp()"

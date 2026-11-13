@@ -6,7 +6,7 @@
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <!-- User Info -->
     <div class="bg-white rounded-xl shadow-sm p-6">
-        <h3 class="font-semibold text-gray-800 mb-4"><i class="fas fa-user mr-2 text-blue-600"></i>User Information</h3>
+        <h3 class="font-semibold text-gray-800 mb-4"><i aria-hidden="true" class="fas fa-user mr-2 text-blue-600"></i>User Information</h3>
         <div class="text-center mb-4">
             <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-xl mx-auto mb-3">
                 {{ $documentVerification->user ? substr($documentVerification->user->name, 0, 1) : '?' }}
@@ -35,7 +35,7 @@
         <!-- Document Details -->
         <div class="bg-white rounded-xl shadow-sm p-6">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="font-semibold text-gray-800"><i class="fas fa-id-card mr-2 text-purple-600"></i>Document Information</h3>
+                <h3 class="font-semibold text-gray-800"><i aria-hidden="true" class="fas fa-id-card mr-2 text-purple-600"></i>Document Information</h3>
                 <x-status-badge :status="$documentVerification->status" />
             </div>
             <div class="space-y-3 text-sm">
@@ -71,13 +71,13 @@
         <!-- Document URLs -->
         @if(!empty($documentVerification->document_urls))
         <div class="bg-white rounded-xl shadow-sm p-6">
-            <h3 class="font-semibold text-gray-800 mb-3"><i class="fas fa-link mr-2 text-green-600"></i>Document Files</h3>
+            <h3 class="font-semibold text-gray-800 mb-3"><i aria-hidden="true" class="fas fa-link mr-2 text-green-600"></i>Document Files</h3>
             <div class="space-y-2">
                 @foreach($documentVerification->document_urls as $index => $url)
                     <a href="{{ $url }}" target="_blank" class="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 hover:underline">
-                        <i class="fas fa-file-alt"></i>
+                        <i aria-hidden="true" class="fas fa-file-alt"></i>
                         Document {{ $index + 1 }}
-                        <i class="fas fa-external-link-alt text-xs"></i>
+                        <i aria-hidden="true" class="fas fa-external-link-alt text-xs"></i>
                     </a>
                 @endforeach
             </div>
@@ -87,13 +87,13 @@
         <!-- Admin Action Form -->
         @if(in_array($documentVerification->status, ['pending', 'under_review']))
         <div class="bg-white rounded-xl shadow-sm p-6">
-            <h3 class="font-semibold text-gray-800 mb-4"><i class="fas fa-gavel mr-2 text-orange-600"></i>Review Document</h3>
+            <h3 class="font-semibold text-gray-800 mb-4"><i aria-hidden="true" class="fas fa-gavel mr-2 text-orange-600"></i>Review Document</h3>
             <form method="POST" action="{{ route('admin.document-verifications.update', $documentVerification) }}">
                 @csrf
                 @method('PATCH')
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-xs text-gray-500 mb-1">Status</label>
+                        <label class="block text-xs text-gray-500 mb-1" for="reviewStatus">Status</label>
                         <select name="status" id="reviewStatus" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none">
                             <option value="under_review" {{ $documentVerification->status === 'under_review' ? 'selected' : '' }}>Under Review</option>
                             <option value="approved">Approved</option>
@@ -101,13 +101,13 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs text-gray-500 mb-1">Admin Notes</label>
-                        <textarea name="admin_notes" rows="3" placeholder="Internal notes about this review..."
+                        <label class="block text-xs text-gray-500 mb-1" for="field-admin_notes">Admin Notes</label>
+                        <textarea id="field-admin_notes" name="admin_notes" rows="3" placeholder="Internal notes about this review..."
                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none">{{ $documentVerification->admin_notes }}</textarea>
                     </div>
                     <div id="rejectionReasonDiv" style="display: none;">
-                        <label class="block text-xs text-gray-500 mb-1">Rejection Reason</label>
-                        <textarea name="rejection_reason" rows="3" placeholder="Explain why this document is being rejected..."
+                        <label class="block text-xs text-gray-500 mb-1" for="field-rejection_reason">Rejection Reason</label>
+                        <textarea id="field-rejection_reason" name="rejection_reason" rows="3" placeholder="Explain why this document is being rejected..."
                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none">{{ $documentVerification->rejection_reason }}</textarea>
                     </div>
                     <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg text-sm font-medium">Submit Review</button>
@@ -119,7 +119,7 @@
         <!-- Audit Trail -->
         @if($documentVerification->reviewed_at)
         <div class="bg-white rounded-xl shadow-sm p-6">
-            <h3 class="font-semibold text-gray-800 mb-3"><i class="fas fa-history mr-2 text-gray-600"></i>Review History</h3>
+            <h3 class="font-semibold text-gray-800 mb-3"><i aria-hidden="true" class="fas fa-history mr-2 text-gray-600"></i>Review History</h3>
             <div class="space-y-3 text-sm">
                 <div class="flex justify-between border-b pb-2">
                     <span class="text-gray-500">Reviewed By</span>

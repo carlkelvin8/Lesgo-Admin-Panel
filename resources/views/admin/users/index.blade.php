@@ -4,8 +4,8 @@
 
 @section('actions')
 @if(auth()->user()->hasAdminPermission('users.manage'))
-<a href="{{ route('admin.users.export', request()->query()) }}" class="border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg text-sm"><i class="fas fa-download mr-1"></i> Export CSV</a>
-<a href="{{ route('admin.users.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"><i class="fas fa-plus mr-1"></i> Add User</a>
+<a href="{{ route('admin.users.export', request()->query()) }}" class="border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg text-sm"><i aria-hidden="true" class="fas fa-download mr-1"></i> Export CSV</a>
+<a href="{{ route('admin.users.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"><i aria-hidden="true" class="fas fa-plus mr-1"></i> Add User</a>
 @endif
 @endsection
 
@@ -14,7 +14,7 @@
 <x-filter-panel>
     <x-filter-input name="search" label="Search" placeholder="Name, email, phone..." />
     <x-filter-input name="role" label="Role" type="select" :options="['' => 'All roles'] + array_combine(\App\Models\User::ROLES, array_map(fn ($role) => \Illuminate\Support\Str::headline($role), \App\Models\User::ROLES))" />
-    <x-filter-input name="scope" label="Accounts" type="select" :options="['current' => 'Current accounts', 'deleted' => 'Deleted accounts', 'all' => 'All accounts']" />
+    <x-filter-input name="scope" label="Accounts" :all-option="false" value="current" type="select" :options="['current' => 'Current accounts', 'deleted' => 'Deleted accounts', 'all' => 'All accounts']" />
     <x-filter-input name="status" label="Status" type="select" :options="['' => 'All', 'active' => 'Active', 'inactive' => 'Inactive']" />
 </x-filter-panel>
 
@@ -54,21 +54,21 @@
                             @if($user->trashed())
                                 <span class="text-gray-500 text-xs font-medium">Deleted account</span>
                             @elseif($user->is_active)
-                                <span class="text-green-600 text-xs font-medium"><i class="fas fa-circle text-green-500 mr-1" style="font-size:6px"></i>Active</span>
+                                <span class="text-green-600 text-xs font-medium"><i aria-hidden="true" class="fas fa-circle text-green-500 mr-1" style="font-size:6px"></i>Active</span>
                             @else
-                                <span class="text-red-600 text-xs font-medium"><i class="fas fa-circle text-red-500 mr-1" style="font-size:6px"></i>Inactive</span>
+                                <span class="text-red-600 text-xs font-medium"><i aria-hidden="true" class="fas fa-circle text-red-500 mr-1" style="font-size:6px"></i>Inactive</span>
                             @endif
                         </td>
                         <td class="px-6 py-4 text-gray-500 text-xs" data-label="Joined">{{ $user->created_at->diffForHumans() }}</td>
                         <td class="px-6 py-4 text-right" data-label="Actions">
-                            <a href="{{ route('admin.users.show', $user) }}" class="text-blue-600 hover:text-blue-800 mr-2" title="View"><i class="fas fa-eye"></i></a>
+                            <a aria-label="View" href="{{ route('admin.users.show', $user) }}" class="text-blue-600 hover:text-blue-800 mr-2" title="View"><i aria-hidden="true" class="fas fa-eye"></i></a>
                             @if(auth()->user()->hasAdminPermission('users.manage') && ! $user->trashed())
-                                <a href="{{ route('admin.users.edit', $user) }}" class="text-yellow-600 hover:text-yellow-800 mr-2" title="Edit"><i class="fas fa-edit"></i></a>
+                                <a aria-label="Edit" href="{{ route('admin.users.edit', $user) }}" class="text-yellow-600 hover:text-yellow-800 mr-2" title="Edit"><i aria-hidden="true" class="fas fa-edit"></i></a>
                                 @unless($user->is(auth()->user()))
                                     <x-confirm-action :action="route('admin.users.destroy', $user)" method="DELETE" title="Delete User"
                                         :message="'Delete '.$user->name.'? This user will no longer be able to access their account.'"
                                         confirm-text="Delete" class="text-red-600 hover:text-red-800" aria-label="Delete user">
-                                        <i class="fas fa-trash"></i>
+                                        <i aria-hidden="true" class="fas fa-trash"></i>
                                     </x-confirm-action>
                                 @endunless
                             @endif

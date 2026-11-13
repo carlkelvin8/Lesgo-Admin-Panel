@@ -11,7 +11,7 @@
                 <p class="text-2xl font-bold text-gray-800">₱{{ number_format($report->total_revenue, 2) }}</p>
             </div>
             <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                <i class="fas fa-dollar-sign text-green-600"></i>
+                <i aria-hidden="true" class="fas fa-dollar-sign text-green-600"></i>
             </div>
         </div>
     </div>
@@ -23,7 +23,7 @@
                 <p class="text-2xl font-bold text-gray-800">{{ number_format($report->total_orders) }}</p>
             </div>
             <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                <i class="fas fa-shopping-cart text-blue-600"></i>
+                <i aria-hidden="true" class="fas fa-shopping-cart text-blue-600"></i>
             </div>
         </div>
     </div>
@@ -35,7 +35,7 @@
                 <p class="text-2xl font-bold text-gray-800">{{ number_format($report->new_users) }}</p>
             </div>
             <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                <i class="fas fa-user-plus text-purple-600"></i>
+                <i aria-hidden="true" class="fas fa-user-plus text-purple-600"></i>
             </div>
         </div>
     </div>
@@ -47,7 +47,7 @@
                 <p class="text-2xl font-bold text-gray-800">{{ number_format($report->new_drivers) }}</p>
             </div>
             <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-                <i class="fas fa-motorcycle text-orange-600"></i>
+                <i aria-hidden="true" class="fas fa-motorcycle text-orange-600"></i>
             </div>
         </div>
     </div>
@@ -140,7 +140,7 @@
 
 @if($report->meta && count($report->meta))
 <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
-    <h3 class="font-semibold text-gray-800 mb-4"><i class="fas fa-code mr-2 text-gray-400"></i>Additional Data</h3>
+    <h3 class="font-semibold text-gray-800 mb-4"><i aria-hidden="true" class="fas fa-code mr-2 text-gray-400"></i>Additional Data</h3>
     <div class="bg-gray-50 rounded-lg p-4">
         <pre class="text-sm text-gray-700 whitespace-pre-wrap">{{ json_encode($report->meta, JSON_PRETTY_PRINT) }}</pre>
     </div>
@@ -183,6 +183,6 @@
 @endif
 
 <div class="flex justify-end">
-    <a href="{{ route('admin.reports.index') }}" class="text-gray-500 hover:text-gray-700 text-sm"><i class="fas fa-arrow-left mr-1"></i> Back to Reports</a>
+    <a href="{{ route('admin.reports.index') }}" class="text-gray-500 hover:text-gray-700 text-sm"><i aria-hidden="true" class="fas fa-arrow-left mr-1"></i> Back to Reports</a>
 </div>
 @endsection

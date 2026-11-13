@@ -76,14 +76,14 @@
                 @method('PATCH')
                 <div class="flex flex-wrap gap-3 items-end">
                     <div class="flex-1 min-w-[200px]">
-                        <select name="status" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                        <select aria-label="Order status" name="status" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
                             @foreach(['pending','accepted','driver_arrived','in_progress','picked_up','completed','cancelled'] as $s)
                                 <option value="{{ $s }}" {{ $order->status === $s ? 'selected' : '' }}>{{ ucfirst(str_replace('_', ' ', $s)) }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div class="flex-1 min-w-[200px]">
-                        <input type="text" name="cancel_reason" placeholder="Cancel reason (if cancelling)" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                        <input type="text" aria-label="Cancellation reason" name="cancel_reason" placeholder="Cancel reason (if cancelling)" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
                     </div>
                     <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg text-sm font-medium">Update</button>
                 </div>
@@ -110,11 +110,11 @@
             <div class="space-y-4 text-sm">
                 @forelse($order->trackingEvents as $event)
                     <div class="flex gap-3 border-l-2 {{ $event->is_milestone ? 'border-blue-500' : 'border-gray-200' }} pl-4 py-1">
-                        <span class="{{ $event->is_milestone ? 'text-blue-600' : 'text-gray-400' }}"><i class="fas fa-circle text-[8px]"></i></span>
+                        <span class="{{ $event->is_milestone ? 'text-blue-600' : 'text-gray-400' }}"><i aria-hidden="true" class="fas fa-circle text-[8px]"></i></span>
                         <div class="flex-1">
                             <p class="font-medium">{{ $event->event_title }}</p>
                             @if($event->event_description)<p class="text-xs text-gray-500">{{ $event->event_description }}</p>@endif
-                            @if($event->location_address)<p class="text-xs text-gray-500"><i class="fas fa-location-dot mr-1"></i>{{ $event->location_address }}</p>@endif
+                            @if($event->location_address)<p class="text-xs text-gray-500"><i aria-hidden="true" class="fas fa-location-dot mr-1"></i>{{ $event->location_address }}</p>@endif
                         </div>
                         <div class="text-right text-xs text-gray-500"><p>{{ $event->event_time?->format('M d, Y H:i') }}</p><p>{{ $event->user->name ?? 'System' }}</p></div>
                     </div>

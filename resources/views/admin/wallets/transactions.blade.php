@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="mb-4">
-    <a href="{{ route('admin.wallets.show', $wallet) }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium"><i class="fas fa-arrow-left mr-1"></i> Back to Wallet</a>
+    <a href="{{ route('admin.wallets.show', $wallet) }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium"><i aria-hidden="true" class="fas fa-arrow-left mr-1"></i> Back to Wallet</a>
 </div>
 
 <div class="bg-white rounded-xl shadow-sm p-4 mb-6">

@@ -47,8 +47,8 @@
             </div>
             <form method="POST" action="{{ route('admin.tickets.messages.store', $ticket) }}">
                 @csrf
-                <label class="block text-sm font-medium mb-1">Reply or internal note</label>
-                <textarea name="message" rows="4" required class="w-full border border-gray-300 rounded-lg px-3 py-2 mb-3" placeholder="Write a response..."></textarea>
+                <label class="block text-sm font-medium mb-1" for="field-message">Reply or internal note</label>
+                <textarea id="field-message" name="message" rows="4" required class="w-full border border-gray-300 rounded-lg px-3 py-2 mb-3" placeholder="Write a response..."></textarea>
                 <div class="flex items-center justify-between gap-3">
                     <label class="text-sm"><input type="checkbox" name="is_internal" value="1"> Internal note (hidden from customer)</label>
                     <button class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm">Post Message</button>
@@ -64,24 +64,24 @@
                 @method('PATCH')
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <div>
-                        <label class="block text-xs text-gray-500 mb-1">Status</label>
-                        <select name="status" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                        <label class="block text-xs text-gray-500 mb-1" for="field-status">Status</label>
+                        <select id="field-status" name="status" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
                             @foreach(['open','in_progress','waiting_customer','waiting_internal','resolved','closed','cancelled'] as $s)
                                 <option value="{{ $s }}" {{ $ticket->status === $s ? 'selected' : '' }}>{{ ucfirst(str_replace('_', ' ', $s)) }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs text-gray-500 mb-1">Priority</label>
-                        <select name="priority" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                        <label class="block text-xs text-gray-500 mb-1" for="field-priority">Priority</label>
+                        <select id="field-priority" name="priority" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
                             @foreach(['low','medium','high','urgent'] as $p)
                                 <option value="{{ $p }}" {{ $ticket->priority === $p ? 'selected' : '' }}>{{ ucfirst($p) }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs text-gray-500 mb-1">Assign To</label>
-                        <select name="assigned_to" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                        <label class="block text-xs text-gray-500 mb-1" for="field-assigned_to">Assign To</label>
+                        <select id="field-assigned_to" name="assigned_to" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
                             <option value="">Unassigned</option>
                             @foreach($admins as $admin)
                                 <option value="{{ $admin->id }}" @selected($ticket->assigned_to === $admin->id)>{{ $admin->name }}</option>

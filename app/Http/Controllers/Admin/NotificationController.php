@@ -47,7 +47,7 @@ class NotificationController extends Controller
             $query->where('delivery_status', $request->delivery_status);
         }
 
-        $notifications = $query->latest()->paginate(20)->withQueryString();
+        $notifications = $query->latest()->orderByDesc('id')->paginate(20)->withQueryString();
 
         return view('admin.notifications.index', compact('notifications'));
     }

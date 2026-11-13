@@ -51,13 +51,13 @@
                         <td class="px-6 py-4 text-gray-500 text-xs font-mono">{{ $log->ip_address ?? '-' }}</td>
                         <td class="px-6 py-4 text-center">
                             @if($log->is_suspicious)
-                                <i class="fas fa-exclamation-triangle text-red-500" title="Suspicious"></i>
+                                <i aria-hidden="true" class="fas fa-exclamation-triangle text-red-500" title="Suspicious"></i>
                             @else
-                                <i class="fas fa-check-circle text-green-400" title="Normal"></i>
+                                <i aria-hidden="true" class="fas fa-check-circle text-green-400" title="Normal"></i>
                             @endif
                         </td>
                         <td class="px-6 py-4 text-right">
-                            <a href="{{ route('admin.audit-logs.show', $log) }}" class="text-blue-600 hover:text-blue-800" title="View Details"><i class="fas fa-eye"></i></a>
+                            <a aria-label="View Details" href="{{ route('admin.audit-logs.show', $log) }}" class="text-blue-600 hover:text-blue-800" title="View Details"><i aria-hidden="true" class="fas fa-eye"></i></a>
                         </td>
                     </tr>
                 @empty

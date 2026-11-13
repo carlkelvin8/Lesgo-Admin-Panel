@@ -9,6 +9,7 @@ use App\Models\Payment;
 use App\Traits\SearchEscaping;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class PaymentController extends Controller
@@ -47,9 +48,13 @@ class PaymentController extends Controller
             $query->where('created_at', '<=', $request->date_to.' 23:59:59');
         }
 
-        $payments = $query->latest()->paginate(20)->withQueryString();
+        $payments = $query->latest()->orderByDesc('id')->paginate(20)->withQueryString();
 
-        return view('admin.payments.index', compact('payments'));
+        $paymentMethods = collect(['cash', 'card', 'ewallet'])
+            ->merge(Payment::query()->whereNotNull('method')->distinct()->pluck('method'))
+            ->filter()->unique()->sort()->mapWithKeys(fn ($method) => [$method => Str::headline($method)])->all();
+
+        return view('admin.payments.index', compact('payments', 'paymentMethods'));
     }
 
     public function show(Payment $payment)

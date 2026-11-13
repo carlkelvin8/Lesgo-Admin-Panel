@@ -2,13 +2,16 @@
 
 namespace Tests\Feature;
 
+use App\Jobs\DeliverAdminNotification;
 use App\Models\AuditLog;
 use App\Models\DataRetentionPolicy;
 use App\Models\DocumentVerification;
 use App\Models\DriverProfile;
 use App\Models\FaqArticle;
 use App\Models\FaqCategory;
+use App\Models\IpWhitelist;
 use App\Models\MenuCategory;
+use App\Models\MenuItem;
 use App\Models\Notification;
 use App\Models\Order;
 use App\Models\Partner;
@@ -23,6 +26,7 @@ use App\Models\User;
 use App\Models\Wallet;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Queue;
 use PragmaRX\Google2FA\Google2FA;
 use Tests\TestCase;
 
@@ -119,6 +123,21 @@ class AdminFunctionalWorkflowsTest extends TestCase
         $this->assertDatabaseMissing('partners', ['id' => $partner->id]);
     }
 
+    public function test_blank_partner_delivery_fee_defaults_to_zero_on_create_and_update(): void
+    {
+        $user = User::factory()->create(['role' => 'partner']);
+        $this->post(route('admin.partners.store'), [
+            'user_id' => $user->id, 'name' => 'Blank Fee Kitchen', 'delivery_fee' => '',
+        ])->assertRedirect(route('admin.partners.index'));
+
+        $partner = Partner::firstOrFail();
+        $this->assertEquals(0, $partner->delivery_fee);
+        $this->put(route('admin.partners.update', $partner), [
+            'name' => 'Updated Blank Fee Kitchen', 'status' => 'approved', 'delivery_fee' => '',
+        ])->assertRedirect(route('admin.partners.show', $partner));
+        $this->assertEquals(0, $partner->fresh()->delivery_fee);
+    }
+
     public function test_ticket_assignment_rejects_a_customer(): void
     {
         $user = User::factory()->create(['role' => 'customer']);
@@ -179,6 +198,37 @@ class AdminFunctionalWorkflowsTest extends TestCase
         $this->assertDatabaseCount('menu_items', 0);
     }
 
+    public function test_partner_menu_categories_and_items_support_full_crud(): void
+    {
+        $partner = Partner::create(['name' => 'Menu CRUD Kitchen', 'slug' => 'menu-crud-kitchen']);
+
+        $this->post(route('admin.partners.menu.categories.store', $partner), [
+            'name' => 'Drinks', 'sort_order' => 1, 'is_active' => 1,
+        ])->assertSessionHas('success');
+        $category = MenuCategory::where('partner_id', $partner->id)->firstOrFail();
+
+        $this->put(route('admin.partners.menu.categories.update', [$partner, $category]), [
+            'name' => 'Cold Drinks', 'sort_order' => 2, 'is_active' => 1,
+        ])->assertSessionHas('success');
+        $this->assertSame('Cold Drinks', $category->fresh()->name);
+
+        $this->post(route('admin.partners.menu.items.store', $partner), [
+            'menu_category_id' => $category->id, 'name' => 'Iced Tea', 'price' => 55, 'is_available' => 1,
+        ])->assertSessionHas('success');
+        $item = MenuItem::where('partner_id', $partner->id)->firstOrFail();
+
+        $this->put(route('admin.partners.menu.items.update', [$partner, $item]), [
+            'menu_category_id' => $category->id, 'name' => 'Lemon Iced Tea', 'price' => 65, 'is_available' => 1,
+        ])->assertSessionHas('success');
+        $this->assertSame('Lemon Iced Tea', $item->fresh()->name);
+        $this->assertSame('65.00', $item->fresh()->price);
+
+        $this->delete(route('admin.partners.menu.items.destroy', [$partner, $item]))->assertSessionHas('success');
+        $this->assertDatabaseMissing('menu_items', ['id' => $item->id]);
+        $this->delete(route('admin.partners.menu.categories.destroy', [$partner, $category]))->assertSessionHas('success');
+        $this->assertDatabaseMissing('menu_categories', ['id' => $category->id]);
+    }
+
     public function test_refunds_reject_overpayment_and_full_refunds_cannot_be_repeated(): void
     {
         $payment = Payment::factory()->paid()->create(['amount' => 100]);
@@ -201,6 +251,31 @@ class AdminFunctionalWorkflowsTest extends TestCase
         $this->assertTrue($readAt->equalTo($notification->fresh()->read_at));
         $this->delete(route('admin.notifications.destroy', $notification))->assertRedirect(route('admin.notifications.index'));
         $this->assertDatabaseMissing('notifications', ['id' => $notification->id]);
+    }
+
+    public function test_failed_notifications_can_be_retried_and_delivered_notifications_cannot(): void
+    {
+        Queue::fake();
+        $notification = Notification::create([
+            'user_id' => auth()->id(), 'type' => 'test', 'title' => 'Retry test', 'body' => 'Retry delivery',
+            'channel' => 'email', 'delivery_status' => 'failed', 'delivery_attempts' => 2,
+            'delivered_via' => 'email', 'delivery_reference' => 'old-reference',
+            'failure_reason' => 'Previous failure', 'failed_at' => now(),
+        ]);
+
+        $this->post(route('admin.notifications.retry', $notification))->assertSessionHas('success');
+
+        $notification->refresh();
+        $this->assertSame('pending', $notification->delivery_status);
+        $this->assertNull($notification->delivered_via);
+        $this->assertNull($notification->delivery_reference);
+        $this->assertNull($notification->failure_reason);
+        $this->assertNull($notification->failed_at);
+        Queue::assertPushed(DeliverAdminNotification::class, fn ($job) => $job->notificationId === $notification->id);
+
+        $notification->update(['delivery_status' => 'delivered']);
+        $this->post(route('admin.notifications.retry', $notification))->assertSessionHasErrors('notification');
+        Queue::assertPushed(DeliverAdminNotification::class, 1);
     }
 
     public function test_finance_role_cannot_change_orders_or_create_services(): void
@@ -230,6 +305,23 @@ class AdminFunctionalWorkflowsTest extends TestCase
         $this->withSession(['2fa_pending_at' => now()->timestamp, '2fa_pending_user_id' => $admin->id])->post(route('admin.2fa.verify.post'), ['code' => $code])
             ->assertSessionHasErrors('code');
         $this->assertGuest();
+    }
+
+    public function test_admin_can_enable_two_factor_with_a_valid_authenticator_code(): void
+    {
+        $twoFactor = TwoFactorAuth::factory()->create(['user_id' => auth()->id(), 'is_enabled' => false]);
+        $secret = $twoFactor->generateTotpSecret();
+        $code = app(Google2FA::class)->getCurrentOtp($secret);
+
+        $this->post(route('admin.2fa.enable'), ['code' => $code])
+            ->assertOk()
+            ->assertViewIs('admin.profile.2fa-recovery')
+            ->assertViewHas('backupCodes', fn ($codes) => count($codes) === 10);
+
+        $this->assertTrue($twoFactor->fresh()->is_enabled);
+        $this->assertNotNull($twoFactor->fresh()->enabled_at);
+        $this->assertCount(10, $twoFactor->fresh()->backup_codes);
+        $this->assertNull($twoFactor->fresh()->recovery_codes);
     }
 
     public function test_two_factor_challenge_rejects_an_admin_deactivated_during_login(): void
@@ -277,6 +369,21 @@ class AdminFunctionalWorkflowsTest extends TestCase
         $this->assertSame(auth()->id(), $review->fresh()->moderated_by);
     }
 
+    public function test_review_moderation_form_uses_the_patch_route_method(): void
+    {
+        $order = Order::factory()->create();
+        $review = RatingReview::create([
+            'user_id' => $order->customer_id,
+            'order_id' => $order->id,
+            'overall_rating' => 4,
+        ]);
+
+        $this->get(route('admin.ratings.show', $review))
+            ->assertOk()
+            ->assertSee('action="'.e(route('admin.ratings.update', $review)).'"', false)
+            ->assertSee('<input type="hidden" name="_method" value="PATCH">', false);
+    }
+
     public function test_order_cancellation_requires_a_reason_and_creates_a_tracking_event(): void
     {
         $order = Order::factory()->create();
@@ -302,6 +409,43 @@ class AdminFunctionalWorkflowsTest extends TestCase
             ->delete(route('admin.profile.sessions.destroy', $currentSessionId))->assertSessionHasErrors('session');
     }
 
+    public function test_ip_whitelist_rule_can_be_created_toggled_and_deleted(): void
+    {
+        $this->post(route('admin.security-settings.ip-rules.store'), [
+            'list' => 'whitelist', 'ip_address' => '203.0.113.10', 'type' => 'permanent', 'description' => 'CRUD test rule',
+        ])->assertSessionHas('success');
+        $rule = IpWhitelist::where('ip_address', '203.0.113.10')->firstOrFail();
+        $this->assertTrue($rule->is_active);
+
+        $params = ['list' => 'whitelist', 'ruleId' => $rule->id];
+        $this->patch(route('admin.security-settings.ip-rules.toggle', $params))->assertSessionHas('success');
+        $this->assertFalse($rule->fresh()->is_active);
+        $this->patch(route('admin.security-settings.ip-rules.toggle', $params))->assertSessionHas('success');
+        $this->assertTrue($rule->fresh()->is_active);
+
+        $this->delete(route('admin.security-settings.ip-rules.destroy', $params))->assertSessionHas('success');
+        $this->assertDatabaseMissing('ip_whitelist', ['id' => $rule->id]);
+    }
+
+    public function test_admin_can_toggle_another_users_active_state_both_ways(): void
+    {
+        $user = User::factory()->create(['role' => 'customer', 'is_active' => true]);
+
+        $this->post(route('admin.users.toggle', $user))->assertSessionHas('success');
+        $this->assertFalse($user->fresh()->is_active);
+        $this->assertNotNull($user->fresh()->deactivated_at);
+
+        $this->post(route('admin.users.toggle', $user))->assertSessionHas('success');
+        $this->assertTrue($user->fresh()->is_active);
+        $this->assertNull($user->fresh()->deactivated_at);
+    }
+
+    public function test_admin_logout_invalidates_the_authenticated_session(): void
+    {
+        $this->post(route('admin.logout'))->assertRedirect(route('admin.login'));
+        $this->assertGuest();
+    }
+
     public function test_partner_staff_can_be_added_edited_and_removed_with_ownership_checks(): void
     {
         $partner = Partner::create(['name' => 'Staff Kitchen', 'slug' => 'staff-kitchen']);
@@ -316,6 +460,26 @@ class AdminFunctionalWorkflowsTest extends TestCase
         $this->assertSame([], $staff->fresh()->permissions);
         $this->delete(route('admin.partners.staff.destroy', [$partner, $staff]))->assertSessionHas('success');
         $this->assertDatabaseMissing('partner_staff', ['id' => $staff->id]);
+    }
+
+    public function test_partner_staff_page_renders_a_working_delete_form(): void
+    {
+        $partner = Partner::create(['name' => 'Staff UI Kitchen', 'slug' => 'staff-ui-kitchen']);
+        $staff = PartnerStaff::create([
+            'partner_id' => $partner->id,
+            'user_id' => User::factory()->create()->id,
+            'role' => 'cashier',
+            'permissions' => [],
+            'is_active' => true,
+            'invited_by' => auth()->id(),
+        ]);
+
+        $this->get(route('admin.partners.staff.index', $partner))
+            ->assertOk()
+            ->assertSee('action="'.e(route('admin.partners.staff.destroy', [$partner, $staff])).'"', false)
+            ->assertSee('<input type="hidden" name="_method" value="DELETE">', false)
+            ->assertSee('Remove staff member')
+            ->assertDontSee('document.body.appendChild(f)');
     }
 
     public function test_rate_limit_and_retention_policy_forms_validate_and_save_changes(): void

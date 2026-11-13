@@ -18,7 +18,7 @@
                 <p class="text-2xl font-bold text-gray-800">₱{{ number_format($summary->total_revenue ?? 0, 2) }}</p>
             </div>
             <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                <i class="fas fa-dollar-sign text-green-600"></i>
+                <i aria-hidden="true" class="fas fa-dollar-sign text-green-600"></i>
             </div>
         </div>
     </div>
@@ -30,7 +30,7 @@
                 <p class="text-2xl font-bold text-gray-800">{{ number_format($summary->total_transactions ?? 0) }}</p>
             </div>
             <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                <i class="fas fa-receipt text-blue-600"></i>
+                <i aria-hidden="true" class="fas fa-receipt text-blue-600"></i>
             </div>
         </div>
     </div>
@@ -42,7 +42,7 @@
                 <p class="text-2xl font-bold text-gray-800">₱{{ number_format($summary->avg_transaction ?? 0, 2) }}</p>
             </div>
             <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                <i class="fas fa-chart-line text-purple-600"></i>
+                <i aria-hidden="true" class="fas fa-chart-line text-purple-600"></i>
             </div>
         </div>
     </div>
@@ -54,7 +54,7 @@
                 <p class="text-2xl font-bold text-gray-800">{{ number_format($summary->days_with_data ?? 0) }}</p>
             </div>
             <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-                <i class="fas fa-calendar text-orange-600"></i>
+                <i aria-hidden="true" class="fas fa-calendar text-orange-600"></i>
             </div>
         </div>
     </div>
@@ -63,7 +63,7 @@
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
     <div class="bg-white rounded-xl shadow-sm overflow-hidden">
         <div class="px-6 py-4 border-b">
-            <h3 class="font-semibold text-gray-800"><i class="fas fa-chart-pie mr-2 text-gray-400"></i>Revenue by Type</h3>
+            <h3 class="font-semibold text-gray-800"><i aria-hidden="true" class="fas fa-chart-pie mr-2 text-gray-400"></i>Revenue by Type</h3>
         </div>
         <div class="overflow-x-auto">
             @forelse($byType as $type)
@@ -84,7 +84,7 @@
 
     <div class="bg-white rounded-xl shadow-sm overflow-hidden">
         <div class="px-6 py-4 border-b">
-            <h3 class="font-semibold text-gray-800"><i class="fas fa-store mr-2 text-gray-400"></i>Revenue by Source</h3>
+            <h3 class="font-semibold text-gray-800"><i aria-hidden="true" class="fas fa-store mr-2 text-gray-400"></i>Revenue by Source</h3>
         </div>
         <div class="overflow-x-auto">
             @forelse($bySource as $source)
@@ -107,7 +107,7 @@
 
 <div class="bg-white rounded-xl shadow-sm overflow-hidden">
     <div class="px-6 py-4 border-b">
-        <h3 class="font-semibold text-gray-800"><i class="fas fa-calendar-alt mr-2 text-gray-400"></i>Daily Revenue Breakdown</h3>
+        <h3 class="font-semibold text-gray-800"><i aria-hidden="true" class="fas fa-calendar-alt mr-2 text-gray-400"></i>Daily Revenue Breakdown</h3>
     </div>
     <div class="overflow-x-auto">
         <table class="responsive-table w-full text-sm">

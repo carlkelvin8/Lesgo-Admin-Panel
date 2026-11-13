@@ -11,39 +11,39 @@
 
             <div class="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                    <input type="text" name="name" value="{{ old('name', $service->name) }}" required class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1" for="field-name">Name</label>
+                    <input id="field-name" type="text" name="name" value="{{ old('name', $service->name) }}" required class="w-full border border-gray-300 rounded-lg px-3 py-2">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Code</label>
-                    <input type="text" name="code" value="{{ old('code', $service->code) }}" required class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1" for="field-code">Code</label>
+                    <input id="field-code" type="text" name="code" value="{{ old('code', $service->code) }}" required class="w-full border border-gray-300 rounded-lg px-3 py-2">
                 </div>
             </div>
 
             <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <textarea name="description" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2">{{ old('description', $service->description) }}</textarea>
+                <label class="block text-sm font-medium text-gray-700 mb-1" for="field-description">Description</label>
+                <textarea id="field-description" name="description" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2">{{ old('description', $service->description) }}</textarea>
             </div>
 
             <div class="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Base Fare (₱)</label>
-                    <input type="number" step="0.01" name="base_fare" value="{{ old('base_fare', $service->base_fare) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1" for="field-base_fare">Base Fare (₱)</label>
+                    <input id="field-base_fare" type="number" step="0.01" name="base_fare" value="{{ old('base_fare', $service->base_fare) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Per KM Rate (₱)</label>
-                    <input type="number" step="0.01" name="per_km_rate" value="{{ old('per_km_rate', $service->per_km_rate) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1" for="field-per_km_rate">Per KM Rate (₱)</label>
+                    <input id="field-per_km_rate" type="number" step="0.01" name="per_km_rate" value="{{ old('per_km_rate', $service->per_km_rate) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
                 </div>
             </div>
 
             <div class="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Per Minute Rate (₱)</label>
-                    <input type="number" step="0.01" name="per_minute_rate" value="{{ old('per_minute_rate', $service->per_minute_rate) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1" for="field-per_minute_rate">Per Minute Rate (₱)</label>
+                    <input id="field-per_minute_rate" type="number" step="0.01" name="per_minute_rate" value="{{ old('per_minute_rate', $service->per_minute_rate) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Minimum Fare (₱)</label>
-                    <input type="number" step="0.01" name="minimum_fare" value="{{ old('minimum_fare', $service->minimum_fare) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1" for="field-minimum_fare">Minimum Fare (₱)</label>
+                    <input id="field-minimum_fare" type="number" step="0.01" name="minimum_fare" value="{{ old('minimum_fare', $service->minimum_fare) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
                 </div>
             </div>
 

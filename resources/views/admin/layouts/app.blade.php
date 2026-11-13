@@ -10,26 +10,27 @@
     @stack('head')
 </head>
 <body class="admin-shell min-h-screen" x-data>
+    <a href="#admin-main" class="admin-skip-link">Skip to main content</a>
     <!-- Toast Notifications -->
-    <div x-data="toastManager()" x-init="init()" class="fixed top-4 right-4 z-[100] space-y-2 max-w-sm">
+    <div aria-live="polite" aria-atomic="false" x-data="toastManager()" x-init="init()" class="fixed top-4 right-4 z-[100] space-y-2 max-w-sm">
         <template x-for="toast in toasts" :key="toast.id">
             <div x-show="toast.visible" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-8" x-transition:enter-end="opacity-100 translate-x-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" :class="{'bg-green-50 border-green-300 text-green-800': toast.type==='success','bg-red-50 border-red-300 text-red-800': toast.type==='error','bg-blue-50 border-blue-300 text-blue-800': toast.type==='info'}" class="border rounded-lg px-4 py-3 shadow-lg flex items-center gap-3 text-sm">
-                <i :class="{'fas fa-check-circle text-green-500': toast.type==='success','fas fa-exclamation-circle text-red-500': toast.type==='error','fas fa-info-circle text-blue-500': toast.type==='info'}"></i>
+                <i aria-hidden="true" :class="{'fas fa-check-circle text-green-500': toast.type==='success','fas fa-exclamation-circle text-red-500': toast.type==='error','fas fa-info-circle text-blue-500': toast.type==='info'}"></i>
                 <span class="flex-1" x-text="toast.message"></span>
-                <button @click="removeToast(toast.id)" class="opacity-60 hover:opacity-100"><i class="fas fa-times text-xs"></i></button>
+                <button aria-label="Dismiss notification" @click="removeToast(toast.id)" class="opacity-60 hover:opacity-100"><i aria-hidden="true" class="fas fa-times text-xs"></i></button>
             </div>
         </template>
     </div>
 
     <!-- Global Confirm Modal -->
-    <div x-data="confirmModal()" x-show="open" x-cloak x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 z-[90] flex items-center justify-center p-4" @confirm-modal.window="show($event.detail.title, $event.detail.message, $event.detail)">
+    <div role="dialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-message" tabindex="-1" x-effect="syncAdminDialog($el, open)" @admin-dialog-close="cancel()" x-data="confirmModal()" x-show="open" x-cloak x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 z-[90] flex items-center justify-center p-4" @confirm-modal.window="show($event.detail.title, $event.detail.message, $event.detail)">
         <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="cancel()"></div>
         <div class="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-6" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
             <div class="flex items-center gap-3 mb-4">
-                <div class="w-10 h-10 rounded-full flex items-center justify-center" :class="iconBg"><i class="fas" :class="iconClass"></i></div>
-                <h3 class="text-lg font-semibold text-gray-800" x-text="title"></h3>
+                <div class="w-10 h-10 rounded-full flex items-center justify-center" :class="iconBg"><i aria-hidden="true" class="fas" :class="iconClass"></i></div>
+                <h3 id="confirm-title" class="text-lg font-semibold text-gray-800" x-text="title"></h3>
             </div>
-            <p class="text-gray-600 text-sm mb-6" x-text="message"></p>
+            <p id="confirm-message" class="text-gray-600 text-sm mb-6" x-text="message"></p>
             <div class="flex justify-end gap-3">
                 <button @click="cancel()" class="px-4 py-2 text-sm rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition" x-text="cancelText"></button>
                 <button @click="confirm()" class="px-4 py-2 text-sm rounded-lg text-white transition" :class="confirmClass" x-text="confirmText"></button>
@@ -37,9 +38,10 @@
         </div>
     </div>
 
-    <div class="flex min-h-screen">
+    <div id="admin-app" class="flex min-h-screen">
         <!-- Sidebar -->
         <aside id="admin-sidebar" class="admin-sidebar w-64 text-gray-300 flex flex-col fixed h-full" aria-label="Admin navigation">
+            <button id="admin-menu-close" type="button" class="self-end m-2 px-3 py-2 rounded-lg text-white md:hidden" aria-label="Close navigation">Close navigation</button>
             <div class="admin-brand border-b px-4 py-3">
                 <a href="{{ route('admin.dashboard') }}" class="block" aria-label="LesGo Admin dashboard">
                     <span class="lesgo-logo-crop lesgo-logo-sidebar" aria-hidden="true">
@@ -51,7 +53,7 @@
             <nav class="flex-1 overflow-y-auto py-4">
                 @if(auth()->user()->hasAdminPermission('dashboard.view'))
                     <a href="{{ route('admin.dashboard') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
-                        <i class="fas fa-tachometer-alt w-5"></i> Dashboard
+                        <i aria-hidden="true" class="fas fa-tachometer-alt w-5"></i> Dashboard
                     </a>
                 @endif
 
@@ -60,37 +62,37 @@
                 @endif
                 @if(auth()->user()->hasAdminPermission('roles.manage'))
                 <a href="{{ route('admin.roles.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
-                    <i class="fas fa-user-shield w-5"></i> Roles & Permissions
+                    <i aria-hidden="true" class="fas fa-user-shield w-5"></i> Roles & Permissions
                 </a>
                 @endif
                 @if(auth()->user()->hasAdminPermission('users.view'))
                 <a href="{{ route('admin.users.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
-                    <i class="fas fa-users w-5"></i> Users
+                    <i aria-hidden="true" class="fas fa-users w-5"></i> Users
                 </a>
                 @endif
                 @if(auth()->user()->hasAdminPermission('drivers.manage'))
                 <a href="{{ route('admin.drivers.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm {{ request()->routeIs('admin.drivers.*') ? 'active' : '' }}">
-                    <i class="fas fa-motorcycle w-5"></i> Drivers
+                    <i aria-hidden="true" class="fas fa-motorcycle w-5"></i> Drivers
                 </a>
                 @endif
                 @if(auth()->user()->hasAdminPermission('partners.manage'))
                 <a href="{{ route('admin.partners.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm {{ request()->routeIs('admin.partners.*') ? 'active' : '' }}">
-                    <i class="fas fa-store w-5"></i> Partners
+                    <i aria-hidden="true" class="fas fa-store w-5"></i> Partners
                 </a>
                 @endif
                 @if(auth()->user()->hasAdminPermission('orders.view'))
                 <a href="{{ route('admin.orders.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm {{ request()->routeIs('admin.orders.*') ? 'active' : '' }}">
-                    <i class="fas fa-shopping-cart w-5"></i> Orders
+                    <i aria-hidden="true" class="fas fa-shopping-cart w-5"></i> Orders
                 </a>
                 @endif
                 @if(auth()->user()->hasAdminPermission('services.manage'))
                 <a href="{{ route('admin.services.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm {{ request()->routeIs('admin.services.*') ? 'active' : '' }}">
-                    <i class="fas fa-concierge-bell w-5"></i> Services
+                    <i aria-hidden="true" class="fas fa-concierge-bell w-5"></i> Services
                 </a>
                 @endif
                 @if(auth()->user()->hasAdminPermission('ratings.manage'))
                 <a href="{{ route('admin.ratings.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm {{ request()->routeIs('admin.ratings.*') ? 'active' : '' }}">
-                    <i class="fas fa-star w-5"></i> Ratings & Reviews
+                    <i aria-hidden="true" class="fas fa-star w-5"></i> Ratings & Reviews
                 </a>
                 @endif
 
@@ -99,22 +101,22 @@
                 @endif
                 @if(auth()->user()->hasAdminPermission('payments.view'))
                 <a href="{{ route('admin.payments.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm {{ request()->routeIs('admin.payments.*') ? 'active' : '' }}">
-                    <i class="fas fa-credit-card w-5"></i> Payments
+                    <i aria-hidden="true" class="fas fa-credit-card w-5"></i> Payments
                 </a>
                 @endif
                 @if(auth()->user()->hasAdminPermission('wallets.view'))
                 <a href="{{ route('admin.wallets.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm {{ request()->routeIs('admin.wallets.*') ? 'active' : '' }}">
-                    <i class="fas fa-wallet w-5"></i> Wallets
+                    <i aria-hidden="true" class="fas fa-wallet w-5"></i> Wallets
                 </a>
                 @endif
                 @if(auth()->user()->hasAdminPermission('verifications.manage'))
                 <a href="{{ route('admin.document-verifications.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm {{ request()->routeIs('admin.document-verifications.*') ? 'active' : '' }}">
-                    <i class="fas fa-id-card w-5"></i> Verifications
+                    <i aria-hidden="true" class="fas fa-id-card w-5"></i> Verifications
                 </a>
                 @endif
                 @if(auth()->user()->hasAdminPermission('notifications.manage'))
                 <a href="{{ route('admin.notifications.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm {{ request()->routeIs('admin.notifications.*') ? 'active' : '' }}">
-                    <i class="fas fa-bell w-5"></i> Notifications
+                    <i aria-hidden="true" class="fas fa-bell w-5"></i> Notifications
                 </a>
                 @endif
 
@@ -123,12 +125,12 @@
                 @endif
                 @if(auth()->user()->hasAdminPermission('tickets.manage'))
                 <a href="{{ route('admin.tickets.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm {{ request()->routeIs('admin.tickets.*') ? 'active' : '' }}">
-                    <i class="fas fa-ticket-alt w-5"></i> Support Tickets
+                    <i aria-hidden="true" class="fas fa-ticket-alt w-5"></i> Support Tickets
                 </a>
                 @endif
                 @if(auth()->user()->hasAdminPermission('faq.manage'))
                 <a href="{{ route('admin.faq.articles') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm {{ request()->routeIs('admin.faq.*') ? 'active' : '' }}">
-                    <i class="fas fa-circle-question w-5"></i> FAQ Knowledge Base
+                    <i aria-hidden="true" class="fas fa-circle-question w-5"></i> FAQ Knowledge Base
                 </a>
                 @endif
 
@@ -137,38 +139,38 @@
                 @endif
                 @if(auth()->user()->hasAdminPermission('reports.view'))
                 <a href="{{ route('admin.analytics.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm {{ request()->routeIs('admin.analytics.*') ? 'active' : '' }}">
-                    <i class="fas fa-chart-line w-5"></i> Analytics
+                    <i aria-hidden="true" class="fas fa-chart-line w-5"></i> Analytics
                 </a>
                 <a href="{{ route('admin.reports.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
-                    <i class="fas fa-file-lines w-5"></i> Reports
+                    <i aria-hidden="true" class="fas fa-file-lines w-5"></i> Reports
                 </a>
                 @endif
                 @if(auth()->user()->hasAdminPermission('security.manage'))
                 <a href="{{ route('admin.security-settings.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm {{ request()->routeIs('admin.security-settings.*') ? 'active' : '' }}">
-                    <i class="fas fa-sliders w-5"></i> Security Center
+                    <i aria-hidden="true" class="fas fa-sliders w-5"></i> Security Center
                 </a>
                 <a href="{{ route('admin.security-events.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm {{ request()->routeIs('admin.security-events.*') ? 'active' : '' }}">
-                    <i class="fas fa-shield-halved w-5"></i> Security Events
+                    <i aria-hidden="true" class="fas fa-shield-halved w-5"></i> Security Events
                 </a>
                 @endif
                 @if(auth()->user()->hasAdminPermission('audit.view'))
                 <a href="{{ route('admin.audit-logs.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm {{ request()->routeIs('admin.audit-logs.*') ? 'active' : '' }}">
-                    <i class="fas fa-clock-rotate-left w-5"></i> Audit Logs
+                    <i aria-hidden="true" class="fas fa-clock-rotate-left w-5"></i> Audit Logs
                 </a>
                 @endif
                 @if(auth()->user()->hasAdminPermission('security.manage'))
                 <a href="{{ route('admin.system-health.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm {{ request()->routeIs('admin.system-health.*') ? 'active' : '' }}">
-                    <i class="fas fa-heart-pulse w-5"></i> System Health
+                    <i aria-hidden="true" class="fas fa-heart-pulse w-5"></i> System Health
                 </a>
                 @endif
                 <div class="sidebar-section-label px-4 py-2 text-xs uppercase tracking-wider mt-4">Business Records</div>
-                <a href="{{ route('admin.data.hub') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm {{ request()->routeIs('admin.data.*') ? 'active' : '' }}"><i class="fas fa-table-list w-5"></i> All Business Records</a>
+                <a href="{{ route('admin.data.hub') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm {{ request()->routeIs('admin.data.*') ? 'active' : '' }}"><i aria-hidden="true" class="fas fa-table-list w-5"></i> All Business Records</a>
                 @foreach(['realtime-notifications' => ['notifications.manage', 'Realtime Notifications', 'fa-bell'], 'partner-branches' => ['partners.manage', 'Partner Branches', 'fa-store'], 'driver-locations' => ['drivers.manage', 'Driver Locations', 'fa-location-dot'], 'registration-payments' => ['payments.view', 'Registration Payments', 'fa-receipt']] as $key => [$permission, $label, $icon])
                 @if(auth()->user()->hasAdminPermission($permission))
-                <a href="{{ route('admin.data.index', $key) }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm"><i class="fas {{ $icon }} w-5"></i> {{ $label }}</a>
+                <a href="{{ route('admin.data.index', $key) }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm"><i aria-hidden="true" class="fas {{ $icon }} w-5"></i> {{ $label }}</a>
                 @endif
                 @endforeach
-                @if(auth()->user()->hasAdminPermission('wallets.view'))<a href="{{ route('admin.wallets.top-ups.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm"><i class="fas fa-coins w-5"></i> Wallet Top-ups</a>@endif
+                @if(auth()->user()->hasAdminPermission('wallets.view'))<a href="{{ route('admin.wallets.top-ups.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm"><i aria-hidden="true" class="fas fa-coins w-5"></i> Wallet Top-ups</a>@endif
             </nav>
 
             <div class="admin-user-panel p-4 border-t">
@@ -182,7 +184,7 @@
                     </a>
                     <form action="{{ route('admin.logout') }}" method="POST">
                         @csrf
-                        <button type="submit" class="text-gray-400 hover:text-red-400" title="Logout"><i class="fas fa-sign-out-alt"></i></button>
+                        <button type="submit" class="text-gray-400 hover:text-red-400" title="Logout"><i aria-hidden="true" class="fas fa-sign-out-alt"></i></button>
                     </form>
                 </div>
             </div>
@@ -190,16 +192,16 @@
         <button id="admin-sidebar-overlay" type="button" class="admin-sidebar-overlay" aria-label="Close navigation"></button>
 
         <!-- Main Content -->
-        <main class="flex-1 ml-0 md:ml-64 min-w-0">
+        <main id="admin-main" tabindex="-1" class="flex-1 ml-0 md:ml-64 min-w-0">
             <!-- Top Bar -->
-            <header class="admin-topbar border-b px-4 sm:px-6 py-4 flex items-center justify-between sticky top-0 z-10">
-                <div class="flex min-w-0 items-center gap-3">
-                    <button id="admin-menu-toggle" type="button" class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-purple-100 bg-white text-purple-700 md:hidden" aria-controls="admin-sidebar" aria-expanded="false" aria-label="Open navigation"><i class="fas fa-bars"></i></button>
-                    <div>
+            <header class="admin-topbar border-b px-4 sm:px-6 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sticky top-0 z-10">
+                <div class="flex min-w-0 items-center gap-3 sm:flex-1">
+                    <button id="admin-menu-toggle" type="button" class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-purple-100 bg-white text-purple-700 md:hidden" aria-controls="admin-sidebar" aria-expanded="false" aria-label="Open navigation"><i aria-hidden="true" class="fas fa-bars"></i></button>
+                    <div class="min-w-0">
                         @if(isset($breadcrumbs))
                         <nav class="flex items-center gap-1 text-xs text-gray-400 mb-1">
                             @foreach($breadcrumbs as $i => $crumb)
-                                @if($i > 0) <i class="fas fa-chevron-right text-[8px]"></i> @endif
+                                @if($i > 0) <i aria-hidden="true" class="fas fa-chevron-right text-[8px]"></i> @endif
                                 @if(isset($crumb['url']))
                                     <a href="{{ $crumb['url'] }}" class="hover:text-blue-600 transition-colors">{{ $crumb['label'] }}</a>
                                 @else
@@ -208,14 +210,14 @@
                             @endforeach
                         </nav>
                         @endif
-                        <h2 class="truncate text-lg font-semibold text-gray-800">@yield('header', 'Dashboard')</h2>
+                        <h1 class="truncate text-lg font-semibold text-gray-800">@yield('header', 'Dashboard')</h1>
                     </div>
                 </div>
-                <div class="flex items-center gap-4">
+                <div class="flex flex-wrap items-center gap-3 sm:justify-end">
                     @if(auth()->user()->hasAdminPermission('notifications.manage'))
                     <div x-data="{ open: false }" class="relative">
                         <button @click="open = !open" class="text-gray-400 hover:text-gray-600 relative" title="Notifications">
-                            <i class="fas fa-bell"></i>
+                            <i aria-hidden="true" class="fas fa-bell"></i>
                             @php
                                 $unreadCount = \Illuminate\Support\Facades\Cache::remember('admin:notification_unread_count', 60, function () {
                                     return \App\Models\Notification::whereNull('read_at')->count();
@@ -225,7 +227,7 @@
                                 <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full h-4 min-w-[1rem] flex items-center justify-center px-1">{{ $unreadCount > 99 ? '99+' : $unreadCount }}</span>
                             @endif
                         </button>
-                        <div x-show="open" @click.away="open = false" x-cloak x-transition class="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border z-50">
+                        <div x-show="open" @click.away="open = false" x-cloak x-transition class="absolute left-0 sm:left-auto sm:right-0 mt-2 w-[min(20rem,calc(100vw-2rem))] bg-white rounded-xl shadow-lg border z-50">
                             <div class="p-3 border-b flex items-center justify-between">
                                 <h4 class="font-semibold text-sm text-gray-800">Notifications</h4>
                                 <a href="{{ route('admin.notifications.index') }}" class="text-xs text-blue-600 hover:text-blue-500">View all</a>
@@ -250,7 +252,7 @@
                     </div>
                     @endif
                     <button @click="darkMode = !darkMode; localStorage.setItem('darkMode', darkMode)" class="text-gray-400 hover:text-yellow-400 transition" title="Toggle dark mode">
-                        <i class="fas" :class="darkMode ? 'fa-sun' : 'fa-moon'"></i>
+                        <i aria-hidden="true" class="fas" :class="darkMode ? 'fa-sun' : 'fa-moon'"></i>
                     </button>
                     @yield('actions')
                 </div>
@@ -258,26 +260,26 @@
 
             <!-- Flash Messages -->
             @if(session('success'))
-                <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition class="mx-6 mt-4 bg-green-50 border border-green-300 text-green-800 px-4 py-3 rounded-lg flex items-center gap-2">
-                    <i class="fas fa-check-circle"></i> {{ session('success') }}
-                    <button @click="show = false" class="ml-auto"><i class="fas fa-times"></i></button>
+                <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" role="status" x-transition class="mx-6 mt-4 bg-green-50 border border-green-300 text-green-800 px-4 py-3 rounded-lg flex items-center gap-2">
+                    <i aria-hidden="true" class="fas fa-check-circle"></i> {{ session('success') }}
+                    <button aria-label="Dismiss message" @click="show = false" class="ml-auto"><i aria-hidden="true" class="fas fa-times"></i></button>
                 </div>
             @endif
             @if(session('error'))
-                <div x-data="{ show: true }" x-show="show" x-transition class="mx-6 mt-4 bg-red-50 border border-red-300 text-red-800 px-4 py-3 rounded-lg flex items-center gap-2">
-                    <i class="fas fa-exclamation-circle"></i> {{ session('error') }}
-                    <button @click="show = false" class="ml-auto"><i class="fas fa-times"></i></button>
+                <div x-data="{ show: true }" x-show="show" role="alert" x-transition class="mx-6 mt-4 bg-red-50 border border-red-300 text-red-800 px-4 py-3 rounded-lg flex items-center gap-2">
+                    <i aria-hidden="true" class="fas fa-exclamation-circle"></i> {{ session('error') }}
+                    <button aria-label="Dismiss message" @click="show = false" class="ml-auto"><i aria-hidden="true" class="fas fa-times"></i></button>
                 </div>
             @endif
             @if($errors->any())
-                <div x-data="{ show: true }" x-show="show" x-transition class="mx-6 mt-4 bg-red-50 border border-red-300 text-red-800 px-4 py-3 rounded-lg">
-                    <div class="flex items-center gap-2 mb-1"><i class="fas fa-exclamation-circle"></i> <strong>Please fix the following errors:</strong></div>
+                <div x-data="{ show: true }" x-show="show" role="alert" x-transition class="mx-6 mt-4 bg-red-50 border border-red-300 text-red-800 px-4 py-3 rounded-lg">
+                    <div class="flex items-center gap-2 mb-1"><i aria-hidden="true" class="fas fa-exclamation-circle"></i> <strong>Please fix the following errors:</strong></div>
                     <ul class="list-disc list-inside text-sm">
                         @foreach($errors->all() as $error)
                             <li>{{ $error }}</li>
                         @endforeach
                     </ul>
-                    <button @click="show = false" class="absolute top-3 right-3"><i class="fas fa-times"></i></button>
+                    <button aria-label="Dismiss message" @click="show = false" class="absolute top-3 right-3"><i aria-hidden="true" class="fas fa-times"></i></button>
                 </div>
             @endif
 
@@ -339,11 +341,31 @@
         }
         ((sidebar, toggle, overlay) => {
             const setOpen = (open) => {
+                const mobile = window.innerWidth < 768;
+                const wasOpen = sidebar?.classList.contains('is-open');
+                if (sidebar) {
+                    sidebar.inert = mobile && !open;
+                    if (mobile && open) { sidebar.setAttribute('role', 'dialog'); sidebar.setAttribute('aria-modal', 'true'); }
+                    else { sidebar.removeAttribute('role'); sidebar.removeAttribute('aria-modal'); }
+                }
+                const main = document.getElementById('admin-main');
+                if (main) main.inert = mobile && open;
                 sidebar?.classList.toggle('is-open', open);
                 overlay?.classList.toggle('is-open', open);
                 toggle?.setAttribute('aria-expanded', String(open));
-                document.body.classList.toggle('overflow-hidden', open && window.innerWidth < 768);
+                document.body.classList.toggle('overflow-hidden', open && mobile);
+                if (mobile && open) sidebar?.querySelector('button, a[href]')?.focus();
+                else if (mobile && wasOpen) toggle?.focus();
             };
+            setOpen(false);
+            document.getElementById('admin-menu-close')?.addEventListener('click', () => setOpen(false));
+            sidebar?.addEventListener('keydown', (event) => {
+                if (event.key !== 'Tab' || window.innerWidth >= 768 || !sidebar.classList.contains('is-open')) return;
+                const controls = [...sidebar.querySelectorAll('a[href], button')].filter(el => el.getClientRects().length);
+                const first = controls[0], last = controls[controls.length - 1];
+                if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+                else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+            });
             toggle?.addEventListener('click', () => setOpen(!sidebar.classList.contains('is-open')));
             overlay?.addEventListener('click', () => setOpen(false));
             sidebar?.querySelectorAll('nav a').forEach((link) => link.addEventListener('click', () => setOpen(false)));

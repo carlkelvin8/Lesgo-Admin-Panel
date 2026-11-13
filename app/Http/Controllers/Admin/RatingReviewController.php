@@ -34,7 +34,7 @@ class RatingReviewController extends Controller
             $query->where('overall_rating', '<=', $request->max_rating);
         }
 
-        $reviews = $query->latest()->paginate(20)->withQueryString();
+        $reviews = $query->latest()->orderByDesc('id')->paginate(20)->withQueryString();
 
         return view('admin.ratings.index', compact('reviews'));
     }

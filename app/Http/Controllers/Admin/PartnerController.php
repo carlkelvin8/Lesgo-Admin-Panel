@@ -35,7 +35,7 @@ class PartnerController extends Controller
             $query->where('is_open', $request->is_open === '1');
         }
 
-        $partners = $query->latest()->paginate(20)->withQueryString();
+        $partners = $query->latest()->orderByDesc('id')->paginate(20)->withQueryString();
 
         return view('admin.partners.index', compact('partners'));
     }
@@ -70,6 +70,7 @@ class PartnerController extends Controller
             'delivery_fee' => 'nullable|numeric|min:0',
         ]);
 
+        $validated['delivery_fee'] ??= 0;
         $validated['slug'] = Str::slug($validated['name']).'-'.Str::random(5);
         $validated['status'] = 'pending';
 
@@ -95,6 +96,10 @@ class PartnerController extends Controller
             'delivery_fee' => 'nullable|numeric|min:0',
             'description' => 'nullable|string',
         ]);
+
+        if (array_key_exists('delivery_fee', $validated)) {
+            $validated['delivery_fee'] ??= 0;
+        }
 
         $partner->update($validated);
 

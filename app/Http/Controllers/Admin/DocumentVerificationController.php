@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\DocumentVerification;
 use App\Traits\SearchEscaping;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class DocumentVerificationController extends Controller
 {
@@ -31,9 +32,13 @@ class DocumentVerificationController extends Controller
             $query->where('status', $request->status);
         }
 
-        $verifications = $query->latest('submitted_at')->paginate(20)->withQueryString();
+        $verifications = $query->latest('submitted_at')->orderByDesc('id')->paginate(20)->withQueryString();
 
-        return view('admin.document-verifications.index', compact('verifications'));
+        $documentTypes = collect(['drivers_license', 'national_id', 'passport', 'vehicle_registration', 'other'])
+            ->merge(DocumentVerification::query()->whereNotNull('document_type')->distinct()->pluck('document_type'))
+            ->filter()->unique()->sort()->mapWithKeys(fn ($type) => [$type => Str::headline($type)])->all();
+
+        return view('admin.document-verifications.index', compact('verifications', 'documentTypes'));
     }
 
     public function show(DocumentVerification $documentVerification)

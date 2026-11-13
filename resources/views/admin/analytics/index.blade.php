@@ -11,7 +11,7 @@
                 <p class="text-2xl font-bold text-gray-800">₱{{ number_format($stats['total_revenue'], 2) }}</p>
             </div>
             <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                <i class="fas fa-dollar-sign text-green-600"></i>
+                <i aria-hidden="true" class="fas fa-dollar-sign text-green-600"></i>
             </div>
         </div>
     </div>
@@ -23,7 +23,7 @@
                 <p class="text-2xl font-bold text-gray-800">{{ number_format($stats['total_orders']) }}</p>
             </div>
             <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                <i class="fas fa-shopping-cart text-blue-600"></i>
+                <i aria-hidden="true" class="fas fa-shopping-cart text-blue-600"></i>
             </div>
         </div>
     </div>
@@ -35,7 +35,7 @@
                 <p class="text-2xl font-bold text-gray-800">₱{{ number_format($stats['avg_daily_revenue'], 2) }}</p>
             </div>
             <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                <i class="fas fa-chart-line text-purple-600"></i>
+                <i aria-hidden="true" class="fas fa-chart-line text-purple-600"></i>
             </div>
         </div>
     </div>
@@ -47,7 +47,7 @@
                 <p class="text-2xl font-bold text-gray-800">{{ number_format($stats['total_new_users']) }}</p>
             </div>
             <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-                <i class="fas fa-user-plus text-orange-600"></i>
+                <i aria-hidden="true" class="fas fa-user-plus text-orange-600"></i>
             </div>
         </div>
     </div>
@@ -55,7 +55,7 @@
 
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
     <div class="bg-white rounded-xl shadow-sm p-6">
-        <h3 class="font-semibold text-gray-800 mb-4"><i class="fas fa-chart-pie mr-2 text-gray-400"></i>Revenue by Type (30d)</h3>
+        <h3 class="font-semibold text-gray-800 mb-4"><i aria-hidden="true" class="fas fa-chart-pie mr-2 text-gray-400"></i>Revenue by Type (30d)</h3>
         @forelse($revenueByType as $type)
             <div class="flex items-center justify-between py-3 border-b border-gray-50 last:border-0">
                 <div class="flex items-center gap-3">
@@ -70,7 +70,7 @@
                         $t = $typeIcons[$type->revenue_type] ?? ['icon' => 'fa-dollar-sign', 'color' => 'text-gray-600', 'bg' => 'bg-gray-100'];
                     @endphp
                     <div class="w-8 h-8 {{ $t['bg'] }} rounded-full flex items-center justify-center">
-                        <i class="fas {{ $t['icon'] }} {{ $t['color'] }}" style="font-size: 12px"></i>
+                        <i aria-hidden="true" class="fas {{ $t['icon'] }} {{ $t['color'] }}" style="font-size: 12px"></i>
                     </div>
                     <span class="text-sm text-gray-700 capitalize">{{ str_replace('_', ' ', $type->revenue_type) }}</span>
                 </div>
@@ -85,7 +85,7 @@
     </div>
 
     <div class="bg-white rounded-xl shadow-sm p-6">
-        <h3 class="font-semibold text-gray-800 mb-4"><i class="fas fa-chart-bar mr-2 text-gray-400"></i>Daily Revenue Trend (7d)</h3>
+        <h3 class="font-semibold text-gray-800 mb-4"><i aria-hidden="true" class="fas fa-chart-bar mr-2 text-gray-400"></i>Daily Revenue Trend (7d)</h3>
         @forelse($dailyRevenueTrend as $day)
             <div class="flex items-center justify-between py-3 border-b border-gray-50 last:border-0">
                 <div>
@@ -102,7 +102,7 @@
 
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
     <div class="bg-white rounded-xl shadow-sm p-6">
-        <h3 class="font-semibold text-gray-800 mb-4"><i class="fas fa-bolt mr-2 text-gray-400"></i>Today's Metrics</h3>
+        <h3 class="font-semibold text-gray-800 mb-4"><i aria-hidden="true" class="fas fa-bolt mr-2 text-gray-400"></i>Today's Metrics</h3>
         @forelse($todayMetrics as $type => $metrics)
             <div class="mb-4 last:mb-0">
                 <h4 class="text-xs uppercase tracking-wider text-gray-500 mb-2">{{ str_replace('_', ' ', $type) }}</h4>
@@ -119,7 +119,7 @@
     </div>
 
     <div class="bg-white rounded-xl shadow-sm p-6">
-        <h3 class="font-semibold text-gray-800 mb-4"><i class="fas fa-calendar-check mr-2 text-gray-400"></i>Recent Daily Reports</h3>
+        <h3 class="font-semibold text-gray-800 mb-4"><i aria-hidden="true" class="fas fa-calendar-check mr-2 text-gray-400"></i>Recent Daily Reports</h3>
         @forelse($recentReports as $report)
             <div class="flex items-center justify-between py-3 border-b border-gray-50 last:border-0">
                 <div>
@@ -139,7 +139,7 @@
 
 @if($eventStats->count())
 <div class="bg-white rounded-xl shadow-sm p-6">
-    <h3 class="font-semibold text-gray-800 mb-4"><i class="fas fa-mouse-pointer mr-2 text-gray-400"></i>Top Events (7d)</h3>
+    <h3 class="font-semibold text-gray-800 mb-4"><i aria-hidden="true" class="fas fa-mouse-pointer mr-2 text-gray-400"></i>Top Events (7d)</h3>
     <div class="overflow-x-auto">
         <table class="responsive-table w-full text-sm">
             <thead class="bg-gray-50 border-b">

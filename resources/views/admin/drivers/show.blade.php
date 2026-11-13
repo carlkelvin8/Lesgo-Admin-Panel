@@ -5,25 +5,13 @@
 @section('actions')
 <a href="{{ route('admin.data.index', ['dataset' => 'driver-locations', 'driver_id' => $driver->user_id]) }}" class="rounded-lg border px-4 py-2 text-sm">Location History</a>
 <a href="{{ route('admin.data.index', ['dataset' => 'driver-duty-sessions', 'driver_profile_id' => $driver->id]) }}" class="rounded-lg border px-4 py-2 text-sm">Duty Sessions</a>
-<a href="{{ route('admin.drivers.edit', $driver) }}" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm"><i class="fas fa-edit mr-1"></i> Edit</a>
-<button type="button" class="bg-{{ $driver->status === 'active' ? 'red' : 'green' }}-500 text-white px-4 py-2 rounded-lg text-sm"
-    x-data
-    @click="$dispatch('confirm-modal', {
-        title: '{{ $driver->status === 'active' ? 'Deactivate' : 'Activate' }} Driver',
-        message: 'Are you sure you want to {{ $driver->status === 'active' ? 'deactivate' : 'activate' }} this driver?',
-        confirmText: '{{ $driver->status === 'active' ? 'Deactivate' : 'Activate' }}',
-        confirmClass: '{{ $driver->status === 'active' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700' }}',
-        onConfirm: () => {
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '{{ route('admin.drivers.toggle', $driver) }}';
-            form.innerHTML = '<input type="hidden" name="_token" value="{{ csrf_token() }}">';
-            document.body.appendChild(form);
-            form.submit();
-        }
-    })">
-    <i class="fas fa-{{ $driver->status === 'active' ? 'ban' : 'check' }} mr-1"></i> {{ $driver->status === 'active' ? 'Deactivate' : 'Activate' }}
-</button>
+<a href="{{ route('admin.drivers.edit', $driver) }}" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm"><i aria-hidden="true" class="fas fa-edit mr-1"></i> Edit</a>
+<form method="POST" action="{{ route('admin.drivers.toggle', $driver) }}" onsubmit="return confirm('Are you sure you want to {{ $driver->status === 'active' ? 'deactivate' : 'activate' }} this driver?')">
+    @csrf
+    <button type="submit" class="bg-{{ $driver->status === 'active' ? 'red' : 'green' }}-500 text-white px-4 py-2 rounded-lg text-sm">
+        <i aria-hidden="true" class="fas fa-{{ $driver->status === 'active' ? 'ban' : 'check' }} mr-1"></i> {{ $driver->status === 'active' ? 'Deactivate' : 'Activate' }}
+    </button>
+</form>
 @endsection
 
 @section('content')
@@ -38,7 +26,7 @@
             <x-status-badge status="{{ $driver->status }}" />
         </div>
         <div class="space-y-3 text-sm">
-            <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Rating</span><span>{{ $driver->rating }} <i class="fas fa-star text-yellow-400 text-xs"></i></span></div>
+            <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Rating</span><span>{{ $driver->rating }} <i aria-hidden="true" class="fas fa-star text-yellow-400 text-xs"></i></span></div>
             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Total Trips</span><span>{{ $driver->total_trips }}</span></div>
             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">License #</span><span>{{ $driver->license_number ?? '-' }}</span></div>
             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">License Expiry</span><span>{{ $driver->license_expiry_date ? $driver->license_expiry_date->format('M d, Y') : '-' }}</span></div>

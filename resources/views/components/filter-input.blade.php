@@ -1,9 +1,12 @@
-@props(['name' => '', 'label' => '', 'type' => 'text', 'placeholder' => '', 'options' => [], 'value' => ''])
+@props(['name' => '', 'label' => '', 'type' => 'text', 'placeholder' => '', 'options' => [], 'value' => '', 'allOption' => true])
 
 <div @class(['flex-1 min-w-[200px]' => $type !== 'select'])>
     <label for="filter-{{ $name }}" class="block text-xs text-gray-500 mb-1">{{ $label }}</label>
     @if($type === 'select')
         <select id="filter-{{ $name }}" name="{{ $name }}" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none transition w-full">
+            @if($allOption && !array_key_exists('', $options))
+                <option value="" @selected(!request()->filled($name))>All</option>
+            @endif
             @foreach($options as $key => $option)
                 <option value="{{ $key }}" {{ request($name, $value) == $key ? 'selected' : '' }}>{{ $option }}</option>
             @endforeach

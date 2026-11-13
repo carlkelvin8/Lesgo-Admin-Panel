@@ -1,9 +1,11 @@
 import Alpine from 'alpinejs';
 import Chart from 'chart.js/auto';
 import dashboardCharts from './dashboard-charts';
+import './admin-accessibility';
 
 window.Alpine = Alpine;
 window.Chart = Chart;
+if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) Chart.defaults.animation = false;
 Alpine.data('dashboardCharts', dashboardCharts);
 
 Alpine.data('totpQr', (uri) => ({

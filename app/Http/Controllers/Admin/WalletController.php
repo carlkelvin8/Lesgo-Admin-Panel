@@ -25,7 +25,7 @@ class WalletController extends Controller
                 ->orWhereRaw($this->searchLikeSql('email'), ["%{$search}%"]));
         }
 
-        $wallets = $query->latest()->paginate(20)->withQueryString();
+        $wallets = $query->latest()->orderByDesc('id')->paginate(20)->withQueryString();
 
         return view('admin.wallets.index', compact('wallets'));
     }
@@ -62,7 +62,7 @@ class WalletController extends Controller
             $query->where('provider', $request->provider);
         }
 
-        $topUps = $query->latest()->paginate(20)->withQueryString();
+        $topUps = $query->latest()->orderByDesc('id')->paginate(20)->withQueryString();
 
         return view('admin.wallets.top-ups', compact('topUps'));
     }
@@ -182,7 +182,7 @@ class WalletController extends Controller
             $query->where('created_at', '<=', $request->date_to.' 23:59:59');
         }
 
-        $transactions = $query->latest()->paginate(20)->withQueryString();
+        $transactions = $query->latest()->orderByDesc('id')->paginate(20)->withQueryString();
 
         return view('admin.wallets.transactions', compact('wallet', 'transactions'));
     }

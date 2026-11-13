@@ -15,7 +15,7 @@ class FaqController extends Controller
 
     public function categoryIndex()
     {
-        $categories = FaqCategory::withCount('articles')->latest()->paginate(20);
+        $categories = FaqCategory::withCount('articles')->latest()->orderByDesc('id')->paginate(20);
 
         return view('admin.faq.categories', compact('categories'));
     }
@@ -90,7 +90,7 @@ class FaqController extends Controller
             $query->where('is_published', $request->is_published === '1');
         }
 
-        $articles = $query->latest()->paginate(20)->withQueryString();
+        $articles = $query->latest()->orderByDesc('id')->paginate(20)->withQueryString();
         $categories = FaqCategory::where('is_active', true)->orderBy('sort_order')->get();
 
         return view('admin.faq.articles', compact('articles', 'categories'));

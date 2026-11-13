@@ -16,7 +16,7 @@
         <div class="mb-5">
             <label for="email" class="mb-2 block text-sm font-semibold text-gray-700">Admin email address</label>
             <div class="auth-form-control @error('email') has-error @enderror">
-                <span class="auth-field-icon"><i class="fas fa-envelope"></i></span>
+                <span class="auth-field-icon"><i aria-hidden="true" class="fas fa-envelope"></i></span>
                 <input id="email" type="email" name="email" value="{{ old('email', $email) }}" required autocomplete="email" class="auth-input">
             </div>
             @error('email')<p class="mt-2 text-xs text-red-600" role="alert">{{ $message }}</p>@enderror
@@ -25,9 +25,9 @@
         <div class="mb-5">
             <label for="password" class="mb-2 block text-sm font-semibold text-gray-700">New password</label>
             <div class="auth-form-control @error('password') has-error @enderror">
-                <span class="auth-field-icon"><i class="fas fa-lock"></i></span>
+                <span class="auth-field-icon"><i aria-hidden="true" class="fas fa-lock"></i></span>
                 <input id="password" type="password" name="password" required autocomplete="new-password" class="auth-input auth-input-password" placeholder="Create a strong password">
-                <button type="button" class="auth-password-toggle" data-password-toggle="password" aria-label="Show new password"><i class="fas fa-eye"></i></button>
+                <button type="button" class="auth-password-toggle" data-password-toggle="password" aria-label="Show new password"><i aria-hidden="true" class="fas fa-eye"></i></button>
             </div>
             @error('password')<p class="mt-2 text-xs text-red-600" role="alert">{{ $message }}</p>@enderror
         </div>
@@ -35,14 +35,14 @@
         <div class="mb-7">
             <label for="password_confirmation" class="mb-2 block text-sm font-semibold text-gray-700">Confirm new password</label>
             <div class="auth-form-control">
-                <span class="auth-field-icon"><i class="fas fa-shield-halved"></i></span>
+                <span class="auth-field-icon"><i aria-hidden="true" class="fas fa-shield-halved"></i></span>
                 <input id="password_confirmation" type="password" name="password_confirmation" required autocomplete="new-password" class="auth-input auth-input-password" placeholder="Repeat your new password">
-                <button type="button" class="auth-password-toggle" data-password-toggle="password_confirmation" aria-label="Show confirmed password"><i class="fas fa-eye"></i></button>
+                <button type="button" class="auth-password-toggle" data-password-toggle="password_confirmation" aria-label="Show confirmed password"><i aria-hidden="true" class="fas fa-eye"></i></button>
             </div>
         </div>
 
         <button type="submit" class="brand-button flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 font-semibold">
-            <i class="fas fa-key"></i> Reset password
+            <i aria-hidden="true" class="fas fa-key"></i> Reset password
         </button>
     </form>
 @endsection

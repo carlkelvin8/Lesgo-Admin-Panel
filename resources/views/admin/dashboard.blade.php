@@ -30,7 +30,7 @@
         <x-card href="{{ route('admin.document-verifications.index') }}" border hover class="cursor-pointer">
             <div class="flex items-center gap-4">
                 <div class="flex-shrink-0 w-12 h-12 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
-                    <i class="fas fa-shield-halved w-6 h-6 text-yellow-600 dark:text-yellow-400"></i>
+                    <i aria-hidden="true" class="fas fa-shield-halved w-6 h-6 text-yellow-600 dark:text-yellow-400"></i>
                 </div>
                 <div>
                     <h3 class="font-semibold text-gray-900 dark:text-white">Pending Verifications</h3>
@@ -44,7 +44,7 @@
         <x-card href="{{ route('admin.ratings.index') }}" border hover class="cursor-pointer">
             <div class="flex items-center gap-4">
                 <div class="flex-shrink-0 w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                    <i class="fas fa-star w-6 h-6 text-blue-600 dark:text-blue-400"></i>
+                    <i aria-hidden="true" class="fas fa-star w-6 h-6 text-blue-600 dark:text-blue-400"></i>
                 </div>
                 <div>
                     <h3 class="font-semibold text-gray-900 dark:text-white">Reviews Needing Moderation</h3>
@@ -58,7 +58,7 @@
         <x-card href="{{ route('admin.security-events.index') }}" border hover class="cursor-pointer">
             <div class="flex items-center gap-4">
                 <div class="flex-shrink-0 w-12 h-12 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                    <i class="fas fa-exclamation-triangle w-6 h-6 text-red-600 dark:text-red-400"></i>
+                    <i aria-hidden="true" class="fas fa-exclamation-triangle w-6 h-6 text-red-600 dark:text-red-400"></i>
                 </div>
                 <div>
                     <h3 class="font-semibold text-gray-900 dark:text-white">Open Security Events</h3>
@@ -72,10 +72,10 @@
     <div x-data="dashboardCharts()">
         <div class="flex items-center justify-between mb-4">
             <div></div>
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2">
                 <span class="text-sm text-gray-500">Period:</span>
                 @foreach([7 => '7D', 14 => '14D', 30 => '30D', 60 => '60D', 90 => '90D'] as $d => $label)
-                    <button @click="updateDays({{ $d }})" class="px-3 py-1 text-xs rounded-lg {{ ($days ?? 7) == $d ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }} transition">{{ $label }}</button>
+                    <button @click="updateDays({{ $d }})" aria-pressed="{{ ($days ?? 7) == $d ? 'true' : 'false' }}" class="px-3 py-1 text-xs rounded-lg {{ ($days ?? 7) == $d ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }} transition">{{ $label }}</button>
                 @endforeach
             </div>
         </div>
@@ -85,8 +85,13 @@
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Revenue Overview</h3>
                 </x-slot>
                 <div class="h-64">
-                    <canvas x-ref="revenueChart" x-init="initRevenue()"></canvas>
+                    <canvas role="img" aria-label="Revenue overview chart. A data table follows." x-ref="revenueChart" x-init="initRevenue()"></canvas>
                 </div>
+                <details class="mt-3"><summary class="cursor-pointer text-sm font-medium text-purple-700">View revenue overview data</summary>
+                    <table class="mt-2 w-full text-sm"><caption class="sr-only">Revenue overview data</caption><thead><tr><th scope="col" class="text-left">Date</th><th scope="col" class="text-right">Revenue (PHP)</th></tr></thead><tbody>
+                    @forelse($dailyRevenue as $point)<tr><td>{{ $point->date }}</td><td class="text-right">{{ number_format($point->total, 2) }}</td></tr>@empty<tr><td colspan="2">No data for this period.</td></tr>@endforelse
+                    </tbody></table>
+                </details>
             </x-card>
 
             <x-card>
@@ -94,8 +99,13 @@
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Order Status Distribution</h3>
                 </x-slot>
                 <div class="h-64 flex items-center justify-center">
-                    <canvas x-ref="orderStatusChart" x-init="initOrderStatus()"></canvas>
+                    <canvas role="img" aria-label="Order status distribution chart. A data table follows." x-ref="orderStatusChart" x-init="initOrderStatus()"></canvas>
                 </div>
+                <details class="mt-3"><summary class="cursor-pointer text-sm font-medium text-purple-700">View order status distribution data</summary>
+                    <table class="mt-2 w-full text-sm"><caption class="sr-only">Order status distribution data</caption><thead><tr><th scope="col" class="text-left">Status</th><th scope="col" class="text-right">Count</th></tr></thead><tbody>
+                    @forelse($orderStatusDistribution as $point)<tr><td>{{ $point->status }}</td><td class="text-right">{{ $point->total }}</td></tr>@empty<tr><td colspan="2">No data for this period.</td></tr>@endforelse
+                    </tbody></table>
+                </details>
             </x-card>
         </div>
 
@@ -105,8 +115,13 @@
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">User Growth</h3>
                 </x-slot>
                 <div class="h-64">
-                    <canvas x-ref="userGrowthChart" x-init="initUserGrowth()"></canvas>
+                    <canvas role="img" aria-label="User growth chart. A data table follows." x-ref="userGrowthChart" x-init="initUserGrowth()"></canvas>
                 </div>
+                <details class="mt-3"><summary class="cursor-pointer text-sm font-medium text-purple-700">View user growth data</summary>
+                    <table class="mt-2 w-full text-sm"><caption class="sr-only">User growth data</caption><thead><tr><th scope="col" class="text-left">Date</th><th scope="col" class="text-right">Count</th></tr></thead><tbody>
+                    @forelse($dailyUsers as $point)<tr><td>{{ $point->date }}</td><td class="text-right">{{ $point->total }}</td></tr>@empty<tr><td colspan="2">No data for this period.</td></tr>@endforelse
+                    </tbody></table>
+                </details>
             </x-card>
         </div>
     </div>

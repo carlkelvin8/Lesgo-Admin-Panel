@@ -3,7 +3,7 @@
 @section('header', 'Orders Management')
 
 @section('actions')
-<a href="{{ route('admin.orders.export', request()->query()) }}" class="border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg text-sm"><i class="fas fa-download mr-1"></i> Export CSV</a>
+<a href="{{ route('admin.orders.export', request()->query()) }}" class="border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg text-sm"><i aria-hidden="true" class="fas fa-download mr-1"></i> Export CSV</a>
 @endsection
 
 @section('content')
@@ -47,7 +47,7 @@
                         <td class="px-6 py-4">₱{{ number_format($order->actual_fare ?? $order->estimated_fare, 2) }}</td>
                         <td class="px-6 py-4 text-gray-500 text-xs">{{ $order->created_at->format('M d, Y H:i') }}</td>
                         <td class="px-6 py-4 text-right">
-                            <a href="{{ route('admin.orders.show', $order) }}" class="text-blue-600 hover:text-blue-800"><i class="fas fa-eye"></i></a>
+                            <a aria-label="View details" href="{{ route('admin.orders.show', $order) }}" class="text-blue-600 hover:text-blue-800"><i aria-hidden="true" class="fas fa-eye"></i></a>
                         </td>
                     </tr>
                 @empty

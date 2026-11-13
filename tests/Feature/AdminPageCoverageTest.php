@@ -150,6 +150,30 @@ class AdminPageCoverageTest extends TestCase
             if ($response->getStatusCode() !== 200) {
                 $failures[] = $name.': '.$response->getStatusCode().' '.($response->exception?->getMessage() ?? '');
             }
+            $this->assertStringNotContainsString('document.body.appendChild', $response->getContent(), $name.' leaked confirmation script into rendered page text.');
+            $this->assertStringNotContainsString('form.submit();', $response->getContent(), $name.' leaked form submission script into rendered page text.');
+            if ($response->getStatusCode() === 200 && ! str_ends_with($name, '.export')) {
+                $document = new \DOMDocument;
+                @$document->loadHTML($response->getContent());
+                $xpath = new \DOMXPath($document);
+                $ids = [];
+                foreach ($xpath->query('//*[@id]') as $element) {
+                    $id = $element->getAttribute('id');
+                    $this->assertArrayNotHasKey($id, $ids, $name.' contains duplicate ID '.$id);
+                    $ids[$id] = true;
+                }
+                foreach ($xpath->query('//main//input[not(@type="hidden") and not(@type="submit")] | //main//select | //main//textarea') as $control) {
+                    $labelled = $control->hasAttribute('aria-label') || $control->hasAttribute('aria-labelledby') || $xpath->query('ancestor::label', $control)->length > 0;
+                    if (! $labelled && $control->hasAttribute('id')) {
+                        foreach ($xpath->query('//label[@for]') as $label) {
+                            if ($label->getAttribute('for') === $control->getAttribute('id')) {
+                                $labelled = true;
+                            }
+                        }
+                    }
+                    $this->assertTrue($labelled, $name.' has an unlabelled control: '.$control->getAttribute('name'));
+                }
+            }
             if (str_ends_with($name, '.export')) {
                 $response->assertStreamed();
                 $this->assertNotEmpty($response->streamedContent());

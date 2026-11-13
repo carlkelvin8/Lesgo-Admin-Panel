@@ -4,7 +4,7 @@
 
 @section('actions')
 @if(auth()->user()->hasAdminPermission('users.manage') && ! $user->trashed())
-<a href="{{ route('admin.users.edit', $user) }}" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm"><i class="fas fa-edit mr-1"></i> Edit</a>
+<a href="{{ route('admin.users.edit', $user) }}" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm"><i aria-hidden="true" class="fas fa-edit mr-1"></i> Edit</a>
 @unless($user->is(auth()->user()))
 <x-confirm-action :action="route('admin.users.toggle', $user)"
     :title="($user->is_active ? 'Deactivate' : 'Activate').' User'"
@@ -12,12 +12,12 @@
     :confirm-text="$user->is_active ? 'Deactivate' : 'Activate'"
     :confirm-class="$user->is_active ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'"
     :class="($user->is_active ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600').' text-white px-4 py-2 rounded-lg text-sm'">
-    <i class="fas fa-{{ $user->is_active ? 'ban' : 'check' }} mr-1"></i> {{ $user->is_active ? 'Deactivate' : 'Activate' }}
+    <i aria-hidden="true" class="fas fa-{{ $user->is_active ? 'ban' : 'check' }} mr-1"></i> {{ $user->is_active ? 'Deactivate' : 'Activate' }}
 </x-confirm-action>
 <x-confirm-action :action="route('admin.users.destroy', $user)" method="DELETE" title="Delete User"
     :message="'Delete '.$user->name.'? This user will no longer be able to access their account.'"
     confirm-text="Delete" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm">
-    <i class="fas fa-trash mr-1"></i> Delete
+    <i aria-hidden="true" class="fas fa-trash mr-1"></i> Delete
 </x-confirm-action>
 @endunless
 @endif
@@ -61,10 +61,10 @@
         <!-- Driver Profile -->
         @if($user->driverProfile)
         <div class="bg-white rounded-xl shadow-sm p-6">
-            <h3 class="font-semibold text-gray-800 mb-4"><i class="fas fa-motorcycle mr-2 text-green-600"></i>Driver Profile</h3>
+            <h3 class="font-semibold text-gray-800 mb-4"><i aria-hidden="true" class="fas fa-motorcycle mr-2 text-green-600"></i>Driver Profile</h3>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                 <div><p class="text-gray-500">Status</p><p class="font-medium">{{ ucfirst($user->driverProfile->status) }}</p></div>
-                <div><p class="text-gray-500">Rating</p><p class="font-medium">{{ $user->driverProfile->rating }} <i class="fas fa-star text-yellow-400 text-xs"></i></p></div>
+                <div><p class="text-gray-500">Rating</p><p class="font-medium">{{ $user->driverProfile->rating }} <i aria-hidden="true" class="fas fa-star text-yellow-400 text-xs"></i></p></div>
                 <div><p class="text-gray-500">Total Trips</p><p class="font-medium">{{ $user->driverProfile->total_trips }}</p></div>
                 <div><p class="text-gray-500">License</p><p class="font-medium">{{ $user->driverProfile->license_number ?? '-' }}</p></div>
             </div>
@@ -74,7 +74,7 @@
         <!-- Recent Orders -->
         <div class="bg-white rounded-xl shadow-sm overflow-hidden">
             <div class="px-6 py-4 border-b">
-                <h3 class="font-semibold text-gray-800"><i class="fas fa-shopping-cart mr-2 text-blue-600"></i>Recent Orders</h3>
+                <h3 class="font-semibold text-gray-800"><i aria-hidden="true" class="fas fa-shopping-cart mr-2 text-blue-600"></i>Recent Orders</h3>
             </div>
             <div class="overflow-x-auto">
                 <table class="responsive-table w-full text-sm">

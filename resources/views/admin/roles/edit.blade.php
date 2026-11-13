@@ -4,7 +4,7 @@
 
 @section('actions')
 <a href="{{ route('admin.roles.index') }}" class="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900">
-    <i class="fas fa-arrow-left"></i> Back to roles
+    <i aria-hidden="true" class="fas fa-arrow-left"></i> Back to roles
 </a>
 @endsection
 
@@ -19,7 +19,7 @@
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div class="flex items-center gap-4">
                 <span class="inline-flex h-12 w-12 items-center justify-center rounded-xl {{ $adminRole->is_protected ? 'bg-purple-100 text-purple-700' : 'bg-blue-50 text-blue-700' }}">
-                    <i class="fas {{ $adminRole->is_protected ? 'fa-crown' : 'fa-user-shield' }}"></i>
+                    <i aria-hidden="true" class="fas {{ $adminRole->is_protected ? 'fa-crown' : 'fa-user-shield' }}"></i>
                 </span>
                 <div>
                     <div class="flex flex-wrap items-center gap-2">
@@ -34,7 +34,7 @@
 
             @unless($adminRole->is_protected)
                 <button id="toggle-all-permissions" type="button" class="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                    <i class="fas fa-check-double"></i> Select all
+                    <i aria-hidden="true" class="fas fa-check-double"></i> Select all
                 </button>
             @endunless
         </div>
@@ -42,7 +42,7 @@
 
     @if($adminRole->is_protected)
         <div class="flex items-start gap-3 rounded-xl border border-purple-200 bg-purple-50 px-4 py-3 text-sm text-purple-800">
-            <i class="fas fa-lock mt-0.5"></i>
+            <i aria-hidden="true" class="fas fa-lock mt-0.5"></i>
             <p>Super Admin always has full access. Its permissions are protected to make sure the system cannot lose its highest-level administrator.</p>
         </div>
     @endif
@@ -95,7 +95,7 @@
             <div class="sticky bottom-4 flex flex-col-reverse gap-3 rounded-xl border border-gray-200 bg-white/95 p-4 shadow-lg backdrop-blur sm:flex-row sm:items-center sm:justify-end">
                 <a href="{{ route('admin.roles.index') }}" class="inline-flex items-center justify-center rounded-lg px-5 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50">Cancel</a>
                 <button type="submit" class="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700">
-                    <i class="fas fa-save"></i> Save permissions
+                    <i aria-hidden="true" class="fas fa-save"></i> Save permissions
                 </button>
             </div>
         @endunless
@@ -113,8 +113,8 @@
         const refreshButton = () => {
             const allSelected = checkboxes.length > 0 && checkboxes.every((checkbox) => checkbox.checked);
             button.innerHTML = allSelected
-                ? '<i class="fas fa-xmark"></i> Clear optional'
-                : '<i class="fas fa-check-double"></i> Select all';
+                ? '<i aria-hidden="true" class="fas fa-xmark"></i> Clear optional'
+                : '<i aria-hidden="true" class="fas fa-check-double"></i> Select all';
         };
 
         button?.addEventListener('click', () => {

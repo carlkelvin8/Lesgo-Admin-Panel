@@ -3,7 +3,7 @@
 @section('header', 'Wallet Details')
 
 @section('actions')
-<a href="{{ route('admin.wallets.top-ups.index', ['search' => $wallet->user->email ?? '']) }}" class="rounded-lg border bg-white px-4 py-2 text-sm text-gray-700"><i class="fas fa-arrow-up-right-dots mr-1"></i> Review Top-ups</a>
+<a href="{{ route('admin.wallets.top-ups.index', ['search' => $wallet->user->email ?? '']) }}" class="rounded-lg border bg-white px-4 py-2 text-sm text-gray-700"><i aria-hidden="true" class="fas fa-arrow-up-right-dots mr-1"></i> Review Top-ups</a>
 @endsection
 
 @section('content')
@@ -24,7 +24,7 @@
             <p class="text-3xl font-bold text-green-600">₱{{ number_format($wallet->balance, 2) }}</p>
             <p class="text-xs text-gray-500 mt-1">{{ $wallet->currency }} &middot; Last updated {{ $wallet->updated_at->format('M d, Y H:i') }}</p>
             <div class="mt-4">
-                <a href="{{ route('admin.wallets.transactions', $wallet) }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium"><i class="fas fa-list mr-1"></i> View All Transactions</a>
+                <a href="{{ route('admin.wallets.transactions', $wallet) }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium"><i aria-hidden="true" class="fas fa-list mr-1"></i> View All Transactions</a>
             </div>
         </div>
     </div>
@@ -36,10 +36,10 @@
     <p class="mt-1 text-sm text-gray-500">Every credit or debit creates an immutable ledger record with your administrator ID.</p>
     <form method="POST" action="{{ route('admin.wallets.adjust', $wallet) }}" class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-5" onsubmit="return confirm('Record this wallet adjustment?')">
         @csrf
-        <div><label class="mb-1 block text-xs font-medium">Type</label><select name="type" required class="w-full rounded-lg border px-3 py-2"><option value="credit">Credit</option><option value="debit">Debit</option></select></div>
-        <div><label class="mb-1 block text-xs font-medium">Amount</label><input type="number" name="amount" min="0.01" step="0.01" required class="w-full rounded-lg border px-3 py-2"></div>
-        <div><label class="mb-1 block text-xs font-medium">Reference</label><input name="reference" maxlength="255" class="w-full rounded-lg border px-3 py-2" placeholder="Optional ticket/reference"></div>
-        <div class="lg:col-span-2"><label class="mb-1 block text-xs font-medium">Reason</label><div class="flex gap-2"><input name="reason" minlength="10" maxlength="1000" required class="min-w-0 flex-1 rounded-lg border px-3 py-2" placeholder="Required operational reason"><button class="rounded-lg bg-purple-700 px-4 py-2 text-sm font-semibold text-white">Record</button></div></div>
+        <div><label class="mb-1 block text-xs font-medium" for="field-type">Type</label><select id="field-type" name="type" required class="w-full rounded-lg border px-3 py-2"><option value="credit">Credit</option><option value="debit">Debit</option></select></div>
+        <div><label class="mb-1 block text-xs font-medium" for="field-amount">Amount</label><input id="field-amount" type="number" name="amount" min="0.01" step="0.01" required class="w-full rounded-lg border px-3 py-2"></div>
+        <div><label class="mb-1 block text-xs font-medium" for="field-reference">Reference</label><input id="field-reference" name="reference" maxlength="255" class="w-full rounded-lg border px-3 py-2" placeholder="Optional ticket/reference"></div>
+        <div class="lg:col-span-2"><label class="mb-1 block text-xs font-medium" for="wallet-reason">Reason</label><div class="flex gap-2"><input id="wallet-reason" name="reason" minlength="10" maxlength="1000" required class="min-w-0 flex-1 rounded-lg border px-3 py-2" placeholder="Required operational reason"><button class="rounded-lg bg-purple-700 px-4 py-2 text-sm font-semibold text-white">Record</button></div></div>
     </form>
 </div>
 @endif

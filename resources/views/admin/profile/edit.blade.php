@@ -11,9 +11,9 @@
         </div>
         <form method="POST" action="{{ route('admin.profile.update') }}" class="space-y-4">
             @csrf @method('PUT')
-            <div><label class="mb-1 block text-sm font-medium">Name</label><input name="name" value="{{ old('name', $admin->name) }}" required class="w-full rounded-lg border px-3 py-2"></div>
-            <div><label class="mb-1 block text-sm font-medium">Email</label><input type="email" name="email" value="{{ old('email', $admin->email) }}" required class="w-full rounded-lg border px-3 py-2"></div>
-            <div><label class="mb-1 block text-sm font-medium">Phone number</label><input name="phone_number" value="{{ old('phone_number', $admin->phone_number) }}" class="w-full rounded-lg border px-3 py-2"></div>
+            <div><label class="mb-1 block text-sm font-medium" for="field-name">Name</label><input id="field-name" name="name" value="{{ old('name', $admin->name) }}" required class="w-full rounded-lg border px-3 py-2"></div>
+            <div><label class="mb-1 block text-sm font-medium" for="field-email">Email</label><input id="field-email" type="email" name="email" value="{{ old('email', $admin->email) }}" required class="w-full rounded-lg border px-3 py-2"></div>
+            <div><label class="mb-1 block text-sm font-medium" for="field-phone_number">Phone number</label><input id="field-phone_number" name="phone_number" value="{{ old('phone_number', $admin->phone_number) }}" class="w-full rounded-lg border px-3 py-2"></div>
             <button class="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white">Save profile</button>
         </form>
     </section>
@@ -23,9 +23,9 @@
         <p class="mt-1 text-sm text-gray-500">Changing your password signs out your other admin sessions.</p>
         <form method="POST" action="{{ route('admin.profile.password') }}" class="mt-5 space-y-4">
             @csrf @method('PUT')
-            <div><label class="mb-1 block text-sm font-medium">Current password</label><input type="password" name="current_password" required autocomplete="current-password" class="w-full rounded-lg border px-3 py-2"></div>
-            <div><label class="mb-1 block text-sm font-medium">New password</label><input type="password" name="password" required autocomplete="new-password" class="w-full rounded-lg border px-3 py-2"><p class="mt-1 text-xs text-gray-500">At least 10 characters with uppercase, lowercase, and a number.</p></div>
-            <div><label class="mb-1 block text-sm font-medium">Confirm new password</label><input type="password" name="password_confirmation" required autocomplete="new-password" class="w-full rounded-lg border px-3 py-2"></div>
+            <div><label class="mb-1 block text-sm font-medium" for="field-current_password">Current password</label><input id="field-current_password" type="password" name="current_password" required autocomplete="current-password" class="w-full rounded-lg border px-3 py-2"></div>
+            <div><label class="mb-1 block text-sm font-medium" for="field-password">New password</label><input id="field-password" type="password" name="password" required autocomplete="new-password" class="w-full rounded-lg border px-3 py-2"><p class="mt-1 text-xs text-gray-500">At least 10 characters with uppercase, lowercase, and a number.</p></div>
+            <div><label class="mb-1 block text-sm font-medium" for="field-password_confirmation">Confirm new password</label><input id="field-password_confirmation" type="password" name="password_confirmation" required autocomplete="new-password" class="w-full rounded-lg border px-3 py-2"></div>
             <button class="rounded-lg bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white">Update password</button>
         </form>
     </section>
@@ -33,10 +33,10 @@
 
 <!-- Two-Factor Authentication -->
 <section class="mt-6 rounded-xl bg-white p-6 shadow-sm">
-    <div class="flex items-center justify-between">
+    <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
             <h3 class="font-semibold text-gray-900 flex items-center gap-2">
-                <i class="fas fa-shield-halved text-purple-600"></i> Two-Factor Authentication
+                <i aria-hidden="true" class="fas fa-shield-halved text-purple-600"></i> Two-Factor Authentication
             </h3>
             <p class="mt-1 text-sm text-gray-500">Add an extra layer of security to your admin account with TOTP-based two-factor authentication.</p>
         </div>
@@ -45,11 +45,11 @@
         @endphp
         @if($isEnabled)
             <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                <i class="fas fa-check-circle"></i> Enabled
+                <i aria-hidden="true" class="fas fa-check-circle"></i> Enabled
             </span>
         @else
             <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                <i class="fas fa-circle-xmark"></i> Disabled
+                <i aria-hidden="true" class="fas fa-circle-xmark"></i> Disabled
             </span>
         @endif
     </div>
@@ -62,16 +62,16 @@
                 </label>
                 <div class="flex flex-wrap items-center gap-3">
                 <button type="submit" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm transition">
-                    <i class="fas fa-rotate mr-1"></i> Regenerate Codes
+                    <i aria-hidden="true" class="fas fa-rotate mr-1"></i> Regenerate Codes
                 </button>
                 <button type="submit" formaction="{{ route('admin.2fa.disable') }}" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm transition">
-                    <i class="fas fa-ban mr-1"></i> Disable 2FA
+                    <i aria-hidden="true" class="fas fa-ban mr-1"></i> Disable 2FA
                 </button>
                 </div>
             </form>
         @else
             <a href="{{ route('admin.2fa.setup') }}" class="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition">
-                <i class="fas fa-shield-halved"></i> Set Up Two-Factor Authentication
+                <i aria-hidden="true" class="fas fa-shield-halved"></i> Set Up Two-Factor Authentication
             </a>
         @endif
     </div>

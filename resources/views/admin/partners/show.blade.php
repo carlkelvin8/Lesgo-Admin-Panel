@@ -4,9 +4,9 @@
 
 @section('actions')
 <a href="{{ route('admin.data.index', ['dataset' => 'partner-branches', 'partner_id' => $partner->id]) }}" class="rounded-lg border px-4 py-2 text-sm">Branches</a>
-<a href="{{ route('admin.partners.menu.index', $partner) }}" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm"><i class="fas fa-utensils mr-1"></i> Menu</a>
-<a href="{{ route('admin.partners.staff.index', $partner) }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"><i class="fas fa-user-group mr-1"></i> Staff</a>
-<a href="{{ route('admin.partners.edit', $partner) }}" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm"><i class="fas fa-edit mr-1"></i> Edit</a>
+<a href="{{ route('admin.partners.menu.index', $partner) }}" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm"><i aria-hidden="true" class="fas fa-utensils mr-1"></i> Menu</a>
+<a href="{{ route('admin.partners.staff.index', $partner) }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"><i aria-hidden="true" class="fas fa-user-group mr-1"></i> Staff</a>
+<a href="{{ route('admin.partners.edit', $partner) }}" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm"><i aria-hidden="true" class="fas fa-edit mr-1"></i> Edit</a>
 @endsection
 
 @section('content')
@@ -28,7 +28,7 @@
             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Status</span>
                 <x-status-badge :status="$partner->status" />
             </div>
-            <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Rating</span><span>{{ $partner->rating }} <i class="fas fa-star text-yellow-400 text-xs"></i> ({{ $partner->total_reviews }} reviews)</span></div>
+            <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Rating</span><span>{{ $partner->rating }} <i aria-hidden="true" class="fas fa-star text-yellow-400 text-xs"></i> ({{ $partner->total_reviews }} reviews)</span></div>
             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Delivery Fee</span><span>₱{{ number_format($partner->delivery_fee, 2) }}</span></div>
             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Min Order</span><span>₱{{ number_format($partner->min_order_amount, 2) }}</span></div>
             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Est. Delivery</span><span>{{ $partner->estimated_delivery_minutes }} mins</span></div>

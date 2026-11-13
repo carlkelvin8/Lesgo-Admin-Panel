@@ -28,7 +28,7 @@ class ServiceController extends Controller
             $query->where('is_active', $request->is_active === '1');
         }
 
-        $services = $query->latest()->paginate(20)->withQueryString();
+        $services = $query->latest()->orderByDesc('id')->paginate(20)->withQueryString();
 
         return view('admin.services.index', compact('services'));
     }

@@ -38,7 +38,7 @@ class UserController extends Controller
             $query->where('is_active', $request->status === 'active');
         }
 
-        $users = $query->latest()->paginate(20)->withQueryString();
+        $users = $query->latest()->orderByDesc('id')->paginate(20)->withQueryString();
 
         return view('admin.users.index', compact('users'));
     }

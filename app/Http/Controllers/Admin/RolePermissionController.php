@@ -40,7 +40,7 @@ class RolePermissionController extends Controller
 
         return view('admin.roles.edit', [
             'adminRole' => $adminRole,
-            'permissionGroups' => collect(config('admin.permissions', []))->groupBy('group'),
+            'permissionGroups' => collect(config('admin.permissions', []))->groupBy('group', true),
             'requiredPermissions' => config('admin.required_permissions', []),
             'roleUserCount' => $roleUserCount,
         ]);
