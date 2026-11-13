@@ -4,9 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AdminRole;
+use App\Models\AuditLog;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Log;
 
 class RolePermissionController extends Controller
 {
@@ -15,12 +16,12 @@ class RolePermissionController extends Controller
         $roles = $this->orderedRoles();
         $roleCounts = User::query()
             ->where('role', 'admin')
-            ->get(['admin_role'])
+            ->get(['role', 'admin_role'])
             ->countBy(fn (User $user) => $user->effectiveAdminRole());
 
         $adminsByRole = User::query()
             ->where('role', 'admin')
-            ->get(['id', 'name', 'email', 'admin_role', 'is_active'])
+            ->get(['id', 'name', 'email', 'role', 'admin_role', 'is_active'])
             ->groupBy(fn (User $user) => $user->effectiveAdminRole());
 
         return view('admin.roles.index', [
@@ -35,7 +36,7 @@ class RolePermissionController extends Controller
     {
         abort_if($adminRole->is_protected, 403, 'Protected role cannot be repaired.');
         $defaults = config("admin.roles.{$adminRole->getKey()}.permissions");
-        if (!is_array($defaults) || empty($defaults)) {
+        if (! is_array($defaults) || empty($defaults)) {
             return back()->with('error', 'No default permissions defined for '.$adminRole->label.'.');
         }
         // Keep the same filtering/sorting as update so count is reliable
@@ -44,8 +45,9 @@ class RolePermissionController extends Controller
         $old = $adminRole->permissions ?? [];
         $adminRole->forceFill(['permissions' => $permissions])->save();
         $adminRole->refresh();
-        \Illuminate\Support\Facades\Log::info('Role permissions repaired to defaults', ['role' => $adminRole->getKey(), 'old' => $old, 'new' => $permissions, 'by' => auth()->id()]);
-        return back()->with('success', "{$adminRole->label} repaired to defaults (".count($permissions)." permissions). You can now edit again.");
+        Log::info('Role permissions repaired to defaults', ['role' => $adminRole->getKey(), 'old' => $old, 'new' => $permissions, 'by' => auth()->id()]);
+
+        return back()->with('success', "{$adminRole->label} repaired to defaults (".count($permissions).' permissions). You can now edit again.');
     }
 
     public function edit(AdminRole $adminRole)
@@ -87,11 +89,12 @@ class RolePermissionController extends Controller
         if ($selectAll) {
             $raw = $permissionKeys; // Select all was clicked — trust it even if JS failed to check boxes
         }
-        \Illuminate\Support\Facades\Log::info('Role permissions raw input', ['role' => $adminRole->getKey(), 'raw_count' => count($raw), 'raw' => $raw, 'select_all' => $selectAll, 'all_input' => $request->all()]);
+        Log::info('Role permissions raw input', ['role' => $adminRole->getKey(), 'raw_count' => count($raw), 'raw' => $raw, 'select_all' => $selectAll, 'all_input' => $request->all()]);
         // Never report success if the form submitted keys the server cannot save.
         $invalid = array_diff($raw, $permissionKeys);
-        if (!empty($invalid)) {
-            \Illuminate\Support\Facades\Log::warning('Role permissions: invalid keys rejected', ['role' => $adminRole->getKey(), 'invalid' => $invalid]);
+        if (! empty($invalid)) {
+            Log::warning('Role permissions: invalid keys rejected', ['role' => $adminRole->getKey(), 'invalid' => $invalid]);
+
             return back()->withErrors(['permissions' => 'Some selected permissions were invalid. Reload the page and try again.'])->withInput();
         }
         $selected = array_values(array_intersect($permissionKeys, $raw));
@@ -103,15 +106,16 @@ class RolePermissionController extends Controller
         ));
         // Only block if truly nothing was sent (all unchecked) and old had many — prevents accidental clear
         $old = $adminRole->permissions ?? [];
-        if (empty($raw) && count($old) > 1 && !$selectAll) {
-            \Illuminate\Support\Facades\Log::warning('Prevented accidental clear to required-only', ['role' => $adminRole->getKey(), 'old' => $old, 'raw' => $raw, 'permissions' => $permissions]);
+        if (empty($raw) && count($old) > 1 && ! $selectAll) {
+            Log::warning('Prevented accidental clear to required-only', ['role' => $adminRole->getKey(), 'old' => $old, 'raw' => $raw, 'permissions' => $permissions]);
+
             return back()->withErrors(['permissions' => 'No permissions were sent. Please tick at least one or use Select all & Save.'])->withInput();
         }
 
         // Use Eloquent so the `array` cast correctly handles Postgres json/jsonb
         $adminRole->forceFill(['permissions' => $permissions])->save();
         $adminRole->refresh();
-        \Illuminate\Support\Facades\Log::info('Role permissions updated', [
+        Log::info('Role permissions updated', [
             'role' => $adminRole->getKey(),
             'old' => $old,
             'new' => $permissions,
@@ -121,12 +125,12 @@ class RolePermissionController extends Controller
 
         // Audit log — correct columns for this app's audit_logs table
         try {
-            \App\Models\AuditLog::create([
+            AuditLog::create([
                 'user_id' => $request->user()?->id,
                 'event_type' => 'admin_action',
                 'event_category' => 'role_permissions',
                 'action' => 'update_role_permissions',
-                'description' => "Updated {$adminRole->label} permissions from ".count($old)." to ".count($permissions),
+                'description' => "Updated {$adminRole->label} permissions from ".count($old).' to '.count($permissions),
                 'resource_type' => 'AdminRole',
                 'resource_id' => null,
                 'old_values' => ['permissions' => $old, 'role' => $adminRole->getKey()],
@@ -136,12 +140,12 @@ class RolePermissionController extends Controller
                 'occurred_at' => now(),
             ]);
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning('Role permissions audit failed', ['error' => $e->getMessage()]);
+            Log::warning('Role permissions audit failed', ['error' => $e->getMessage()]);
         }
 
         return redirect()
             ->route('admin.roles.index')
-            ->with('success', "{$adminRole->label} permissions updated successfully. (" . count($permissions) . " permissions)");
+            ->with('success', "{$adminRole->label} permissions updated successfully. (".count($permissions).' permissions)');
     }
 
     private function orderedRoles()

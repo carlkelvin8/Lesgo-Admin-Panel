@@ -57,6 +57,7 @@ class Order extends Model
             'completed_at' => 'datetime',
             'cancelled_at' => 'datetime',
             'meta' => 'array',
+            'fare_breakdown' => 'array',
             'proof_images' => 'array',
             'proof_uploaded_at' => 'datetime',
         ];
@@ -80,6 +81,33 @@ class Order extends Model
     public function service()
     {
         return $this->belongsTo(Service::class);
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(PartnerBranch::class, 'partner_branch_id');
+    }
+
+    public function proofImageUrls(): array
+    {
+        $images = $this->proof_images ?? [];
+        if (! is_array($images)) {
+            return [];
+        }
+        $urls = [];
+        foreach ($images as $image) {
+            $url = is_array($image) ? ($image['url'] ?? $image['image_url'] ?? $image['path'] ?? null) : $image;
+            if (! is_string($url)) {
+                continue;
+            }
+            if (filter_var($url, FILTER_VALIDATE_URL) && in_array(strtolower(parse_url($url, PHP_URL_SCHEME) ?? ''), ['https', 'http'], true)) {
+                $urls[] = $url;
+            } elseif (preg_match('#^(?:/?storage/)?[a-zA-Z0-9_/-]+\\.(?:png|jpe?g|webp|gif)$#i', $url) && ! str_contains($url, '..')) {
+                $urls[] = asset('storage/'.preg_replace('#^/?storage/#', '', $url));
+            }
+        }
+
+        return array_values(array_unique($urls));
     }
 
     public function payments()

@@ -4,16 +4,20 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
+use App\Models\RegistrationFeePayment;
 use App\Models\User;
 use App\Services\CascadeEntityDeletionService;
+use App\Services\RegistrationFeeService;
 use App\Traits\SearchEscaping;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class PartnerController extends Controller
 {
     use SearchEscaping;
+
     public function index(Request $request)
     {
         $query = Partner::with('user');
@@ -22,9 +26,9 @@ class PartnerController extends Controller
             $search = $this->escapeLikePattern($request->search);
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('category', 'like', "%{$search}%")
-                  ->orWhereHas('user', fn ($uq) => $uq->where('name', 'like', "%{$search}%")
-                      ->orWhere('email', 'like', "%{$search}%"));
+                    ->orWhere('category', 'like', "%{$search}%")
+                    ->orWhereHas('user', fn ($uq) => $uq->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%"));
             });
         }
 
@@ -36,7 +40,7 @@ class PartnerController extends Controller
             $query->where('is_open', $request->is_open === '1');
         }
 
-        $partners = $query->latest()->paginate(20)->withQueryString();
+        $partners = $query->latest()->orderByDesc('id')->paginate(20)->withQueryString();
 
         return view('admin.partners.index', compact('partners'));
     }
@@ -53,6 +57,7 @@ class PartnerController extends Controller
     public function create()
     {
         $users = User::whereIn('role', ['partner', 'partner_admin'])->whereDoesntHave('partner')->get();
+
         return view('admin.partners.create', compact('users'));
     }
 
@@ -83,7 +88,7 @@ class PartnerController extends Controller
 
         $validated['delivery_fee'] = $validated['delivery_fee'] ?? 0;
 
-        $validated['slug'] = Str::limit(Str::slug($validated['name']), 250, '') . '-' . Str::random(5);
+        $validated['slug'] = Str::limit(Str::slug($validated['name']), 250, '').'-'.Str::random(5);
         $validated['status'] = 'pending';
 
         Partner::create($validated);
@@ -119,17 +124,37 @@ class PartnerController extends Controller
         ]);
 
         if ($request->hasFile('logo')) {
-            if ($partner->logo_url) try { Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->delete($partner->logo_url); } catch (\Throwable $e) {}
+            if ($partner->logo_url) {
+                try {
+                    Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->delete($partner->logo_url);
+                } catch (\Throwable $e) {
+                }
+            }
             $validated['logo_url'] = $request->file('logo')->store('partners/logos', config('filesystems.default') === 's3' ? 's3' : 'public');
         } elseif ($request->boolean('remove_logo')) {
-            if ($partner->logo_url) try { Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->delete($partner->logo_url); } catch (\Throwable $e) {}
+            if ($partner->logo_url) {
+                try {
+                    Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->delete($partner->logo_url);
+                } catch (\Throwable $e) {
+                }
+            }
             $validated['logo_url'] = null;
         }
         if ($request->hasFile('cover_image')) {
-            if ($partner->cover_image_url) try { Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->delete($partner->cover_image_url); } catch (\Throwable $e) {}
+            if ($partner->cover_image_url) {
+                try {
+                    Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->delete($partner->cover_image_url);
+                } catch (\Throwable $e) {
+                }
+            }
             $validated['cover_image_url'] = $request->file('cover_image')->store('partners/covers', config('filesystems.default') === 's3' ? 's3' : 'public');
         } elseif ($request->boolean('remove_cover')) {
-            if ($partner->cover_image_url) try { Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->delete($partner->cover_image_url); } catch (\Throwable $e) {}
+            if ($partner->cover_image_url) {
+                try {
+                    Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->delete($partner->cover_image_url);
+                } catch (\Throwable $e) {
+                }
+            }
             $validated['cover_image_url'] = null;
         }
         unset($validated['logo'], $validated['cover_image'], $validated['remove_logo'], $validated['remove_cover']);
@@ -139,22 +164,23 @@ class PartnerController extends Controller
         // Enforce fee + approval for merchant activation (approved ≈ active)
         $requestedStatus = $validated['status'];
         if ($requestedStatus === 'approved' || $requestedStatus === 'active') {
-            $user = $partner->user ?? \App\Models\User::find($partner->user_id);
+            $user = $partner->user ?? User::find($partner->user_id);
             if ($user) {
-                $fee = \App\Models\RegistrationFeePayment::where('user_id', $user->id)->where('account_type', 'merchant')->first();
+                $fee = RegistrationFeePayment::where('user_id', $user->id)->where('account_type', 'merchant')->first();
                 if ($fee) {
-                    if (!$fee->isFeeSatisfied()) {
+                    if (! $fee->isFeeSatisfied()) {
                         return redirect()->route('admin.partners.show', $partner)
                             ->with('error', 'Cannot activate merchant: registration fee must be paid through PayMongo or explicitly waived.');
                     }
                     // Sync approval via service to ensure is_active logic
                     try {
-                        \App\Services\RegistrationFeeService::approveApplication($fee, $request->user());
+                        RegistrationFeeService::approveApplication($fee, $request->user());
                         $partner->refresh();
-                    } catch (\Throwable $e) {}
+                    } catch (\Throwable $e) {
+                    }
                     // Re-check is_active after service sync
                     $fee = $fee->fresh();
-                    if (!$fee->is_active) {
+                    if (! $fee->is_active) {
                         return redirect()->route('admin.partners.show', $partner)
                             ->with('error', 'Merchant remains restricted – fee paid but activation pending. Check payment status.');
                     }
@@ -165,11 +191,11 @@ class PartnerController extends Controller
         }
 
         if ($requestedStatus === 'rejected') {
-            $user = $partner->user ?? \App\Models\User::find($partner->user_id);
+            $user = $partner->user ?? User::find($partner->user_id);
             if ($user) {
-                $fee = \App\Models\RegistrationFeePayment::where('user_id', $user->id)->where('account_type', 'merchant')->first();
+                $fee = RegistrationFeePayment::where('user_id', $user->id)->where('account_type', 'merchant')->first();
                 if ($fee) {
-                    \App\Services\RegistrationFeeService::rejectApplication($fee, $request->user(), 'Rejected by admin');
+                    RegistrationFeeService::rejectApplication($fee, $request->user(), 'Rejected by admin');
                 }
             }
         }
@@ -182,9 +208,10 @@ class PartnerController extends Controller
 
     public function toggleStatus(Partner $partner)
     {
-        $partner->update(['is_open' => !$partner->is_open]);
+        $partner->update(['is_open' => ! $partner->is_open]);
 
         $status = $partner->is_open ? 'opened' : 'closed';
+
         return redirect()->back()->with('success', "Partner {$status} successfully.");
     }
 
@@ -204,7 +231,7 @@ class PartnerController extends Controller
         ]);
 
         $partners = Partner::query()->whereIn('id', $validated['ids'])->get();
-        \Illuminate\Support\Facades\DB::transaction(function () use ($partners, $deletionService) {
+        DB::transaction(function () use ($partners, $deletionService) {
             foreach ($partners as $partner) {
                 $deletionService->deletePartner($partner);
             }

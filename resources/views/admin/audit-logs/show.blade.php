@@ -13,7 +13,7 @@
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <!-- Event Info -->
     <div class="bg-white rounded-xl shadow-sm p-6">
-        <h3 class="font-semibold text-gray-800 mb-4"><i class="fas fa-clipboard-list mr-2 text-blue-600"></i>Event Information</h3>
+        <h3 class="font-semibold text-gray-800 mb-4"><i aria-hidden="true" class="fas fa-clipboard-list mr-2 text-blue-600"></i>Event Information</h3>
         <div class="space-y-3 text-sm">
             <div class="flex justify-between border-b pb-2">
                 <span class="text-gray-500">Timestamp</span>
@@ -40,7 +40,7 @@
 
     <!-- Resource & Network Info -->
     <div class="bg-white rounded-xl shadow-sm p-6">
-        <h3 class="font-semibold text-gray-800 mb-4"><i class="fas fa-server mr-2 text-purple-600"></i>Resource & Network</h3>
+        <h3 class="font-semibold text-gray-800 mb-4"><i aria-hidden="true" class="fas fa-server mr-2 text-purple-600"></i>Resource & Network</h3>
         <div class="space-y-3 text-sm">
             <div class="flex justify-between border-b pb-2">
                 <span class="text-gray-500">Resource Type</span>
@@ -71,7 +71,7 @@
 
     <!-- Risk Assessment -->
     <div class="bg-white rounded-xl shadow-sm p-6">
-        <h3 class="font-semibold text-gray-800 mb-4"><i class="fas fa-shield-alt mr-2 text-orange-600"></i>Risk Assessment</h3>
+        <h3 class="font-semibold text-gray-800 mb-4"><i aria-hidden="true" class="fas fa-shield-alt mr-2 text-orange-600"></i>Risk Assessment</h3>
         <div class="space-y-3 text-sm">
             <div class="flex justify-between border-b pb-2">
                 <span class="text-gray-500">Risk Level</span>
@@ -80,9 +80,9 @@
             <div class="flex justify-between border-b pb-2">
                 <span class="text-gray-500">Suspicious</span>
                 @if($auditLog->is_suspicious)
-                    <span class="text-red-600 font-medium"><i class="fas fa-exclamation-triangle mr-1"></i>Yes</span>
+                    <span class="text-red-600 font-medium"><i aria-hidden="true" class="fas fa-exclamation-triangle mr-1"></i>Yes</span>
                 @else
-                    <span class="text-green-600 font-medium"><i class="fas fa-check-circle mr-1"></i>No</span>
+                    <span class="text-green-600 font-medium"><i aria-hidden="true" class="fas fa-check-circle mr-1"></i>No</span>
                 @endif
             </div>
             @if(!empty($auditLog->context))
@@ -104,7 +104,7 @@
 <!-- Changes Comparison -->
 @if(!empty($auditLog->old_values) || !empty($auditLog->new_values))
 <div class="bg-white rounded-xl shadow-sm p-6 mt-6">
-    <h3 class="font-semibold text-gray-800 mb-4"><i class="fas fa-exchange-alt mr-2 text-teal-600"></i>Changes</h3>
+    <h3 class="font-semibold text-gray-800 mb-4"><i aria-hidden="true" class="fas fa-exchange-alt mr-2 text-teal-600"></i>Changes</h3>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
             <h4 class="text-xs uppercase tracking-wider text-gray-500 mb-2 font-medium">Old Values</h4>

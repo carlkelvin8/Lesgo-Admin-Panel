@@ -4,7 +4,7 @@
 
 @section('content')
     <a href="{{ route('admin.login') }}" class="mb-8 inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-800">
-        <i class="fas fa-arrow-left text-xs"></i> Back to sign in
+        <i aria-hidden="true" class="fas fa-arrow-left text-xs"></i> Back to sign in
     </a>
 
     <div class="mb-8">
@@ -15,7 +15,7 @@
 
     @if(session('status'))
         <div class="mb-6 flex items-start gap-3 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm leading-relaxed text-green-800" role="status">
-            <i class="fas fa-paper-plane mt-0.5 text-green-600"></i>
+            <i aria-hidden="true" class="fas fa-paper-plane mt-0.5 text-green-600"></i>
             <span>{{ session('status') }}</span>
         </div>
     @endif
@@ -25,17 +25,17 @@
         <div class="mb-6">
             <label for="email" class="mb-2 block text-sm font-semibold text-gray-700">Admin email address</label>
             <div class="auth-form-control @error('email') has-error @enderror">
-                <span class="auth-field-icon"><i class="fas fa-envelope"></i></span>
+                <span class="auth-field-icon"><i aria-hidden="true" class="fas fa-envelope"></i></span>
                 <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="email"
                        class="auth-input" placeholder="admin@lesgo.com">
             </div>
             @error('email')
-                <p class="mt-2 flex items-center gap-1.5 text-xs text-red-600" role="alert"><i class="fas fa-circle-exclamation"></i>{{ $message }}</p>
+                <p class="mt-2 flex items-center gap-1.5 text-xs text-red-600" role="alert"><i aria-hidden="true" class="fas fa-circle-exclamation"></i>{{ $message }}</p>
             @enderror
         </div>
 
         <button type="submit" class="brand-button flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 font-semibold">
-            <i class="fas fa-paper-plane"></i> Send reset link
+            <i aria-hidden="true" class="fas fa-paper-plane"></i> Send reset link
         </button>
     </form>
 

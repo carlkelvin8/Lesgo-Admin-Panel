@@ -36,7 +36,10 @@ class RolePermissionsTest extends TestCase
             ->assertOk()
             ->assertSee('Support Permissions')
             ->assertSee('Save permissions')
-            ->assertSee('View payments');
+            ->assertSee('View payments')
+            ->assertSee('id="permission-dashboard-view"', false)
+            ->assertSee('value="tickets.manage"', false)
+            ->assertDontSee('id="permission-0"', false);
 
         $this->put(route('admin.roles.update', $supportRole), [
             'permissions' => ['payments.view'],

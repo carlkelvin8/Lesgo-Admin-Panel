@@ -53,9 +53,9 @@
                             <div class="flex items-center gap-1">
                                 @for($i = 1; $i <= 5; $i++)
                                     @if($i <= $review->overall_rating)
-                                        <i class="fas fa-star text-yellow-400 text-xs"></i>
+                                        <i aria-hidden="true" class="fas fa-star text-yellow-400 text-xs"></i>
                                     @else
-                                        <i class="far fa-star text-gray-300 text-xs"></i>
+                                        <i aria-hidden="true" class="far fa-star text-gray-300 text-xs"></i>
                                     @endif
                                 @endfor
                                 <span class="ml-1 text-gray-500 text-xs">{{ $review->overall_rating }}/5</span>
@@ -69,7 +69,7 @@
                         </td>
                         <td class="px-6 py-4 text-gray-500 text-xs">{{ $review->created_at->diffForHumans() }}</td>
                         <td class="px-6 py-4 text-right">
-                            <a href="{{ route('admin.ratings.show', $review) }}" class="text-blue-600 hover:text-blue-800" title="View"><i class="fas fa-eye"></i></a>
+                            <a aria-label="View" href="{{ route('admin.ratings.show', $review) }}" class="text-blue-600 hover:text-blue-800" title="View"><i aria-hidden="true" class="fas fa-eye"></i></a>
                         </td>
                     </tr>
                 @empty

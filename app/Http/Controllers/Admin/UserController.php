@@ -6,15 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreUserRequest;
 use App\Http\Requests\Admin\UpdateUserRequest;
 use App\Models\AdminRole;
+use App\Models\AuditLog;
 use App\Models\User;
+use App\Support\CsvFormatter;
+use App\Traits\SearchEscaping;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
-use App\Traits\SearchEscaping;
-use App\Support\CsvFormatter;
-use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
@@ -46,7 +46,7 @@ class UserController extends Controller
             $query->where('is_active', $request->status === 'active');
         }
 
-        $users = $query->latest()->paginate(20)->withQueryString();
+        $users = $query->latest()->orderByDesc('id')->paginate(20)->withQueryString();
 
         return view('admin.users.index', compact('users'));
     }
@@ -163,7 +163,10 @@ class UserController extends Controller
         $croppedStored = null;
         if ($request->filled('cropped_profile_picture') && str_starts_with($request->input('cropped_profile_picture'), 'data:image')) {
             if ($user->profile_picture) {
-                try { Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->delete($user->profile_picture); } catch (\Throwable $e) {}
+                try {
+                    Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->delete($user->profile_picture);
+                } catch (\Throwable $e) {
+                }
             }
             $croppedStored = $this->storeCroppedImage($request->input('cropped_profile_picture'));
         }
@@ -171,12 +174,18 @@ class UserController extends Controller
             $validated['profile_picture'] = $croppedStored;
         } elseif ($request->hasFile('profile_picture')) {
             if ($user->profile_picture) {
-                try { Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->delete($user->profile_picture); } catch (\Throwable $e) {}
+                try {
+                    Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->delete($user->profile_picture);
+                } catch (\Throwable $e) {
+                }
             }
             $validated['profile_picture'] = $request->file('profile_picture')->store('profile-pictures', config('filesystems.default') === 's3' ? 's3' : 'public');
         } elseif ($request->boolean('remove_profile_picture')) {
             if ($user->profile_picture) {
-                try { Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->delete($user->profile_picture); } catch (\Throwable $e) {}
+                try {
+                    Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->delete($user->profile_picture);
+                } catch (\Throwable $e) {
+                }
             }
             $validated['profile_picture'] = null;
         } else {
@@ -222,7 +231,7 @@ class UserController extends Controller
         // Audit max level
         try {
             if (($oldPerms ?? null) !== ($validated['admin_permissions'] ?? null) || ($user->wasChanged('admin_role'))) {
-                \App\Models\AuditLog::create([
+                AuditLog::create([
                     'user_id' => $request->user()?->id,
                     'action' => 'update_user_permissions',
                     'auditable_type' => User::class,
@@ -233,7 +242,8 @@ class UserController extends Controller
                     'user_agent' => $request->userAgent(),
                 ]);
             }
-        } catch (\Throwable $e) {}
+        } catch (\Throwable $e) {
+        }
 
         return redirect()->route('admin.users.show', $user)
             ->with($permsIgnored ? 'warning' : 'success', $permsIgnored
@@ -289,11 +299,12 @@ class UserController extends Controller
         $deleted = 0;
         $skipped = 0;
 
-        \Illuminate\Support\Facades\DB::transaction(function () use ($users, &$deleted, &$skipped) {
+        DB::transaction(function () use ($users, &$deleted, &$skipped) {
             foreach ($users as $user) {
                 // Bulk deletion is intentionally limited to non-admin accounts.
                 if ($user->isAdmin() || $user->is(auth()->user())) {
                     $skipped++;
+
                     continue;
                 }
 
@@ -338,7 +349,7 @@ class UserController extends Controller
 
         $headers = [
             'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="users_export_' . now()->format('Y-m-d_His') . '.csv"',
+            'Content-Disposition' => 'attachment; filename="users_export_'.now()->format('Y-m-d_His').'.csv"',
             'Cache-Control' => 'no-cache, no-store, must-revalidate',
         ];
 
@@ -400,14 +411,19 @@ class UserController extends Controller
         try {
             // data:image/jpeg;base64,...
             $parts = explode(',', $dataUrl, 2);
-            if (count($parts) !== 2) return null;
+            if (count($parts) !== 2) {
+                return null;
+            }
             $meta = $parts[0];
             $base64 = $parts[1];
             $ext = str_contains($meta, 'png') ? 'png' : (str_contains($meta, 'webp') ? 'webp' : 'jpg');
             $data = base64_decode($base64, true);
-            if (!$data) return null;
-            $filename = 'profile-pictures/cropped_' . uniqid() . '.' . $ext;
+            if (! $data) {
+                return null;
+            }
+            $filename = 'profile-pictures/cropped_'.uniqid().'.'.$ext;
             Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->put($filename, $data);
+
             return $filename;
         } catch (\Throwable $e) {
             return null;

@@ -3,7 +3,7 @@
 @section('header', 'Services Management')
 
 @section('actions')
-<a href="{{ route('admin.services.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"><i class="fas fa-plus mr-1"></i> Add Service</a>
+<a href="{{ route('admin.services.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"><i aria-hidden="true" class="fas fa-plus mr-1"></i> Add Service</a>
 @endsection
 
 @section('content')
@@ -38,8 +38,8 @@
                         <td class="px-6 py-4">₱{{ number_format($service->minimum_fare, 2) }}</td>
                         <td class="px-6 py-4"><x-status-badge :status="$service->is_active ? 'active' : 'inactive'" /></td>
                         <td class="px-6 py-4 text-right">
-                            <a href="{{ route('admin.services.show', $service) }}" class="text-blue-600 hover:text-blue-800 mr-2"><i class="fas fa-eye"></i></a>
-                            <a href="{{ route('admin.services.edit', $service) }}" class="text-yellow-600 hover:text-yellow-800"><i class="fas fa-edit"></i></a>
+                            <a aria-label="View details" href="{{ route('admin.services.show', $service) }}" class="text-blue-600 hover:text-blue-800 mr-2"><i aria-hidden="true" class="fas fa-eye"></i></a>
+                            <a aria-label="Edit record" href="{{ route('admin.services.edit', $service) }}" class="text-yellow-600 hover:text-yellow-800"><i aria-hidden="true" class="fas fa-edit"></i></a>
                         </td>
                     </tr>
                 @empty

@@ -11,7 +11,7 @@
 
     @if(session('status'))
         <div class="mb-6 flex items-start gap-3 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800" role="status">
-            <i class="fas fa-circle-check mt-0.5 text-green-600"></i>
+            <i aria-hidden="true" class="fas fa-circle-check mt-0.5 text-green-600"></i>
             <span>{{ session('status') }}</span>
         </div>
     @endif
@@ -22,14 +22,14 @@
         <div class="mb-5">
             <label for="email" class="mb-2 block text-sm font-semibold text-gray-700">Email address</label>
             <div class="auth-form-control @error('email') has-error @enderror">
-                <span class="auth-field-icon"><i class="fas fa-envelope"></i></span>
+                <span class="auth-field-icon"><i aria-hidden="true" class="fas fa-envelope"></i></span>
                 <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus
                        autocomplete="username" inputmode="email"
                        class="auth-input" placeholder="admin@lesgo.com"
                        @error('email') aria-invalid="true" aria-describedby="email-error" @enderror>
             </div>
             @error('email')
-                <p id="email-error" class="mt-2 flex items-center gap-1.5 text-xs text-red-600" role="alert"><i class="fas fa-circle-exclamation"></i>{{ $message }}</p>
+                <p id="email-error" class="mt-2 flex items-center gap-1.5 text-xs text-red-600" role="alert"><i aria-hidden="true" class="fas fa-circle-exclamation"></i>{{ $message }}</p>
             @enderror
         </div>
 
@@ -39,7 +39,7 @@
                 <a href="{{ route('admin.password.request') }}" class="text-xs font-semibold text-blue-600 hover:text-blue-800">Forgot password?</a>
             </div>
             <div class="auth-form-control @error('password') has-error @enderror">
-                <span class="auth-field-icon"><i class="fas fa-lock"></i></span>
+                <span class="auth-field-icon"><i aria-hidden="true" class="fas fa-lock"></i></span>
                 <input id="password" type="password" name="password" required autocomplete="current-password"
                        class="auth-input auth-input-password" placeholder="Enter your password"
                        @error('password') aria-invalid="true" aria-describedby="password-error" @enderror>
@@ -48,10 +48,10 @@
                 </button>
             </div>
             @error('password')
-                <p id="password-error" class="mt-2 flex items-center gap-1.5 text-xs text-red-600" role="alert"><i class="fas fa-circle-exclamation"></i>{{ $message }}</p>
+                <p id="password-error" class="mt-2 flex items-center gap-1.5 text-xs text-red-600" role="alert"><i aria-hidden="true" class="fas fa-circle-exclamation"></i>{{ $message }}</p>
             @enderror
             <p id="caps-lock-warning" class="mt-2 hidden items-center gap-1.5 text-xs text-amber-700" role="status">
-                <i class="fas fa-arrow-up-long"></i> Caps Lock is on
+                <i aria-hidden="true" class="fas fa-arrow-up-long"></i> Caps Lock is on
             </p>
         </div>
 
@@ -68,7 +68,7 @@
     </form>
 
     <div class="mt-7 flex items-center justify-center gap-2 text-xs text-gray-400">
-        <i class="fas fa-shield-halved text-blue-500"></i>
+        <i aria-hidden="true" class="fas fa-shield-halved text-blue-500"></i>
         <span>Your session is encrypted and monitored.</span>
     </div>
     <!-- lesgo-admin-build:2026-09-18-c -->

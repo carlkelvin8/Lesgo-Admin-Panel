@@ -41,7 +41,7 @@
                         </td>
                         <td class="px-6 py-4 text-gray-500 text-xs">{{ $ticket->assignee?->name ?? 'Unassigned' }}</td>
                         <td class="px-6 py-4 text-right">
-                            <a href="{{ route('admin.tickets.show', $ticket) }}" class="text-blue-600 hover:text-blue-800"><i class="fas fa-eye"></i></a>
+                            <a aria-label="View details" href="{{ route('admin.tickets.show', $ticket) }}" class="text-blue-600 hover:text-blue-800"><i aria-hidden="true" class="fas fa-eye"></i></a>
                         </td>
                     </tr>
                 @empty

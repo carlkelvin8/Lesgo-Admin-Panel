@@ -6,7 +6,7 @@
 <div class="bg-white rounded-xl shadow-sm p-4 mb-6">
     <x-filter-panel action="{{ request()->url() }}">
         <x-filter-input name="search" label="Search" placeholder="User name or email..." value="{{ request('search') }}" />
-        <x-filter-input name="document_type" label="Document Type" type="select" :options="['' => 'All Types', 'drivers_license' => 'Drivers License', 'national_id' => 'National Id', 'passport' => 'Passport', 'vehicle_registration' => 'Vehicle Registration', 'other' => 'Other']" :selected="request('document_type')" />
+        <x-filter-input name="document_type" label="Document Type" type="select" :options="['' => 'All Types'] + $documentTypes" :selected="request('document_type')" />
         <x-filter-input name="status" label="Status" type="select" :options="['' => 'All Status', 'pending' => 'Pending', 'under_review' => 'Under Review', 'approved' => 'Approved', 'rejected' => 'Rejected', 'expired' => 'Expired']" :selected="request('status')" />
     </x-filter-panel>
 </div>
@@ -47,7 +47,7 @@
                         <td class="px-6 py-4 text-gray-500 text-xs">{{ $v->submitted_at?->diffForHumans() ?? '-' }}</td>
                         <td class="px-6 py-4 text-gray-500 text-xs">{{ $v->verifier?->name ?? '-' }}</td>
                         <td class="px-6 py-4 text-right">
-                            <a href="{{ route('admin.document-verifications.show', $v) }}" class="text-blue-600 hover:text-blue-800" title="View"><i class="fas fa-eye"></i></a>
+                            <a aria-label="View" href="{{ route('admin.document-verifications.show', $v) }}" class="text-blue-600 hover:text-blue-800" title="View"><i aria-hidden="true" class="fas fa-eye"></i></a>
                         </td>
                     </tr>
                 @empty

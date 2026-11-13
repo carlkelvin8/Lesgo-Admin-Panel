@@ -3,14 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Admin\RecordRefundRequest;
 use App\Http\Requests\Admin\ReconcilePaymentRequest;
+use App\Http\Requests\Admin\RecordRefundRequest;
 use App\Models\Order;
 use App\Models\Payment;
-use App\Traits\SearchEscaping;
 use App\Support\CsvFormatter;
+use App\Traits\SearchEscaping;
 use Illuminate\Http\Request;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -36,10 +35,38 @@ class PaymentController extends Controller
 
     private function orderToPayment($order)
     {
-        return new class($order) {
-            public $id, $order_id, $customer, $amount, $currency, $method, $status, $paid_at;
-            public $refunded_amount = 0, $provider, $provider_reference, $meta;
-            public $reconciliation_status = 'unreconciled', $reconciliation_notes, $created_at;
+        return new class($order)
+        {
+            public $id;
+
+            public $order_id;
+
+            public $customer;
+
+            public $amount;
+
+            public $currency;
+
+            public $method;
+
+            public $status;
+
+            public $paid_at;
+
+            public $refunded_amount = 0;
+
+            public $provider;
+
+            public $provider_reference;
+
+            public $meta;
+
+            public $reconciliation_status = 'unreconciled';
+
+            public $reconciliation_notes;
+
+            public $created_at;
+
             public $reconciler = null;
 
             public function getRouteKey()
@@ -67,7 +94,7 @@ class PaymentController extends Controller
 
     public function index(Request $request)
     {
-        $orders = $this->buildPaymentQuery($request)->latest()->paginate(20)->withQueryString();
+        $orders = $this->buildPaymentQuery($request)->latest()->orderByDesc('id')->paginate(20)->withQueryString();
 
         $payments = $orders->getCollection()->map(fn ($o) => $this->orderToPayment($o));
         $orders->setCollection($payments);
@@ -100,6 +127,7 @@ class PaymentController extends Controller
             }
 
             $order->update(['payment_status' => 'refunded']);
+
             return back()->with('success', 'Refund recorded on order.');
         }
 
@@ -160,7 +188,7 @@ class PaymentController extends Controller
 
         $headers = [
             'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="payments_export_' . now()->format('Y-m-d_His') . '.csv"',
+            'Content-Disposition' => 'attachment; filename="payments_export_'.now()->format('Y-m-d_His').'.csv"',
             'Cache-Control' => 'no-cache, no-store, must-revalidate',
         ];
 

@@ -4,9 +4,12 @@ use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\DataRecordsController;
 use App\Http\Controllers\Admin\DocumentVerificationController;
 use App\Http\Controllers\Admin\DriverController;
 use App\Http\Controllers\Admin\FaqController;
+use App\Http\Controllers\Admin\MissionRewardPayoutController;
+use App\Http\Controllers\Admin\MissionTemplateController;
 use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\PartnerController;
@@ -14,17 +17,17 @@ use App\Http\Controllers\Admin\PartnerOperationsController;
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\RatingReviewController;
+use App\Http\Controllers\Admin\RegistrationFeeController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\RolePermissionController;
 use App\Http\Controllers\Admin\SecurityEventController;
 use App\Http\Controllers\Admin\SecuritySettingsController;
-use App\Http\Controllers\Admin\MissionTemplateController;
 use App\Http\Controllers\Admin\ServiceController;
 use App\Http\Controllers\Admin\SystemHealthController;
-use App\Http\Controllers\Admin\VoucherController;
 use App\Http\Controllers\Admin\TicketController;
 use App\Http\Controllers\Admin\TwoFactorAuthController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\VoucherController;
 use App\Http\Controllers\Admin\WalletController;
 use Illuminate\Support\Facades\Route;
 
@@ -42,6 +45,10 @@ Route::post('/admin/2fa/verify', [TwoFactorAuthController::class, 'verify'])->na
 
 // Admin protected routes
 Route::prefix('admin')->name('admin.')->middleware(['admin', 'admin.audit'])->group(function () {
+    Route::get('/data', [DataRecordsController::class, 'hub'])->name('data.hub');
+    Route::get('/data/{dataset}', [DataRecordsController::class, 'index'])->name('data.index');
+    Route::get('/data/{dataset}/export', [DataRecordsController::class, 'export'])->name('data.export');
+    Route::get('/data/{dataset}/{id}', [DataRecordsController::class, 'show'])->whereNumber('id')->name('data.show');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
     // Administrator account and active sessions
@@ -84,7 +91,7 @@ Route::prefix('admin')->name('admin.')->middleware(['admin', 'admin.audit'])->gr
     });
     Route::middleware('admin.permission:users.view')->group(function () {
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
-        Route::get('/users/{user}', [UserController::class, 'show'])->name('users.show');
+        Route::get('/users/{user}', [UserController::class, 'show'])->withTrashed()->name('users.show');
     });
 
     // Partners
@@ -178,19 +185,19 @@ Route::prefix('admin')->name('admin.')->middleware(['admin', 'admin.audit'])->gr
 
     // Mission Reward Reimbursements (PayMongo-backed)
     Route::middleware('admin.permission:missions.manage')->group(function () {
-        Route::get('/mission-rewards', [\App\Http\Controllers\Admin\MissionRewardPayoutController::class, 'index'])->name('mission-rewards.index');
-        Route::get('/mission-rewards/{missionReward}', [\App\Http\Controllers\Admin\MissionRewardPayoutController::class, 'show'])->name('mission-rewards.show');
-        Route::post('/mission-rewards/{missionReward}/retry', [\App\Http\Controllers\Admin\MissionRewardPayoutController::class, 'retry'])->name('mission-rewards.retry');
+        Route::get('/mission-rewards', [MissionRewardPayoutController::class, 'index'])->name('mission-rewards.index');
+        Route::get('/mission-rewards/{missionReward}', [MissionRewardPayoutController::class, 'show'])->name('mission-rewards.show');
+        Route::post('/mission-rewards/{missionReward}/retry', [MissionRewardPayoutController::class, 'retry'])->name('mission-rewards.retry');
     });
 
     // Registration Fees (Rider & Merchant — PayMongo)
     Route::middleware('admin.permission:users.manage')->group(function () {
-        Route::get('/registration-fees', [\App\Http\Controllers\Admin\RegistrationFeeController::class, 'index'])->name('registration-fees.index');
-        Route::put('/registration-fees/rider-prices', [\App\Http\Controllers\Admin\RegistrationFeeController::class, 'updateRiderPrices'])->name('registration-fees.rider-prices.update');
-        Route::get('/registration-fees/{registrationFee}', [\App\Http\Controllers\Admin\RegistrationFeeController::class, 'show'])->name('registration-fees.show');
-        Route::post('/registration-fees/{registrationFee}/approve', [\App\Http\Controllers\Admin\RegistrationFeeController::class, 'approve'])->name('registration-fees.approve');
-        Route::post('/registration-fees/{registrationFee}/waive', [\App\Http\Controllers\Admin\RegistrationFeeController::class, 'waive'])->name('registration-fees.waive');
-        Route::post('/registration-fees/{registrationFee}/reject', [\App\Http\Controllers\Admin\RegistrationFeeController::class, 'reject'])->name('registration-fees.reject');
+        Route::get('/registration-fees', [RegistrationFeeController::class, 'index'])->name('registration-fees.index');
+        Route::put('/registration-fees/rider-prices', [RegistrationFeeController::class, 'updateRiderPrices'])->name('registration-fees.rider-prices.update');
+        Route::get('/registration-fees/{registrationFee}', [RegistrationFeeController::class, 'show'])->name('registration-fees.show');
+        Route::post('/registration-fees/{registrationFee}/approve', [RegistrationFeeController::class, 'approve'])->name('registration-fees.approve');
+        Route::post('/registration-fees/{registrationFee}/waive', [RegistrationFeeController::class, 'waive'])->name('registration-fees.waive');
+        Route::post('/registration-fees/{registrationFee}/reject', [RegistrationFeeController::class, 'reject'])->name('registration-fees.reject');
     });
 
     // Payments

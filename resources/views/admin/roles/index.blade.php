@@ -11,7 +11,7 @@
                 <p class="mt-1 max-w-2xl text-sm text-gray-600">Choose which admin modules each access level can use. Assign an access level to an administrator from the Users page.</p>
             </div>
             <a href="{{ route('admin.users.index', ['role' => 'admin']) }}" class="inline-flex items-center justify-center gap-2 rounded-lg border border-purple-200 bg-white px-4 py-2 text-sm font-medium text-purple-700 hover:bg-purple-50">
-                <i class="fas fa-users"></i> View administrators
+                <i aria-hidden="true" class="fas fa-users"></i> View administrators
             </a>
         </div>
     </div>
@@ -25,7 +25,7 @@
             <article class="flex min-h-64 flex-col rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
                 <div class="flex items-start justify-between gap-3">
                     <span class="inline-flex h-11 w-11 items-center justify-center rounded-xl {{ $role->is_protected ? 'bg-purple-100 text-purple-700' : 'bg-blue-50 text-blue-700' }}">
-                        <i class="fas {{ $role->is_protected ? 'fa-crown' : 'fa-user-shield' }}"></i>
+                        <i aria-hidden="true" class="fas {{ $role->is_protected ? 'fa-crown' : 'fa-user-shield' }}"></i>
                     </span>
                     @if($role->is_protected)
                         <span class="rounded-full bg-purple-100 px-2.5 py-1 text-xs font-medium text-purple-700">Protected</span>
@@ -62,7 +62,7 @@
 
                 <div class="mt-auto pt-5 flex flex-col gap-2">
                     <a href="{{ route('admin.roles.edit', $role) }}" class="inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium {{ $role->is_protected ? 'border border-gray-200 text-gray-700 hover:bg-gray-50' : 'bg-blue-600 text-white hover:bg-blue-700' }}">
-                        <i class="fas {{ $role->is_protected ? 'fa-eye' : 'fa-pen' }}"></i>
+                        <i aria-hidden="true" class="fas {{ $role->is_protected ? 'fa-eye' : 'fa-pen' }}"></i>
                         {{ $role->is_protected ? 'View permissions' : 'Edit permissions' }}
                     </a>
                     @if(!$role->is_protected && count($role->permissions ?? []) <= 1)

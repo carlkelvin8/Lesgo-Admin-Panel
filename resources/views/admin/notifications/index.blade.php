@@ -3,7 +3,8 @@
 @section('header', 'Notifications')
 
 @section('actions')
-<a href="{{ route('admin.notifications.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"><i class="fas fa-paper-plane mr-1"></i> Publish Notification</a>
+<a href="{{ route('admin.data.index', 'realtime-notifications') }}" class="rounded-lg border px-4 py-2 text-sm">Realtime Notifications</a>
+<a href="{{ route('admin.notifications.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"><i aria-hidden="true" class="fas fa-paper-plane mr-1"></i> Publish Notification</a>
 @endsection
 
 @section('content')

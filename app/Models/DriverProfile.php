@@ -9,6 +9,15 @@ class DriverProfile extends Model
 {
     use HasFactory;
 
+    protected static function booted(): void
+    {
+        static::creating(function (self $driver): void {
+            if (blank($driver->package_tier)) {
+                $driver->package_tier = 'basic';
+            }
+        });
+    }
+
     protected $fillable = [
         'user_id',
         'partner_id',
@@ -37,7 +46,7 @@ class DriverProfile extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class)->withTrashed();
     }
 
     public function partner()

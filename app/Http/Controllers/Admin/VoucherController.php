@@ -20,7 +20,7 @@ class VoucherController extends Controller
             $search = $this->escapeLikePattern($request->search);
             $query->where(function ($q) use ($search) {
                 $q->where('code', 'like', "%{$search}%")
-                  ->orWhere('title', 'like', "%{$search}%");
+                    ->orWhere('title', 'like', "%{$search}%");
             });
         }
         if ($request->filled('is_active')) {
@@ -30,7 +30,8 @@ class VoucherController extends Controller
             $query->where('type', $request->type);
         }
 
-        $vouchers = $query->latest()->paginate(20)->withQueryString();
+        $vouchers = $query->latest()->orderByDesc('id')->paginate(20)->withQueryString();
+
         return view('admin.vouchers.index', compact('vouchers'));
     }
 
@@ -42,12 +43,13 @@ class VoucherController extends Controller
     public function create()
     {
         $services = Service::where('is_active', true)->get();
+
         return view('admin.vouchers.create', compact('services'));
     }
 
     public function store(Request $request)
     {
-        $request->merge(['code' => strtoupper(trim($request->input('code','')))]);
+        $request->merge(['code' => strtoupper(trim($request->input('code', '')))]);
         $validated = $request->validate([
             'code' => 'required|string|max:50|unique:vouchers,code',
             'title' => 'required|string|max:255',
@@ -77,7 +79,7 @@ class VoucherController extends Controller
         if ($request->filled('max_uses_per_user')) {
             $restrictions['max_uses_per_user'] = (int) $request->max_uses_per_user;
         }
-        $validated['user_restrictions'] = !empty($restrictions) ? $restrictions : null;
+        $validated['user_restrictions'] = ! empty($restrictions) ? $restrictions : null;
         unset($validated['new_users_only'], $validated['max_uses_per_user']);
 
         // applicable_services already validated
@@ -93,14 +95,15 @@ class VoucherController extends Controller
     public function edit(Voucher $voucher)
     {
         $services = Service::where('is_active', true)->get();
+
         return view('admin.vouchers.edit', compact('voucher', 'services'));
     }
 
     public function update(Request $request, Voucher $voucher)
     {
-        $request->merge(['code' => strtoupper(trim($request->input('code','')))]);
+        $request->merge(['code' => strtoupper(trim($request->input('code', '')))]);
         $validated = $request->validate([
-            'code' => 'required|string|max:50|unique:vouchers,code,' . $voucher->id,
+            'code' => 'required|string|max:50|unique:vouchers,code,'.$voucher->id,
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'discount_text' => 'nullable|string|max:100',
@@ -127,7 +130,7 @@ class VoucherController extends Controller
         if ($request->filled('max_uses_per_user')) {
             $restrictions['max_uses_per_user'] = (int) $request->max_uses_per_user;
         }
-        $validated['user_restrictions'] = !empty($restrictions) ? $restrictions : null;
+        $validated['user_restrictions'] = ! empty($restrictions) ? $restrictions : null;
         unset($validated['new_users_only'], $validated['max_uses_per_user']);
 
         if (empty($validated['applicable_services'])) {
@@ -143,13 +146,15 @@ class VoucherController extends Controller
     public function destroy(Voucher $voucher)
     {
         $voucher->delete();
+
         return redirect()->route('admin.vouchers.index')->with('success', 'Promo deleted successfully.');
     }
 
     public function toggleStatus(Voucher $voucher)
     {
-        $voucher->update(['is_active' => !$voucher->is_active]);
+        $voucher->update(['is_active' => ! $voucher->is_active]);
         $status = $voucher->is_active ? 'activated' : 'deactivated';
+
         return redirect()->back()->with('success', "Promo {$status} successfully.");
     }
 }

@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\MissionRewardPayout;
-use App\Models\MissionTemplate;
 use Illuminate\Http\Request;
 
 class MissionRewardPayoutController extends Controller
@@ -20,12 +19,12 @@ class MissionRewardPayoutController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('paymongo_reference', 'like', "%{$search}%")
-                  ->orWhere('paymongo_transfer_id', 'like', "%{$search}%")
-                  ->orWhereHas('rider', fn($qq) => $qq->where('name', 'like', "%{$search}%"));
+                    ->orWhere('paymongo_transfer_id', 'like', "%{$search}%")
+                    ->orWhereHas('rider', fn ($qq) => $qq->where('name', 'like', "%{$search}%"));
             });
         }
 
-        $payouts = $query->latest()->paginate(20)->withQueryString();
+        $payouts = $query->latest()->orderByDesc('id')->paginate(20)->withQueryString();
 
         $stats = [
             'total' => MissionRewardPayout::count(),
@@ -41,6 +40,7 @@ class MissionRewardPayoutController extends Controller
     public function show(MissionRewardPayout $missionReward)
     {
         $missionReward->load(['rider', 'mission', 'missionTemplate', 'driverProfile']);
+
         return view('admin.mission-rewards.show', [
             'payout' => $missionReward,
         ]);
@@ -60,9 +60,10 @@ class MissionRewardPayoutController extends Controller
             } else {
                 $missionReward->update(['status' => 'pending', 'failure_reason' => null]);
             }
+
             return back()->with('success', 'Reimbursement retry initiated via PayMongo.');
         } catch (\Throwable $e) {
-            return back()->with('error', 'Retry failed: ' . $e->getMessage());
+            return back()->with('error', 'Retry failed: '.$e->getMessage());
         }
     }
 }

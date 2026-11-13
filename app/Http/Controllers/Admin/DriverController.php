@@ -6,15 +6,19 @@ use App\Http\Controllers\Controller;
 use App\Models\DocumentVerification;
 use App\Models\DriverProfile;
 use App\Models\Partner;
+use App\Models\RegistrationFeePayment;
 use App\Models\User;
 use App\Services\CascadeEntityDeletionService;
+use App\Services\RegistrationFeeService;
 use App\Traits\SearchEscaping;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class DriverController extends Controller
 {
     use SearchEscaping;
+
     public function index(Request $request)
     {
         $query = DriverProfile::with(['user', 'registrationFee.waivedBy']);
@@ -45,7 +49,7 @@ class DriverController extends Controller
             }
         }
 
-        $drivers = $query->latest()->paginate(20)->withQueryString();
+        $drivers = $query->latest()->orderByDesc('id')->paginate(20)->withQueryString();
 
         $feeStats = [
             'paid' => DriverProfile::whereHas('registrationFee', fn ($q) => $q->where('payment_status', 'paid'))->count(),
@@ -60,7 +64,7 @@ class DriverController extends Controller
     public function show(DriverProfile $driver)
     {
         $driver->load(['user.documentVerifications' => fn ($q) => $q->latest('submitted_at'), 'partner']);
-        $registrationFee = \App\Models\RegistrationFeePayment::where('user_id', $driver->user_id)
+        $registrationFee = RegistrationFeePayment::where('user_id', $driver->user_id)
             ->where('account_type', 'rider')
             ->with(['approver:id,name', 'waivedBy:id,name'])
             ->first();
@@ -95,6 +99,9 @@ class DriverController extends Controller
         unset($validated['id_document']);
 
         $validated['status'] = 'pending';
+        $validated['package_tier'] = filled($validated['package_tier'] ?? null)
+            ? $validated['package_tier']
+            : 'basic';
 
         DriverProfile::create($validated);
 
@@ -131,26 +138,35 @@ class DriverController extends Controller
                 $newPath = $request->file('profile_picture')->store('profile-pictures', config('filesystems.default') === 's3' ? 's3' : 'public');
             }
             if ($newPath) {
-                if ($oldPic) { try { Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->delete($oldPic); } catch (\Throwable $e) {} }
+                if ($oldPic) {
+                    try {
+                        Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->delete($oldPic);
+                    } catch (\Throwable $e) {
+                    }
+                }
                 $user->update(['profile_picture' => $newPath]);
             }
         }
         // Remove cropping fields from driver validated data
         unset($validated['profile_picture'], $validated['cropped_profile_picture']);
+        $validated['package_tier'] = filled($validated['package_tier'] ?? null)
+            ? $validated['package_tier']
+            : ($driver->package_tier ?: 'basic');
 
         // If admin tries to activate rider, enforce fee-paid check via RegistrationFeePayment
         if ($validated['status'] === 'active') {
-            $user = $driver->user ?? \App\Models\User::find($driver->user_id);
+            $user = $driver->user ?? User::find($driver->user_id);
             if ($user) {
-                $fee = \App\Models\RegistrationFeePayment::where('user_id', $user->id)->where('account_type', 'rider')->first();
+                $fee = RegistrationFeePayment::where('user_id', $user->id)->where('account_type', 'rider')->first();
                 if ($fee) {
                     if ($fee->application_status !== 'approved') {
                         // Auto-approve via service but still check fee
                         try {
-                            $fee = \App\Services\RegistrationFeeService::approveApplication($fee, $request->user());
-                        } catch (\Throwable $e) {}
+                            $fee = RegistrationFeeService::approveApplication($fee, $request->user());
+                        } catch (\Throwable $e) {
+                        }
                     }
-                    if (!$fee->fresh()->is_active) {
+                    if (! $fee->fresh()->is_active) {
                         return redirect()->route('admin.drivers.show', $driver)
                             ->with('error', 'Cannot activate rider: registration fee must be paid through PayMongo or explicitly waived. Approval alone does not bypass the fee.');
                     }
@@ -161,11 +177,12 @@ class DriverController extends Controller
 
         if ($validated['status'] === 'active' || $validated['status'] === 'suspended') {
             // Sync registration fee application status accordingly
-            $fee = \App\Models\RegistrationFeePayment::where('user_id', $driver->user_id)->where('account_type', 'rider')->first();
+            $fee = RegistrationFeePayment::where('user_id', $driver->user_id)->where('account_type', 'rider')->first();
             if ($fee) {
                 if ($validated['status'] === 'suspended') {
-                    \App\Services\RegistrationFeeService::rejectApplication($fee, $request->user(), 'Suspended by admin');
+                    RegistrationFeeService::rejectApplication($fee, $request->user(), 'Suspended by admin');
                     $driver->refresh();
+
                     return redirect()->route('admin.drivers.show', $driver)->with('success', 'Driver suspended and application rejected.');
                 }
             }
@@ -181,10 +198,10 @@ class DriverController extends Controller
     {
         if ($driver->status !== 'active') {
             // Attempt to activate — check fee
-            $user = $driver->user ?? \App\Models\User::find($driver->user_id);
+            $user = $driver->user ?? User::find($driver->user_id);
             if ($user) {
-                $fee = \App\Models\RegistrationFeePayment::where('user_id', $user->id)->where('account_type', 'rider')->first();
-                if ($fee && !$fee->is_active) {
+                $fee = RegistrationFeePayment::where('user_id', $user->id)->where('account_type', 'rider')->first();
+                if ($fee && ! $fee->is_active) {
                     return redirect()->route('admin.drivers.show', $driver)
                         ->with('error', 'Cannot activate: application approval and a paid or explicitly waived registration fee are required.');
                 }
@@ -214,7 +231,7 @@ class DriverController extends Controller
         ]);
 
         $drivers = DriverProfile::query()->whereIn('id', $validated['ids'])->get();
-        \Illuminate\Support\Facades\DB::transaction(function () use ($drivers, $deletionService) {
+        DB::transaction(function () use ($drivers, $deletionService) {
             foreach ($drivers as $driver) {
                 $deletionService->deleteDriver($driver);
             }
@@ -270,7 +287,9 @@ class DriverController extends Controller
         if ($request->hasFile('documents')) {
             $existing = $driver->documents ?? [];
             foreach ($request->file('documents') as $key => $file) {
-                if (!$file) continue;
+                if (! $file) {
+                    continue;
+                }
                 $path = $file->store('driver-documents/'.$driver->id, config('filesystems.default') === 's3' ? 's3' : 'public');
                 $url = Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->url($path);
                 $existing[$key] = $url;
@@ -278,7 +297,7 @@ class DriverController extends Controller
             $data['documents'] = $existing;
         }
 
-        if (!empty($data)) {
+        if (! empty($data)) {
             $driver->update($data);
         }
 
@@ -289,17 +308,21 @@ class DriverController extends Controller
     {
         try {
             $parts = explode(',', $dataUrl, 2);
-            if (count($parts) !== 2) return null;
+            if (count($parts) !== 2) {
+                return null;
+            }
             $meta = $parts[0];
             $ext = str_contains($meta, 'png') ? 'png' : (str_contains($meta, 'webp') ? 'webp' : 'jpg');
             $data = base64_decode($parts[1], true);
-            if (!$data) return null;
-            $filename = 'profile-pictures/cropped_' . uniqid() . '.' . $ext;
+            if (! $data) {
+                return null;
+            }
+            $filename = 'profile-pictures/cropped_'.uniqid().'.'.$ext;
             Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->put($filename, $data);
+
             return $filename;
         } catch (\Throwable $e) {
             return null;
         }
     }
-
 }

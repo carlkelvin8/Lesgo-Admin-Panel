@@ -19,7 +19,7 @@ class MissionTemplateController extends Controller
             $search = $this->escapeLikePattern($request->search);
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%");
             });
         }
         if ($request->filled('target_audience')) {
@@ -32,7 +32,8 @@ class MissionTemplateController extends Controller
             $query->where('is_active', $request->is_active === '1');
         }
 
-        $templates = $query->latest()->paginate(20)->withQueryString();
+        $templates = $query->latest()->orderByDesc('id')->paginate(20)->withQueryString();
+
         return view('admin.mission-templates.index', compact('templates'));
     }
 
@@ -46,7 +47,8 @@ class MissionTemplateController extends Controller
         return view('admin.mission-templates.create');
     }
 
-    private const ALLOWED_GOAL_TYPES = ['complete_orders','specific_service','get_rating','refer_friend','leseat_order','lesride_orders','friend_referral','app_review','social_follow'];
+    private const ALLOWED_GOAL_TYPES = ['complete_orders', 'specific_service', 'get_rating', 'refer_friend', 'leseat_order', 'lesride_orders', 'friend_referral', 'app_review', 'social_follow'];
+
     private const ALLOWED_CURRENCIES = ['PHP'];
 
     public function store(Request $request)
@@ -56,10 +58,10 @@ class MissionTemplateController extends Controller
             'description' => 'nullable|string',
             'type' => 'required|in:daily,weekly,monthly,one_time',
             'target_audience' => 'required|in:driver,merchant,customer',
-            'goal_type' => ['required','string','max:50','in:'.implode(',', self::ALLOWED_GOAL_TYPES)],
+            'goal_type' => ['required', 'string', 'max:50', 'in:'.implode(',', self::ALLOWED_GOAL_TYPES)],
             'goal_target' => 'required|integer|min:1',
             'reward_amount' => 'required|numeric|min:0',
-            'reward_currency' => ['nullable','string','max:10','in:'.implode(',', self::ALLOWED_CURRENCIES)],
+            'reward_currency' => ['nullable', 'string', 'max:10', 'in:'.implode(',', self::ALLOWED_CURRENCIES)],
             'service_code' => 'nullable|string|max:50|exists:services,code',
             'is_active' => 'boolean',
         ]);
@@ -88,10 +90,10 @@ class MissionTemplateController extends Controller
             'description' => 'nullable|string',
             'type' => 'required|in:daily,weekly,monthly,one_time',
             'target_audience' => 'required|in:driver,merchant,customer',
-            'goal_type' => ['required','string','max:50','in:'.implode(',', self::ALLOWED_GOAL_TYPES)],
+            'goal_type' => ['required', 'string', 'max:50', 'in:'.implode(',', self::ALLOWED_GOAL_TYPES)],
             'goal_target' => 'required|integer|min:1',
             'reward_amount' => 'required|numeric|min:0',
-            'reward_currency' => ['nullable','string','max:10','in:'.implode(',', self::ALLOWED_CURRENCIES)],
+            'reward_currency' => ['nullable', 'string', 'max:10', 'in:'.implode(',', self::ALLOWED_CURRENCIES)],
             'service_code' => 'nullable|string|max:50|exists:services,code',
             'is_active' => 'boolean',
         ]);
@@ -110,13 +112,15 @@ class MissionTemplateController extends Controller
     public function destroy(MissionTemplate $missionTemplate)
     {
         $missionTemplate->delete();
+
         return redirect()->route('admin.mission-templates.index')->with('success', 'Mission deleted successfully.');
     }
 
     public function toggleStatus(MissionTemplate $missionTemplate)
     {
-        $missionTemplate->update(['is_active' => !$missionTemplate->is_active]);
+        $missionTemplate->update(['is_active' => ! $missionTemplate->is_active]);
         $status = $missionTemplate->is_active ? 'activated' : 'deactivated';
+
         return redirect()->back()->with('success', "Mission {$status} successfully.");
     }
 }

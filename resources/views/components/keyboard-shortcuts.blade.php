@@ -1,6 +1,8 @@
 <div x-data="keyboardShortcuts()" x-init="init()" class="no-print">
     <!-- Help Overlay -->
     <div
+        role="dialog" aria-modal="true" aria-label="Keyboard shortcuts" tabindex="-1"
+        x-effect="syncAdminDialog($el, showHelp)" @admin-dialog-close="showHelp = false"
         x-show="showHelp"
         x-transition:enter="transition ease-out duration-200"
         x-transition:enter-start="opacity-0"
@@ -16,7 +18,7 @@
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                 <h3 class="text-lg font-semibold text-gray-900">Keyboard Shortcuts</h3>
-                <button @click="showHelp = false" class="text-gray-400 hover:text-gray-600">
+                <button aria-label="Close keyboard shortcuts" @click="showHelp = false" class="text-gray-400 hover:text-gray-600">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
@@ -66,6 +68,7 @@
     <!-- Floating Help Button -->
     <button
         @click="showHelp = true"
+        aria-label="Open keyboard shortcuts"
         class="no-print fixed bottom-6 right-6 z-[9997] w-10 h-10 bg-purple-600 hover:bg-purple-700 text-white rounded-full shadow-lg flex items-center justify-center text-sm font-bold transition-colors"
         title="Keyboard Shortcuts (?)"
     >
@@ -78,6 +81,7 @@
                 showHelp: false,
                 init() {
                     document.addEventListener('keydown', (e) => {
+                        if (e.target.closest('[role="dialog"]')) return;
                         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
                             return;
                         }

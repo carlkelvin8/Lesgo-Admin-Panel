@@ -1,5 +1,6 @@
 import Alpine from 'alpinejs';
 import './dashboard-charts';
+import './admin-accessibility';
 
 window.Alpine = Alpine;
 

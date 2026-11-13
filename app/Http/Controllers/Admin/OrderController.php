@@ -6,15 +6,16 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateOrderStatusRequest;
 use App\Models\Order;
 use App\Models\OrderTrackingEvent;
-use App\Traits\SearchEscaping;
 use App\Support\CsvFormatter;
+use App\Traits\SearchEscaping;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class OrderController extends Controller
 {
     use SearchEscaping;
+
     public function index(Request $request)
     {
         $query = Order::with(['customer', 'partner', 'driver']);
@@ -46,7 +47,7 @@ class OrderController extends Controller
             $query->where('created_at', '<=', $request->date_to.' 23:59:59');
         }
 
-        $orders = $query->latest()->paginate(20)->withQueryString();
+        $orders = $query->latest()->orderByDesc('id')->paginate(20)->withQueryString();
 
         return view('admin.orders.index', compact('orders'));
     }
@@ -153,7 +154,7 @@ class OrderController extends Controller
 
         $headers = [
             'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="orders_export_' . now()->format('Y-m-d_His') . '.csv"',
+            'Content-Disposition' => 'attachment; filename="orders_export_'.now()->format('Y-m-d_His').'.csv"',
             'Cache-Control' => 'no-cache, no-store, must-revalidate',
         ];
 

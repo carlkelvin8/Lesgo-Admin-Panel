@@ -95,9 +95,9 @@ class ReportController extends Controller
         }
 
         return redirect()->route('admin.reports.index', [
-                'date_from' => $days[0],
-                'date_to' => end($days),
-            ])
+            'date_from' => $days[0],
+            'date_to' => end($days),
+        ])
             ->with('success', count($days)." daily reports generated ({$days[0]} to ".end($days).').');
     }
 
@@ -124,10 +124,13 @@ class ReportController extends Controller
             'total_distance_km' => (int) round(((clone $orders)->sum('actual_distance_m') ?? 0) / 1000),
         ];
 
-        DailyReport::updateOrCreate(
-            ['report_date' => $date],
-            [...$values, 'meta' => ['generated_by' => auth()->id(), 'generated_at' => now()->toIso8601String()]]
-        );
+        $reportValues = [...$values, 'meta' => ['generated_by' => auth()->id(), 'generated_at' => now()->toIso8601String()]];
+        $report = DailyReport::whereDate('report_date', $date)->first();
+        if ($report) {
+            $report->update($reportValues);
+        } else {
+            DailyReport::create(['report_date' => $date, ...$reportValues]);
+        }
 
         foreach ([
             'total_orders' => $values['total_orders'],
@@ -137,10 +140,23 @@ class ReportController extends Controller
             'new_drivers' => $values['new_drivers'],
             'total_revenue' => $values['total_revenue'],
         ] as $key => $value) {
-            DailyMetric::updateOrCreate(
-                ['date' => $date, 'metric_type' => str_contains($key, 'revenue') ? 'revenue' : 'operations', 'metric_category' => 'daily', 'metric_key' => $key],
-                ['metric_value' => $value]
-            );
+            $metricType = str_contains($key, 'revenue') ? 'revenue' : 'operations';
+            $metric = DailyMetric::whereDate('date', $date)
+                ->where('metric_type', $metricType)
+                ->where('metric_category', 'daily')
+                ->where('metric_key', $key)
+                ->first();
+            if ($metric) {
+                $metric->update(['metric_value' => $value]);
+            } else {
+                DailyMetric::create([
+                    'date' => $date,
+                    'metric_type' => $metricType,
+                    'metric_category' => 'daily',
+                    'metric_key' => $key,
+                    'metric_value' => $value,
+                ]);
+            }
         }
 
         $transactionCount = (clone $revenueQuery)->count();
@@ -419,7 +435,7 @@ class ReportController extends Controller
      *
      * Fallback: payments table (legacy / online-only environments).
      *
-     * @return array{0: Builder, 1: string}  [query, 'orders'|'payments']
+     * @return array{0: Builder, 1: string} [query, 'orders'|'payments']
      */
     private function revenueSource(?\Carbon\Carbon $from = null, ?\Carbon\Carbon $to = null): array
     {

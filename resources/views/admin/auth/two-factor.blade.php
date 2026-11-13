@@ -13,7 +13,7 @@
         <div class="auth-shell-card rounded-2xl p-8">
             <div class="text-center mb-8">
                 <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-shield-halved text-purple-600 text-2xl"></i>
+                    <i aria-hidden="true" class="fas fa-shield-halved text-purple-600 text-2xl"></i>
                 </div>
                 <h1 class="text-xl font-bold text-gray-800">Two-Factor Verification</h1>
                 <p class="text-sm text-gray-500 mt-2">Enter the 6-digit code from your authenticator app, or use a recovery code.</p>
@@ -32,13 +32,13 @@
                            class="w-full border border-gray-300 rounded-lg px-4 py-3 text-center text-lg tracking-[0.3em] font-mono focus:border-blue-500 outline-none transition">
                 </div>
                 <button type="submit" class="w-full brand-button px-4 py-3 rounded-lg text-sm font-medium">
-                    <i class="fas fa-arrow-right mr-1"></i> Verify
+                    <i aria-hidden="true" class="fas fa-arrow-right mr-1"></i> Verify
                 </button>
             </form>
         </div>
         <div class="text-center mt-4">
             <a href="{{ route('admin.login') }}" class="text-gray-400 hover:text-white text-sm">
-                <i class="fas fa-arrow-left mr-1"></i> Back to login
+                <i aria-hidden="true" class="fas fa-arrow-left mr-1"></i> Back to login
             </a>
         </div>
     </div>

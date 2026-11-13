@@ -10,7 +10,9 @@
         <div class="space-y-3 text-sm">
             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Status</span><x-status-badge status="{{ $order->status }}" /></div>
             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Customer</span><span>{{ $order->customer?->name ?? 'N/A' }}</span></div>
+            @if($order->customer?->trashed())<p class="text-xs text-gray-500">Deleted account · Customer history retained</p>@endif
             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Partner</span><span>{{ $order->partner?->name ?? 'N/A' }}</span></div>
+            @if($order->branch)<div class="flex justify-between border-b pb-2"><span class="text-gray-500">Branch</span><span>{{ $order->branch->name }}</span></div><p class="text-xs text-gray-500">{{ $order->branch->address_line1 }} {{ $order->branch->city }}</p>@endif
             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Driver</span><span>{{ $order->driver?->user?->name ?? 'Unassigned' }}</span></div>
             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Service</span><span>{{ $order->service?->name ?? 'N/A' }}</span></div>
             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Payment</span><span>{{ ucfirst($order->payment_status) }} ({{ ucfirst($order->payment_method ?? 'N/A') }})</span></div>
@@ -50,6 +52,22 @@
             </div>
         </div>
 
+        @if($order->fare_breakdown)
+        <section class="rounded-xl bg-white p-6 shadow-sm"><h3 class="mb-4 font-semibold text-gray-800">Detailed fare calculation</h3><dl class="space-y-3 text-sm">
+        @foreach((array) $order->fare_breakdown as $label => $amount)
+        <div class="grid gap-2 sm:grid-cols-2"><dt class="text-gray-500">{{ \Illuminate\Support\Str::headline((string) $label) }}</dt><dd class="whitespace-pre-wrap break-words">{{ is_array($amount) ? json_encode($amount, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) : (is_bool($amount) ? ($amount ? 'Yes' : 'No') : $amount) }}</dd></div>
+        @endforeach
+        </dl></section>
+        @endif
+        @if($order->proof_images)
+        <section class="rounded-xl bg-white p-6 shadow-sm"><h3 class="mb-4 font-semibold text-gray-800">Delivery proof</h3>
+        <div class="grid gap-4 sm:grid-cols-2">
+        @forelse($order->proofImageUrls() as $proofUrl)
+        <a href="{{ $proofUrl }}" target="_blank" rel="noopener noreferrer" class="block"><img src="{{ $proofUrl }}" alt="Order delivery proof {{ $loop->iteration }}" loading="lazy" referrerpolicy="no-referrer" class="max-h-64 w-full rounded-lg border object-contain"><span class="mt-2 block text-sm text-purple-700">Open proof {{ $loop->iteration }}</span></a>
+        @empty<p class="text-sm text-gray-500">Proof records exist, but no supported image link is available.</p>@endforelse
+        </div>@if($order->proof_uploaded_at)<p class="mt-3 text-xs text-gray-500">Uploaded {{ $order->proof_uploaded_at->format('M d, Y H:i') }}</p>@endif</section>
+        @endif
+
         <!-- Update Status -->
         <div class="bg-white rounded-xl shadow-sm p-6">
             <h3 class="font-semibold text-gray-800 mb-4">Update Status</h3>
@@ -58,14 +76,14 @@
                 @method('PATCH')
                 <div class="flex flex-wrap gap-3 items-end">
                     <div class="flex-1 min-w-[200px]">
-                        <select name="status" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                        <select aria-label="Order status" name="status" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
                             @foreach(['pending','accepted','driver_arrived','in_progress','picked_up','completed','cancelled'] as $s)
                                 <option value="{{ $s }}" {{ $order->status === $s ? 'selected' : '' }}>{{ ucfirst(str_replace('_', ' ', $s)) }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div class="flex-1 min-w-[200px]">
-                        <input type="text" name="cancel_reason" placeholder="Cancel reason (if cancelling)" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                        <input type="text" aria-label="Cancellation reason" name="cancel_reason" placeholder="Cancel reason (if cancelling)" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
                     </div>
                     <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg text-sm font-medium">Update</button>
                 </div>
@@ -112,11 +130,11 @@
             <div class="space-y-4 text-sm">
                 @forelse($order->trackingEvents as $event)
                     <div class="flex gap-3 border-l-2 {{ $event->is_milestone ? 'border-blue-500' : 'border-gray-200' }} pl-4 py-1">
-                        <span class="{{ $event->is_milestone ? 'text-blue-600' : 'text-gray-400' }}"><i class="fas fa-circle text-[8px]"></i></span>
+                        <span class="{{ $event->is_milestone ? 'text-blue-600' : 'text-gray-400' }}"><i aria-hidden="true" class="fas fa-circle text-[8px]"></i></span>
                         <div class="flex-1">
                             <p class="font-medium">{{ $event->event_title }}</p>
                             @if($event->event_description)<p class="text-xs text-gray-500">{{ $event->event_description }}</p>@endif
-                            @if($event->location_address)<p class="text-xs text-gray-500"><i class="fas fa-location-dot mr-1"></i>{{ $event->location_address }}</p>@endif
+                            @if($event->location_address)<p class="text-xs text-gray-500"><i aria-hidden="true" class="fas fa-location-dot mr-1"></i>{{ $event->location_address }}</p>@endif
                         </div>
                         <div class="text-right text-xs text-gray-500"><p>{{ $event->event_time?->format('M d, Y H:i') }}</p><p>{{ $event->user?->name ?? 'System' }}</p></div>
                     </div>

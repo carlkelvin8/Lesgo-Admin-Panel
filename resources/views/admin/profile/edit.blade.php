@@ -16,8 +16,8 @@
         <form method="POST" action="{{ route('admin.profile.update') }}" enctype="multipart/form-data" class="space-y-4">
             @csrf @method('PUT')
             <div>
-                <label class="mb-1 block text-sm font-medium">Profile picture</label>
-                <input type="file" name="profile_picture" accept=".jpg,.jpeg,.png,.webp" class="w-full rounded-lg border px-3 py-2 text-sm">
+                <label for="profile_picture" class="mb-1 block text-sm font-medium">Profile picture</label>
+                <input id="profile_picture" type="file" name="profile_picture" accept=".jpg,.jpeg,.png,.webp" class="w-full rounded-lg border px-3 py-2 text-sm">
                 <p class="mt-1 text-xs text-gray-500">JPG, PNG, or WebP up to 2 MB.</p>
                 @if($admin->profile_picture)
                     <label class="mt-2 inline-flex items-center gap-2 text-sm text-gray-600"><input type="checkbox" name="remove_profile_picture" value="1"> Remove current picture</label>

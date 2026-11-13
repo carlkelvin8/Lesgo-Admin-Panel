@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 class AuditLogController extends Controller
 {
     use SearchEscaping;
+
     public function index(Request $request)
     {
         $query = AuditLog::with('user');
@@ -18,13 +19,13 @@ class AuditLogController extends Controller
             $search = $this->escapeLikePattern($request->search);
             $query->where(function ($q) use ($search) {
                 $q->where('action', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%")
-                  ->orWhere('resource_type', 'like', "%{$search}%")
-                  ->orWhere('ip_address', 'like', "%{$search}%")
-                  ->orWhereHas('user', function ($uq) use ($search) {
-                      $uq->where('name', 'like', "%{$search}%")
-                         ->orWhere('email', 'like', "%{$search}%");
-                  });
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('resource_type', 'like', "%{$search}%")
+                    ->orWhere('ip_address', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($uq) use ($search) {
+                        $uq->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -45,10 +46,10 @@ class AuditLogController extends Controller
         }
 
         if ($request->filled('date_to')) {
-            $query->where('occurred_at', '<=', $request->date_to . ' 23:59:59');
+            $query->where('occurred_at', '<=', $request->date_to.' 23:59:59');
         }
 
-        $logs = $query->latest('occurred_at')->paginate(20)->withQueryString();
+        $logs = $query->latest('occurred_at')->orderByDesc('id')->paginate(20)->withQueryString();
 
         return view('admin.audit-logs.index', compact('logs'));
     }

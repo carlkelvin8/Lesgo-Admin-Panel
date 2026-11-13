@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 class NotificationController extends Controller
 {
     use SearchEscaping;
+
     public function index(Request $request)
     {
         $query = Notification::with('user');
@@ -21,8 +22,8 @@ class NotificationController extends Controller
         if ($request->filled('search')) {
             $search = $this->escapeLikePattern($request->search);
             $query->where(function ($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                    ->orWhere('body', 'like', "%{$search}%");
+                $q->whereRaw($this->searchLikeSql('title'), ["%{$search}%"])
+                    ->orWhereRaw($this->searchLikeSql('body'), ["%{$search}%"]);
             });
         }
 
@@ -46,7 +47,7 @@ class NotificationController extends Controller
             $query->where('delivery_status', $request->delivery_status);
         }
 
-        $notifications = $query->latest()->paginate(20)->withQueryString();
+        $notifications = $query->latest()->orderByDesc('id')->paginate(20)->withQueryString();
 
         return view('admin.notifications.index', compact('notifications'));
     }

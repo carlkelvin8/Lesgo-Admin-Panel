@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 class RatingReviewController extends Controller
 {
     use SearchEscaping;
+
     public function index(Request $request)
     {
         $query = RatingReview::with(['user', 'order']);
@@ -17,7 +18,7 @@ class RatingReviewController extends Controller
         if ($request->filled('search')) {
             $search = $this->escapeLikePattern($request->search);
             $query->whereHas('user', function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%");
+                $q->whereRaw($this->searchLikeSql('name'), ["%{$search}%"]);
             });
         }
 
@@ -33,7 +34,7 @@ class RatingReviewController extends Controller
             $query->where('overall_rating', '<=', $request->max_rating);
         }
 
-        $reviews = $query->latest()->paginate(20)->withQueryString();
+        $reviews = $query->latest()->orderByDesc('id')->paginate(20)->withQueryString();
 
         return view('admin.ratings.index', compact('reviews'));
     }

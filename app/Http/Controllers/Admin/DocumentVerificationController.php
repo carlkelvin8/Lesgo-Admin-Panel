@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\DocumentVerification;
 use App\Traits\SearchEscaping;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class DocumentVerificationController extends Controller
 {
     use SearchEscaping;
+
     public function index(Request $request)
     {
         $query = DocumentVerification::with(['user', 'verifier']);
@@ -17,8 +19,8 @@ class DocumentVerificationController extends Controller
         if ($request->filled('search')) {
             $search = $this->escapeLikePattern($request->search);
             $query->whereHas('user', function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                $q->whereRaw($this->searchLikeSql('name'), ["%{$search}%"])
+                    ->orWhereRaw($this->searchLikeSql('email'), ["%{$search}%"]);
             });
         }
 
@@ -30,9 +32,13 @@ class DocumentVerificationController extends Controller
             $query->where('status', $request->status);
         }
 
-        $verifications = $query->latest('submitted_at')->paginate(20)->withQueryString();
+        $verifications = $query->latest('submitted_at')->orderByDesc('id')->paginate(20)->withQueryString();
 
-        return view('admin.document-verifications.index', compact('verifications'));
+        $documentTypes = collect(['drivers_license', 'national_id', 'passport', 'vehicle_registration', 'other'])
+            ->merge(DocumentVerification::query()->whereNotNull('document_type')->distinct()->pluck('document_type'))
+            ->filter()->unique()->sort()->mapWithKeys(fn ($type) => [$type => Str::headline($type)])->all();
+
+        return view('admin.document-verifications.index', compact('verifications', 'documentTypes'));
     }
 
     public function show(DocumentVerification $documentVerification)

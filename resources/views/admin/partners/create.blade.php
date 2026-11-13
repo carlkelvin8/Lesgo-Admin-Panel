@@ -9,8 +9,8 @@
             @csrf
 
             <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-1">User</label>
-                <select name="user_id" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">
+                <label class="block text-sm font-medium text-gray-700 mb-1" for="field-user_id">User</label>
+                <select id="field-user_id" name="user_id" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">
                     <option value="">Select User</option>
                     @foreach($users as $user)
                         <option value="{{ $user->id }}" {{ old('user_id') == $user->id ? 'selected' : '' }}>{{ $user->name }} ({{ $user->email }})</option>
@@ -19,23 +19,23 @@
             </div>
 
             <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                <input type="text" name="name" value="{{ old('name') }}" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">
+                <label class="block text-sm font-medium text-gray-700 mb-1" for="field-name">Name</label>
+                <input id="field-name" type="text" name="name" value="{{ old('name') }}" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">
             </div>
 
             <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                <input type="text" name="category" value="{{ old('category') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">
+                <label class="block text-sm font-medium text-gray-700 mb-1" for="field-category">Category</label>
+                <input id="field-category" type="text" name="category" value="{{ old('category') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">
             </div>
 
             <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <textarea name="description" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">{{ old('description') }}</textarea>
+                <label class="block text-sm font-medium text-gray-700 mb-1" for="field-description">Description</label>
+                <textarea id="field-description" name="description" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">{{ old('description') }}</textarea>
             </div>
 
             <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Delivery Fee (₱)</label>
-                <input type="number" step="0.01" name="delivery_fee" value="{{ old('delivery_fee') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">
+                <label class="block text-sm font-medium text-gray-700 mb-1" for="field-delivery_fee">Delivery Fee (₱)</label>
+                <input id="field-delivery_fee" type="number" step="0.01" name="delivery_fee" value="{{ old('delivery_fee') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">
             </div>
 
             <div class="flex items-center gap-3">

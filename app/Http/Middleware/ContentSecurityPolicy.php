@@ -6,6 +6,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Vite;
 use Symfony\Component\HttpFoundation\Response;
 
 class ContentSecurityPolicy
@@ -19,13 +20,25 @@ class ContentSecurityPolicy
             return $response;
         }
 
+        $devOrigin = '';
+        $devSocket = '';
+        if (app()->environment('local') && Vite::isRunningHot()) {
+            $url = trim(file_get_contents(Vite::hotFile()));
+            $parts = parse_url($url);
+            if (is_array($parts) && in_array($parts['scheme'] ?? '', ['http', 'https'], true) && isset($parts['host'])) {
+                $origin = $parts['host'].(isset($parts['port']) ? ':'.$parts['port'] : '');
+                $devOrigin = ' '.$parts['scheme'].'://'.$origin;
+                $devSocket = ' '.($parts['scheme'] === 'https' ? 'wss' : 'ws').'://'.$origin;
+            }
+        }
+
         $cspDirectives = [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
-            "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com".$devOrigin,
+            "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com".$devOrigin,
             "img-src 'self' data: https:",
-            "font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com",
-            "connect-src 'self' https://ip-api.com",
+            "font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com".$devOrigin,
+            "connect-src 'self' https://ip-api.com".$devOrigin.$devSocket,
             "frame-ancestors 'none'",
             "base-uri 'self'",
             "form-action 'self'",

@@ -29,11 +29,11 @@
 
                 <div class="grid gap-3">
                     <div class="auth-feature flex items-center gap-3 rounded-xl px-4 py-3">
-                        <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-white/12"><i class="fas fa-shield-halved text-sm"></i></span>
+                        <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-white/12"><i aria-hidden="true" class="fas fa-shield-halved text-sm"></i></span>
                         <div><p class="text-sm font-semibold">Protected admin access</p><p class="text-xs text-white/55">Rate-limited and security monitored</p></div>
                     </div>
                     <div class="flex items-center gap-2 text-xs text-white/45">
-                        <i class="fas fa-lock text-[10px]"></i>
+                        <i aria-hidden="true" class="fas fa-lock text-[10px]"></i>
                         <span>Authorized LesGo personnel only</span>
                     </div>
                 </div>

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\RegistrationFeePayment;
 use App\Models\SecuritySetting;
+use App\Services\RegistrationFeeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -30,12 +31,12 @@ class RegistrationFeeController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('paymongo_reference', 'like', "%{$search}%")
-                  ->orWhere('paymongo_checkout_id', 'like', "%{$search}%")
-                  ->orWhereHas('user', fn($qq) => $qq->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%"));
+                    ->orWhere('paymongo_checkout_id', 'like', "%{$search}%")
+                    ->orWhereHas('user', fn ($qq) => $qq->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%"));
             });
         }
 
-        $fees = $query->latest()->paginate(20)->withQueryString();
+        $fees = $query->latest()->orderByDesc('id')->paginate(20)->withQueryString();
 
         $stats = [
             'total' => RegistrationFeePayment::count(),
@@ -111,12 +112,14 @@ class RegistrationFeeController extends Controller
     public function show(RegistrationFeePayment $registrationFee)
     {
         $registrationFee->load(['user', 'approver', 'waivedBy']);
+
         return view('admin.registration-fees.show', ['fee' => $registrationFee]);
     }
 
     public function approve(Request $request, RegistrationFeePayment $registrationFee)
     {
-        \App\Services\RegistrationFeeService::approveApplication($registrationFee, $request->user());
+        RegistrationFeeService::approveApplication($registrationFee, $request->user());
+
         return back()->with('success', $registrationFee->fresh()->is_active ? 'Approved and activated (fee paid/waived + approved).' : 'Approved – account remains restricted until fee is paid or waived.');
     }
 
@@ -124,10 +127,11 @@ class RegistrationFeeController extends Controller
     {
         $validated = $request->validate(['reason' => 'nullable|string|max:1000']);
         try {
-            $updated = \App\Services\RegistrationFeeService::waiveAndApprove($registrationFee, $request->user(), $validated['reason'] ?? null);
+            $updated = RegistrationFeeService::waiveAndApprove($registrationFee, $request->user(), $validated['reason'] ?? null);
         } catch (\DomainException $e) {
             return back()->with('error', $e->getMessage());
         }
+
         return back()->with('success', $updated->is_active
             ? 'Registration fee waived; application approved and account activated.'
             : 'Registration fee waived and application approved, but the account could not be activated.');
@@ -136,7 +140,8 @@ class RegistrationFeeController extends Controller
     public function reject(Request $request, RegistrationFeePayment $registrationFee)
     {
         $validated = $request->validate(['reason' => 'nullable|string|max:1000']);
-        \App\Services\RegistrationFeeService::rejectApplication($registrationFee, $request->user(), $validated['reason'] ?? null);
+        RegistrationFeeService::rejectApplication($registrationFee, $request->user(), $validated['reason'] ?? null);
+
         return back()->with('success', 'Application rejected – account remains restricted.');
     }
 }

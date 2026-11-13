@@ -4,10 +4,21 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class Notification extends Model
 {
     use HasFactory;
+
+    protected static function booted(): void
+    {
+        $invalidatePreview = function (): void {
+            Cache::forget('admin:notification_unread_count');
+            Cache::forget('admin:recent_notifications');
+        };
+        static::saved($invalidatePreview);
+        static::deleted($invalidatePreview);
+    }
 
     protected $fillable = [
         'user_id',
@@ -39,6 +50,6 @@ class Notification extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class)->withTrashed();
     }
 }
