@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Partner extends Model
 {
+    public const STATUSES = ['pending', 'approved', 'active', 'closed', 'rejected', 'suspended'];
+
     use HasFactory;
 
     protected $fillable = [
@@ -48,7 +50,7 @@ class Partner extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class)->withTrashed();
     }
 
     public function services()

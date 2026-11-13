@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AnalyticsEvent;
+use App\Models\DailyMetric;
 use App\Models\DailyReport;
 use App\Models\RevenueAnalytics;
-use App\Models\DailyMetric;
-use App\Models\AnalyticsEvent;
 use Illuminate\Support\Facades\DB;
 
 class AnalyticsController extends Controller
@@ -17,7 +17,7 @@ class AnalyticsController extends Controller
         $thirtyDaysAgo = now()->subDays(30)->toDateString();
         $sevenDaysAgo = now()->subDays(7)->toDateString();
 
-        $todayMetrics = DailyMetric::where('date', $today)
+        $todayMetrics = DailyMetric::whereDate('date', $today)
             ->get()
             ->groupBy('metric_type');
 

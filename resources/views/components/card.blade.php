@@ -7,6 +7,12 @@
     if ($hover && $href) $classes .= ' hover:shadow-md transition-shadow';
 @endphp
 
-<{{ $tag }} {{ $href ? "href=\"{$href}\"" : '' }} class="{{ $classes }}">
+<{{ $tag }} @if($href) href="{{ $href }}" @endif {{ $attributes->class($classes) }}>
+    @isset($header)
+        <div class="mb-4">{{ $header }}</div>
+    @endisset
     {{ $slot }}
+    @isset($footer)
+        <div class="mt-4">{{ $footer }}</div>
+    @endisset
 </{{ $tag }}>

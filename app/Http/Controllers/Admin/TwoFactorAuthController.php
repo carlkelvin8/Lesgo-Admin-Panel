@@ -7,13 +7,16 @@ use App\Models\TwoFactorAuth;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Session;
 
 class TwoFactorAuthController extends Controller
 {
     public function showVerifyForm(Request $request)
     {
-        if (! Session::has('2fa_pending_user_id')) {
+        if (! $this->hasPendingLogin()) {
+            $this->clearPendingLogin();
+
             return redirect()->route('admin.login');
         }
 
@@ -23,13 +26,17 @@ class TwoFactorAuthController extends Controller
     public function showSetup(Request $request)
     {
         $user = $request->user();
-        $twoFactor = TwoFactorAuth::firstOrCreate(
+        $twoFactor = TwoFactorAuth::forUser($user->id) ?? TwoFactorAuth::firstOrCreate(
             ['user_id' => $user->id, 'method' => 'totp'],
             ['is_enabled' => false]
         );
 
         if (! $twoFactor->secret) {
             $twoFactor->generateTotpSecret();
+        }
+
+        if ($twoFactor->getTotpSecret() === null) {
+            return redirect()->route('admin.profile.edit')->withErrors(['code' => 'The existing authenticator secret cannot be read. Contact an administrator before resetting two-factor authentication.']);
         }
 
         $qrCodeUrl = $twoFactor->getQrCodeUrl();
@@ -45,9 +52,7 @@ class TwoFactorAuthController extends Controller
         ]);
 
         $user = $request->user();
-        $twoFactor = TwoFactorAuth::where('user_id', $user->id)
-            ->where('method', 'totp')
-            ->first();
+        $twoFactor = TwoFactorAuth::forUser($user->id);
 
         if (! $twoFactor || ! $twoFactor->verifyCode($validated['code'])) {
             return back()->withErrors(['code' => 'The verification code is invalid. Please try again.']);
@@ -85,17 +90,18 @@ class TwoFactorAuthController extends Controller
         $userId = Session::get('2fa_pending_user_id');
         $user = User::find($userId);
 
-        if (! $user) {
+        if (! $this->hasPendingLogin() || ! $user || ! $user->isAdmin() || ! $user->is_active) {
+            $this->clearPendingLogin();
+
             return redirect()->route('admin.login')
                 ->withErrors(['email' => 'Session expired. Please login again.']);
         }
 
-        $twoFactor = TwoFactorAuth::where('user_id', $user->id)
-            ->where('method', 'totp')
-            ->where('is_enabled', true)
-            ->first();
+        $twoFactor = TwoFactorAuth::forUser($user->id, true);
 
         if (! $twoFactor) {
+            $this->clearPendingLogin();
+
             return redirect()->route('admin.login')
                 ->withErrors(['email' => '2FA is not configured for this account.']);
         }
@@ -108,8 +114,12 @@ class TwoFactorAuthController extends Controller
             return back()->withErrors(['code' => 'Invalid verification code.']);
         }
 
-        Session::forget('2fa_pending_user_id');
-        Auth::login($user);
+        $remember = (bool) Session::get('2fa_pending_remember', false);
+        if ($throttleKey = Session::get('2fa_pending_throttle_key')) {
+            RateLimiter::clear($throttleKey);
+        }
+        $this->clearPendingLogin();
+        Auth::login($user, $remember);
         $request->session()->regenerate();
         $request->session()->put('admin_last_activity', now()->timestamp);
 
@@ -119,10 +129,7 @@ class TwoFactorAuthController extends Controller
     public function regenerateCodes(Request $request)
     {
         $user = $request->user();
-        $twoFactor = TwoFactorAuth::where('user_id', $user->id)
-            ->where('method', 'totp')
-            ->where('is_enabled', true)
-            ->first();
+        $twoFactor = TwoFactorAuth::forUser($user->id, true);
 
         if (! $twoFactor) {
             return back()->withErrors(['error' => '2FA is not enabled.']);
@@ -135,5 +142,18 @@ class TwoFactorAuthController extends Controller
         $backupCodes = $twoFactor->generateBackupCodes();
 
         return view('admin.profile.2fa-recovery', compact('backupCodes'));
+    }
+
+    private function hasPendingLogin(): bool
+    {
+        $startedAt = (int) Session::get('2fa_pending_at', 0);
+
+        return Session::has('2fa_pending_user_id') && $startedAt > 0
+            && $startedAt <= now()->timestamp && now()->timestamp - $startedAt <= 300;
+    }
+
+    private function clearPendingLogin(): void
+    {
+        Session::forget(['2fa_pending_user_id', '2fa_pending_at', '2fa_pending_remember', '2fa_pending_throttle_key']);
     }
 }

@@ -7,6 +7,7 @@
 @endsection
 
 @section('content')
+@if($wallet->user?->trashed())<p class="mb-4 rounded-lg bg-gray-100 p-4 text-sm text-gray-700">Deleted account · Wallet history retained</p>@endif
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <div class="bg-white rounded-xl shadow-sm p-6">
         <h3 class="font-semibold text-gray-800 mb-4">User Information</h3>

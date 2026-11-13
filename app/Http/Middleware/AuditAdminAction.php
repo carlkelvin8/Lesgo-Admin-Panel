@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\AuditLog;
+use App\Services\DashboardService;
 use Closure;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -21,6 +22,7 @@ class AuditAdminAction
         }
 
         try {
+            DashboardService::invalidate();
             $route = $request->route();
             $parameters = collect($route?->parameters() ?? []);
             $resource = $parameters->first(fn ($value) => $value instanceof Model);
@@ -33,7 +35,8 @@ class AuditAdminAction
                 'resource_type' => $resource ? class_basename($resource) : $request->segment(2),
                 'resource_id' => $resource?->getKey(),
                 'new_values' => $request->except([
-                    '_token', '_method', 'password', 'password_confirmation', 'two_factor_secret',
+                    '_token', '_method', 'password', 'password_confirmation', 'current_password',
+                    'two_factor_secret', 'code', 'backup_codes', 'recovery_codes',
                 ]),
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),

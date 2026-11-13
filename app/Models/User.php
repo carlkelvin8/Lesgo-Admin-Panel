@@ -2,14 +2,16 @@
 
 namespace App\Models;
 
+use App\Notifications\AdminResetPasswordNotification;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use App\Notifications\AdminResetPasswordNotification;
 
 class User extends Authenticatable
 {
+    public const ROLES = ['customer', 'driver', 'partner', 'partner_admin', 'staff', 'admin'];
+
     use HasFactory, Notifiable, SoftDeletes;
 
     protected $fillable = [

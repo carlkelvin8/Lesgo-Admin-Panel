@@ -12,6 +12,7 @@ use Illuminate\Support\Str;
 class FaqController extends Controller
 {
     use SearchEscaping;
+
     public function categoryIndex()
     {
         $categories = FaqCategory::withCount('articles')->latest()->paginate(20);
@@ -35,6 +36,7 @@ class FaqController extends Controller
         ]);
 
         $validated['slug'] = $this->uniqueSlug(FaqCategory::class, $validated['name']);
+        $validated['sort_order'] = $validated['sort_order'] ?? 0;
         $validated['is_active'] = $request->boolean('is_active');
 
         FaqCategory::create($validated);
@@ -59,6 +61,7 @@ class FaqController extends Controller
         ]);
 
         $validated['slug'] = $this->uniqueSlug(FaqCategory::class, $validated['name'], $category->id);
+        $validated['sort_order'] = $validated['sort_order'] ?? 0;
         $validated['is_active'] = $request->boolean('is_active');
 
         $category->update($validated);
@@ -116,6 +119,7 @@ class FaqController extends Controller
         ]);
 
         $validated['slug'] = $this->uniqueSlug(FaqArticle::class, $validated['title']);
+        $validated['sort_order'] = $validated['sort_order'] ?? 0;
         $validated['created_by'] = auth()->id();
         $validated['is_published'] = $request->boolean('is_published');
         $validated['is_featured'] = $request->boolean('is_featured');
@@ -139,7 +143,8 @@ class FaqController extends Controller
 
     public function articleEdit(FaqArticle $article)
     {
-        $categories = FaqCategory::where('is_active', true)->orderBy('sort_order')->get();
+        $categories = FaqCategory::where('is_active', true)
+            ->orWhere('id', $article->category_id)->orderBy('sort_order')->get();
 
         return view('admin.faq.article-edit', compact('article', 'categories'));
     }
@@ -160,6 +165,7 @@ class FaqController extends Controller
         ]);
 
         $validated['slug'] = $this->uniqueSlug(FaqArticle::class, $validated['title'], $article->id);
+        $validated['sort_order'] = $validated['sort_order'] ?? 0;
         $validated['updated_by'] = auth()->id();
         $validated['is_published'] = $request->boolean('is_published');
         $validated['is_featured'] = $request->boolean('is_featured');

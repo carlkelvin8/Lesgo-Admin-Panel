@@ -2,9 +2,14 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use PragmaRX\Google2FA\Google2FA;
 
 class TwoFactorAuth extends Model
 {
@@ -35,6 +40,7 @@ class TwoFactorAuth extends Model
             'is_enabled' => 'boolean',
             'enabled_at' => 'datetime',
             'last_used_at' => 'datetime',
+            'backup_codes' => 'array',
             'recovery_codes' => 'array',
             'metadata' => 'array',
         ];
@@ -50,11 +56,28 @@ class TwoFactorAuth extends Model
         return $this->is_enabled && $this->method === 'totp';
     }
 
+    public static function forUser(int $userId, bool $enabledOnly = false): ?static
+    {
+        $fallback = null;
+        foreach (['two_factor_auths', 'two_factor_auth'] as $table) {
+            if (! Schema::hasTable($table)) {
+                continue;
+            }
+            $record = (new static)->setTable($table)->newQuery()->where('user_id', $userId)->where('method', 'totp')->first();
+            if ($record?->is_enabled) {
+                return $record;
+            }
+            $fallback ??= $record;
+        }
+
+        return $enabledOnly ? null : $fallback;
+    }
+
     public function generateTotpSecret(): string
     {
-        $google2fa = app(\PragmaRX\Google2FA\Google2FA::class);
+        $google2fa = app(Google2FA::class);
         $secret = $google2fa->generateSecretKey();
-        $this->update(['secret' => \Illuminate\Support\Facades\Crypt::encryptString($secret)]);
+        $this->update(['secret' => Crypt::encryptString($secret)]);
 
         return $secret;
     }
@@ -65,14 +88,18 @@ class TwoFactorAuth extends Model
             return null;
         }
 
-        return \Illuminate\Support\Facades\Crypt::decryptString($this->secret);
+        try {
+            return Crypt::decryptString($this->secret);
+        } catch (DecryptException) {
+            return null;
+        }
     }
 
     public function getQrCodeUrl(): string
     {
         $secret = $this->getTotpSecret();
         $user = $this->user;
-        $google2fa = app(\PragmaRX\Google2FA\Google2FA::class);
+        $google2fa = app(Google2FA::class);
 
         return $google2fa->getQRCodeUrl(
             'LesGo Admin',
@@ -89,7 +116,7 @@ class TwoFactorAuth extends Model
             return false;
         }
 
-        $google2fa = app(\PragmaRX\Google2FA\Google2FA::class);
+        $google2fa = app(Google2FA::class);
         $valid = $google2fa->verifyKey($secret, $code);
 
         if ($valid) {
@@ -110,7 +137,7 @@ class TwoFactorAuth extends Model
 
         $this->update([
             'backup_codes' => $hashedCodes,
-            'recovery_codes' => $codes,
+            'recovery_codes' => null,
         ]);
 
         return $codes;
@@ -141,8 +168,16 @@ class TwoFactorAuth extends Model
 
     public static function disableForUser(User $user): bool
     {
-        return static::where('user_id', $user->id)
-            ->where('method', 'totp')
-            ->update(['is_enabled' => false]) > 0;
+        return DB::transaction(function () use ($user) {
+            $updated = 0;
+            foreach (['two_factor_auths', 'two_factor_auth'] as $table) {
+                if (Schema::hasTable($table)) {
+                    $updated += (new static)->setTable($table)->newQuery()->where('user_id', $user->id)
+                        ->where('method', 'totp')->update(['is_enabled' => false]);
+                }
+            }
+
+            return $updated > 0;
+        });
     }
 }

@@ -1,4 +1,4 @@
-function dashboardCharts() {
+export default function dashboardCharts() {
     return {
         revenueChart: null,
         orderStatusChart: null,
@@ -42,7 +42,7 @@ function dashboardCharts() {
                             borderWidth: 1,
                             callbacks: {
                                 label: function(ctx) {
-                                    return '$' + ctx.parsed.y.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                                    return '₱' + ctx.parsed.y.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
                                 }
                             }
                         }
@@ -56,7 +56,7 @@ function dashboardCharts() {
                             grid: { color: 'rgba(107,114,128,0.1)' },
                             ticks: {
                                 color: '#6b7280',
-                                callback: function(v) { return '$' + v.toLocaleString(); }
+                                callback: function(v) { return '₱' + v.toLocaleString(); }
                             },
                             beginAtZero: true
                         }

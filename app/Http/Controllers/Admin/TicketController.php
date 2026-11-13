@@ -8,10 +8,12 @@ use App\Models\SupportTicketMessage;
 use App\Models\User;
 use App\Traits\SearchEscaping;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class TicketController extends Controller
 {
     use SearchEscaping;
+
     public function index(Request $request)
     {
         $query = SupportTicket::with(['user', 'assignee']);
@@ -19,8 +21,8 @@ class TicketController extends Controller
         if ($request->filled('search')) {
             $search = $this->escapeLikePattern($request->search);
             $query->where(function ($q) use ($search) {
-                $q->where('ticket_number', 'like', "%{$search}%")
-                    ->orWhere('subject', 'like', "%{$search}%");
+                $q->whereRaw($this->searchLikeSql('ticket_number'), ["%{$search}%"])
+                    ->orWhereRaw($this->searchLikeSql('subject'), ["%{$search}%"]);
             });
         }
 
@@ -54,7 +56,10 @@ class TicketController extends Controller
         $validated = $request->validate([
             'status' => 'required|in:open,in_progress,waiting_customer,waiting_internal,resolved,closed,cancelled',
             'priority' => 'required|in:low,medium,high,urgent',
-            'assigned_to' => 'nullable|exists:users,id',
+            'assigned_to' => [
+                'nullable',
+                Rule::exists('users', 'id')->where('role', 'admin')->where('is_active', true)->whereNull('deleted_at'),
+            ],
         ]);
 
         if ($validated['status'] === 'resolved' && ! $ticket->resolved_at) {

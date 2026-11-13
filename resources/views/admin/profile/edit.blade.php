@@ -41,7 +41,6 @@
             <p class="mt-1 text-sm text-gray-500">Add an extra layer of security to your admin account with TOTP-based two-factor authentication.</p>
         </div>
         @php
-            $twoFactor = $admin->twoFactorAuth;
             $isEnabled = $twoFactor && $twoFactor->is_enabled;
         @endphp
         @if($isEnabled)
@@ -56,19 +55,20 @@
     </div>
     <div class="mt-4">
         @if($isEnabled)
-            <div class="flex items-center gap-3">
-                <form method="POST" action="{{ route('admin.2fa.disable') }}" x-data onsubmit="return confirm('Are you sure you want to disable two-factor authentication?')">
-                    @csrf
-                    <input type="hidden" name="password" value="">
-                    <button type="button" @click="$el.closest('form').querySelector('input[name=password]').value = prompt('Enter your current password to confirm:') || ''; if($el.closest('form').querySelector('input[name=password]').value) $el.closest('form').submit()"
-                        class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm transition">
-                        <i class="fas fa-ban mr-1"></i> Disable 2FA
-                    </button>
-                </form>
-                <a href="{{ route('admin.2fa.setup') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm transition">
+            <form method="POST" action="{{ route('admin.2fa.regenerate') }}" class="space-y-3">
+                @csrf
+                <label class="block max-w-sm text-sm font-medium text-gray-700">Confirm current password
+                    <input type="password" name="password" required autocomplete="current-password" class="mt-1 w-full rounded-lg border px-3 py-2">
+                </label>
+                <div class="flex flex-wrap items-center gap-3">
+                <button type="submit" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm transition">
                     <i class="fas fa-rotate mr-1"></i> Regenerate Codes
-                </a>
-            </div>
+                </button>
+                <button type="submit" formaction="{{ route('admin.2fa.disable') }}" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm transition">
+                    <i class="fas fa-ban mr-1"></i> Disable 2FA
+                </button>
+                </div>
+            </form>
         @else
             <a href="{{ route('admin.2fa.setup') }}" class="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition">
                 <i class="fas fa-shield-halved"></i> Set Up Two-Factor Authentication
@@ -84,7 +84,7 @@
             <div class="flex flex-col gap-3 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
                 <div class="min-w-0"><p class="truncate text-sm font-medium text-gray-800">{{ $session->user_agent ?: 'Unknown browser' }}</p><p class="mt-1 text-xs text-gray-500">{{ $session->ip_address ?: 'Unknown IP' }} · {{ $session->last_activity->diffForHumans() }} @if($session->is_current) · <span class="font-semibold text-green-600">Current session</span>@endif</p></div>
                 @unless($session->is_current)
-                    <button type="button" class="text-sm font-semibold text-red-600" x-data @click="$dispatch('confirm-modal', { title: 'Sign Out Session', message: 'Sign out this administrator session?', confirmText: 'Sign Out', onConfirm: () => { const f = document.createElement('form'); f.method = 'POST'; f.action = '{{ route('admin.profile.sessions.destroy', $session->id) }}'; f.innerHTML = '<input type=\"hidden\" name=\"_token\" value=\"{{ csrf_token() }}\"><input type=\"hidden\" name=\"_method\" value=\"DELETE\">'; document.body.appendChild(f); f.submit(); } })">Sign out</button>
+                    <x-confirm-action :action="route('admin.profile.sessions.destroy', $session->id)" method="DELETE" title="Sign Out Session" message="Sign out this administrator session?" confirm-text="Sign Out" class="text-sm font-semibold text-red-600">Sign out</x-confirm-action>
                 @endunless
             </div>
         @empty

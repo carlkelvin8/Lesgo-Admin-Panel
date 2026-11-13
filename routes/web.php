@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\DataRecordsController;
 use App\Http\Controllers\Admin\DocumentVerificationController;
 use App\Http\Controllers\Admin\DriverController;
 use App\Http\Controllers\Admin\FaqController;
@@ -40,6 +41,10 @@ Route::post('/admin/2fa/verify', [TwoFactorAuthController::class, 'verify'])->na
 
 // Admin protected routes
 Route::prefix('admin')->name('admin.')->middleware(['admin', 'admin.audit'])->group(function () {
+    Route::get('/data', [DataRecordsController::class, 'hub'])->name('data.hub');
+    Route::get('/data/{dataset}', [DataRecordsController::class, 'index'])->name('data.index');
+    Route::get('/data/{dataset}/export', [DataRecordsController::class, 'export'])->name('data.export');
+    Route::get('/data/{dataset}/{id}', [DataRecordsController::class, 'show'])->whereNumber('id')->name('data.show');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
     // Administrator account and active sessions
@@ -77,7 +82,7 @@ Route::prefix('admin')->name('admin.')->middleware(['admin', 'admin.audit'])->gr
     });
     Route::middleware('admin.permission:users.view')->group(function () {
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
-        Route::get('/users/{user}', [UserController::class, 'show'])->name('users.show');
+        Route::get('/users/{user}', [UserController::class, 'show'])->withTrashed()->name('users.show');
     });
 
     // Partners

@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Admin\RecordRefundRequest;
 use App\Http\Requests\Admin\ReconcilePaymentRequest;
+use App\Http\Requests\Admin\RecordRefundRequest;
 use App\Models\Payment;
 use App\Traits\SearchEscaping;
 use Illuminate\Http\Request;
@@ -14,16 +14,20 @@ use Illuminate\Validation\ValidationException;
 class PaymentController extends Controller
 {
     use SearchEscaping;
+
     public function index(Request $request)
     {
         $query = Payment::with(['customer', 'order']);
 
         if ($request->filled('search')) {
             $search = $this->escapeLikePattern($request->search);
-            $query->where(function ($q) use ($search) {
-                $q->where('id', $search)
-                    ->orWhereHas('customer', fn ($cq) => $cq->where('name', 'like', "%{$search}%"))
-                    ->orWhereHas('customer', fn ($cq) => $cq->where('email', 'like', "%{$search}%"));
+            $searchId = filter_var($request->search, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+            $query->where(function ($q) use ($search, $searchId) {
+                if ($searchId !== false) {
+                    $q->where('id', $searchId);
+                }
+                $q->orWhereHas('customer', fn ($cq) => $cq->whereRaw($this->searchLikeSql('name'), ["%{$search}%"]))
+                    ->orWhereHas('customer', fn ($cq) => $cq->whereRaw($this->searchLikeSql('email'), ["%{$search}%"]));
             });
         }
 
@@ -111,10 +115,13 @@ class PaymentController extends Controller
 
         if ($request->filled('search')) {
             $search = $this->escapeLikePattern($request->search);
-            $query->where(function ($q) use ($search) {
-                $q->where('id', $search)
-                    ->orWhereHas('customer', fn ($cq) => $cq->where('name', 'like', "%{$search}%"))
-                    ->orWhereHas('customer', fn ($cq) => $cq->where('email', 'like', "%{$search}%"));
+            $searchId = filter_var($request->search, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+            $query->where(function ($q) use ($search, $searchId) {
+                if ($searchId !== false) {
+                    $q->where('id', $searchId);
+                }
+                $q->orWhereHas('customer', fn ($cq) => $cq->whereRaw($this->searchLikeSql('name'), ["%{$search}%"]))
+                    ->orWhereHas('customer', fn ($cq) => $cq->whereRaw($this->searchLikeSql('email'), ["%{$search}%"]));
             });
         }
 
@@ -136,7 +143,7 @@ class PaymentController extends Controller
 
         $headers = [
             'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="payments_export_' . now()->format('Y-m-d_His') . '.csv"',
+            'Content-Disposition' => 'attachment; filename="payments_export_'.now()->format('Y-m-d_His').'.csv"',
             'Cache-Control' => 'no-cache, no-store, must-revalidate',
         ];
 

@@ -9,20 +9,25 @@ use App\Models\OrderTrackingEvent;
 use App\Traits\SearchEscaping;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class OrderController extends Controller
 {
     use SearchEscaping;
+
     public function index(Request $request)
     {
         $query = Order::with(['customer', 'partner', 'driver']);
 
         if ($request->filled('search')) {
             $search = $this->escapeLikePattern($request->search);
-            $query->where(function ($q) use ($search) {
-                $q->where('id', $search)
-                    ->orWhereHas('customer', fn ($cq) => $cq->where('name', 'like', "%{$search}%"))
-                    ->orWhereHas('partner', fn ($pq) => $pq->where('name', 'like', "%{$search}%"));
+            $searchId = filter_var($request->search, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+            $query->where(function ($q) use ($search, $searchId) {
+                if ($searchId !== false) {
+                    $q->where('id', $searchId);
+                }
+                $q->orWhereHas('customer', fn ($cq) => $cq->whereRaw($this->searchLikeSql('name'), ["%{$search}%"]))
+                    ->orWhereHas('partner', fn ($pq) => $pq->whereRaw($this->searchLikeSql('name'), ["%{$search}%"]));
             });
         }
 
@@ -50,6 +55,11 @@ class OrderController extends Controller
     public function show(Order $order)
     {
         $order->load(['customer', 'partner', 'driver.user', 'service', 'payments', 'trackingEvents.user', 'lesbuyItems']);
+        if (Schema::hasTable('partner_branches')) {
+            $order->load('branch');
+        } else {
+            $order->setRelation('branch', null);
+        }
 
         return view('admin.orders.show', compact('order'));
     }
@@ -104,10 +114,13 @@ class OrderController extends Controller
 
         if ($request->filled('search')) {
             $search = $this->escapeLikePattern($request->search);
-            $query->where(function ($q) use ($search) {
-                $q->where('id', $search)
-                    ->orWhereHas('customer', fn ($cq) => $cq->where('name', 'like', "%{$search}%"))
-                    ->orWhereHas('partner', fn ($pq) => $pq->where('name', 'like', "%{$search}%"));
+            $searchId = filter_var($request->search, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+            $query->where(function ($q) use ($search, $searchId) {
+                if ($searchId !== false) {
+                    $q->where('id', $searchId);
+                }
+                $q->orWhereHas('customer', fn ($cq) => $cq->whereRaw($this->searchLikeSql('name'), ["%{$search}%"]))
+                    ->orWhereHas('partner', fn ($pq) => $pq->whereRaw($this->searchLikeSql('name'), ["%{$search}%"]));
             });
         }
 
@@ -129,7 +142,7 @@ class OrderController extends Controller
 
         $headers = [
             'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="orders_export_' . now()->format('Y-m-d_His') . '.csv"',
+            'Content-Disposition' => 'attachment; filename="orders_export_'.now()->format('Y-m-d_His').'.csv"',
             'Cache-Control' => 'no-cache, no-store, must-revalidate',
         ];
 

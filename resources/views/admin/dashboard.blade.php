@@ -26,6 +26,7 @@
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        @if(auth()->user()->hasAdminPermission('verifications.manage'))
         <x-card href="{{ route('admin.document-verifications.index') }}" border hover class="cursor-pointer">
             <div class="flex items-center gap-4">
                 <div class="flex-shrink-0 w-12 h-12 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
@@ -37,7 +38,9 @@
                 </div>
             </div>
         </x-card>
+        @endif
 
+        @if(auth()->user()->hasAdminPermission('ratings.manage'))
         <x-card href="{{ route('admin.ratings.index') }}" border hover class="cursor-pointer">
             <div class="flex items-center gap-4">
                 <div class="flex-shrink-0 w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
@@ -49,7 +52,9 @@
                 </div>
             </div>
         </x-card>
+        @endif
 
+        @if(auth()->user()->hasAdminPermission('security.manage'))
         <x-card href="{{ route('admin.security-events.index') }}" border hover class="cursor-pointer">
             <div class="flex items-center gap-4">
                 <div class="flex-shrink-0 w-12 h-12 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
@@ -61,6 +66,7 @@
                 </div>
             </div>
         </x-card>
+        @endif
     </div>
 
     <div x-data="dashboardCharts()">
@@ -142,7 +148,7 @@
                                 <span class="font-medium text-gray-900 dark:text-white">{{ $entry->order_count ?? 0 }}</span>
                             </td>
                             <td class="px-4 py-4" data-label="Revenue">
-                                <span class="font-medium text-gray-900 dark:text-white">${{ number_format($entry->revenue ?? 0, 2) }}</span>
+                                <span class="font-medium text-gray-900 dark:text-white">₱{{ number_format($entry->revenue ?? 0, 2) }}</span>
                             </td>
                         </tr>
                     @empty
@@ -188,7 +194,7 @@
                                     </div>
                                 </td>
                                 <td class="px-4 py-4" data-label="Total">
-                                    <span class="font-medium text-gray-900 dark:text-white">${{ number_format($order->total ?? 0, 2) }}</span>
+                                    <span class="font-medium text-gray-900 dark:text-white">₱{{ number_format($order->actual_fare ?? $order->estimated_fare ?? 0, 2) }}</span>
                                 </td>
                                 <td class="px-4 py-4" data-label="Status">
                                     <x-status-badge :status="$order->status" />
@@ -268,7 +274,6 @@
 @endsection
 
 @section('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" integrity="sha512-S2dV4aV2+dTR6bKH1kGO0fH9NfT3kF7H9M8pDMt0PqMqR9I0O0JbRS+GCOh5Z8MKKE1lQ8GqBSF+OGOe1rTQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script>
 window.dashboardData = {
     dailyRevenue: @json($dailyRevenue),
@@ -276,5 +281,4 @@ window.dashboardData = {
     dailyUsers: @json($dailyUsers)
 };
 </script>
-<script src="{{ asset('js/dashboard-charts.js') }}"></script>
 @endsection

@@ -3,6 +3,8 @@
 @section('header', 'Driver Details')
 
 @section('actions')
+<a href="{{ route('admin.data.index', ['dataset' => 'driver-locations', 'driver_id' => $driver->user_id]) }}" class="rounded-lg border px-4 py-2 text-sm">Location History</a>
+<a href="{{ route('admin.data.index', ['dataset' => 'driver-duty-sessions', 'driver_profile_id' => $driver->id]) }}" class="rounded-lg border px-4 py-2 text-sm">Duty Sessions</a>
 <a href="{{ route('admin.drivers.edit', $driver) }}" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm"><i class="fas fa-edit mr-1"></i> Edit</a>
 <button type="button" class="bg-{{ $driver->status === 'active' ? 'red' : 'green' }}-500 text-white px-4 py-2 rounded-lg text-sm"
     x-data

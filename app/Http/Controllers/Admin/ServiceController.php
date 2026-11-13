@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 class ServiceController extends Controller
 {
     use SearchEscaping;
+
     public function index(Request $request)
     {
         $query = Service::with('partner');
@@ -18,8 +19,8 @@ class ServiceController extends Controller
         if ($request->filled('search')) {
             $search = $this->escapeLikePattern($request->search);
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('code', 'like', "%{$search}%");
+                $q->whereRaw($this->searchLikeSql('name'), ["%{$search}%"])
+                    ->orWhereRaw($this->searchLikeSql('code'), ["%{$search}%"]);
             });
         }
 
@@ -35,12 +36,14 @@ class ServiceController extends Controller
     public function show(Service $service)
     {
         $service->load('partner');
+
         return view('admin.services.show', compact('service'));
     }
 
     public function create()
     {
         $partners = Partner::all();
+
         return view('admin.services.create', compact('partners'));
     }
 
@@ -74,7 +77,7 @@ class ServiceController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'code' => 'required|string|max:50|unique:services,code,' . $service->id,
+            'code' => 'required|string|max:50|unique:services,code,'.$service->id,
             'description' => 'nullable|string',
             'base_fare' => 'required|numeric|min:0',
             'per_km_rate' => 'required|numeric|min:0',
@@ -91,7 +94,7 @@ class ServiceController extends Controller
 
     public function toggleStatus(Service $service)
     {
-        $service->update(['is_active' => !$service->is_active]);
+        $service->update(['is_active' => ! $service->is_active]);
         $status = $service->is_active ? 'activated' : 'deactivated';
 
         return redirect()->back()->with('success', "Service {$status} successfully.");

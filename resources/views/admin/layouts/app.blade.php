@@ -161,6 +161,14 @@
                     <i class="fas fa-heart-pulse w-5"></i> System Health
                 </a>
                 @endif
+                <div class="sidebar-section-label px-4 py-2 text-xs uppercase tracking-wider mt-4">Business Records</div>
+                <a href="{{ route('admin.data.hub') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm {{ request()->routeIs('admin.data.*') ? 'active' : '' }}"><i class="fas fa-table-list w-5"></i> All Business Records</a>
+                @foreach(['realtime-notifications' => ['notifications.manage', 'Realtime Notifications', 'fa-bell'], 'partner-branches' => ['partners.manage', 'Partner Branches', 'fa-store'], 'driver-locations' => ['drivers.manage', 'Driver Locations', 'fa-location-dot'], 'registration-payments' => ['payments.view', 'Registration Payments', 'fa-receipt']] as $key => [$permission, $label, $icon])
+                @if(auth()->user()->hasAdminPermission($permission))
+                <a href="{{ route('admin.data.index', $key) }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm"><i class="fas {{ $icon }} w-5"></i> {{ $label }}</a>
+                @endif
+                @endforeach
+                @if(auth()->user()->hasAdminPermission('wallets.view'))<a href="{{ route('admin.wallets.top-ups.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm"><i class="fas fa-coins w-5"></i> Wallet Top-ups</a>@endif
             </nav>
 
             <div class="admin-user-panel p-4 border-t">

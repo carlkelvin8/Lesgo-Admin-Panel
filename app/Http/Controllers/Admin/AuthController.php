@@ -60,7 +60,7 @@ class AuthController extends Controller
                 ->onlyInput('email');
         }
 
-        if (Auth::attempt([...$credentials, 'is_active' => true], $request->boolean('remember'))) {
+        if (Auth::attempt([...$credentials, 'is_active' => true])) {
             $user = Auth::user();
             if (! $user->isAdmin()) {
                 Auth::logout();
@@ -69,17 +69,21 @@ class AuthController extends Controller
                 return back()->withErrors(['email' => 'You do not have admin access.']);
             }
 
-            $twoFactor = TwoFactorAuth::where('user_id', $user->id)
-                ->where('method', 'totp')
-                ->where('is_enabled', true)
-                ->first();
+            $twoFactor = TwoFactorAuth::forUser($user->id, true);
 
             if ($twoFactor) {
                 Auth::logout();
                 $request->session()->put('2fa_pending_user_id', $user->id);
+                $request->session()->put('2fa_pending_at', now()->timestamp);
+                $request->session()->put('2fa_pending_remember', $request->boolean('remember'));
+                $request->session()->put('2fa_pending_throttle_key', $throttleKey);
                 $request->session()->regenerate();
 
                 return redirect()->route('admin.2fa.verify');
+            }
+
+            if ($request->boolean('remember')) {
+                Auth::login($user, true);
             }
 
             RateLimiter::clear($throttleKey);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin;
 
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -18,9 +19,9 @@ class UpdateUserRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $this->route('user')->id,
+            'email' => 'required|email|unique:users,email,'.$this->route('user')->id,
             'phone_number' => 'nullable|string|max:20',
-            'role' => 'required|in:customer,driver,partner,admin',
+            'role' => ['required', Rule::in(User::ROLES)],
             'admin_role' => ['nullable', 'required_if:role,admin', Rule::in(['super_admin', 'operations', 'finance', 'support'])],
             'is_active' => 'boolean',
         ];

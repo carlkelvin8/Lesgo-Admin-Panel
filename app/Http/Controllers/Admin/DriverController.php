@@ -8,10 +8,12 @@ use App\Models\Partner;
 use App\Models\User;
 use App\Traits\SearchEscaping;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class DriverController extends Controller
 {
     use SearchEscaping;
+
     public function index(Request $request)
     {
         $query = DriverProfile::with('user');
@@ -19,9 +21,9 @@ class DriverController extends Controller
         if ($request->filled('search')) {
             $search = $this->escapeLikePattern($request->search);
             $query->where(function ($q) use ($search) {
-                $q->where('license_number', 'like', "%{$search}%")
-                    ->orWhereHas('user', fn ($uq) => $uq->where('name', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%"));
+                $q->whereRaw($this->searchLikeSql('license_number'), ["%{$search}%"])
+                    ->orWhereHas('user', fn ($uq) => $uq->whereRaw($this->searchLikeSql('name'), ["%{$search}%"])
+                        ->orWhereRaw($this->searchLikeSql('email'), ["%{$search}%"]));
             });
         }
 
@@ -56,15 +58,20 @@ class DriverController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
+            'user_id' => [
+                'required',
+                Rule::exists('users', 'id')->where('role', 'driver')->whereNull('deleted_at'),
+                Rule::unique('driver_profiles', 'user_id'),
+            ],
             'partner_id' => 'nullable|exists:partners,id',
             'license_number' => 'nullable|string|max:255',
             'vehicle_type' => 'nullable|string|max:255',
             'plate_number' => 'nullable|string|max:50',
-            'package_tier' => 'nullable|string|max:100',
+            'package_tier' => 'nullable|string|max:20',
         ]);
 
         $validated['status'] = 'pending';
+        $validated['package_tier'] = $validated['package_tier'] ?? 'basic';
 
         DriverProfile::create($validated);
 
@@ -84,9 +91,10 @@ class DriverController extends Controller
             'license_number' => 'nullable|string|max:255',
             'vehicle_type' => 'nullable|string|max:255',
             'plate_number' => 'nullable|string|max:50',
-            'package_tier' => 'nullable|string|max:100',
+            'package_tier' => 'nullable|string|max:20',
         ]);
 
+        $validated['package_tier'] = $validated['package_tier'] ?? $driver->package_tier;
         $driver->update($validated);
 
         return redirect()->route('admin.drivers.show', $driver)

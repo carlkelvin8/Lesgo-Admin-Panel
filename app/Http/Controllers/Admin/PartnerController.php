@@ -3,15 +3,18 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\DriverProfile;
 use App\Models\Partner;
 use App\Models\User;
 use App\Traits\SearchEscaping;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class PartnerController extends Controller
 {
     use SearchEscaping;
+
     public function index(Request $request)
     {
         $query = Partner::with('user');
@@ -19,8 +22,8 @@ class PartnerController extends Controller
         if ($request->filled('search')) {
             $search = $this->escapeLikePattern($request->search);
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('category', 'like', "%{$search}%");
+                $q->whereRaw($this->searchLikeSql('name'), ["%{$search}%"])
+                    ->orWhereRaw($this->searchLikeSql('category'), ["%{$search}%"]);
             });
         }
 
@@ -48,21 +51,26 @@ class PartnerController extends Controller
 
     public function create()
     {
-        $users = User::where('role', 'partner')->whereDoesntHave('partner')->get();
+        $users = User::whereIn('role', ['partner', 'partner_admin'])->whereDoesntHave('partner')->get();
+
         return view('admin.partners.create', compact('users'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
+            'user_id' => [
+                'required',
+                Rule::exists('users', 'id')->whereIn('role', ['partner', 'partner_admin'])->whereNull('deleted_at'),
+                Rule::unique('partners', 'user_id'),
+            ],
             'name' => 'required|string|max:255',
             'category' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'delivery_fee' => 'nullable|numeric|min:0',
         ]);
 
-        $validated['slug'] = Str::slug($validated['name']) . '-' . Str::random(5);
+        $validated['slug'] = Str::slug($validated['name']).'-'.Str::random(5);
         $validated['status'] = 'pending';
 
         Partner::create($validated);
@@ -81,7 +89,7 @@ class PartnerController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'category' => 'nullable|string|max:255',
-            'status' => 'required|in:pending,approved,rejected,suspended',
+            'status' => ['required', Rule::in(Partner::STATUSES)],
             'is_open' => 'boolean',
             'is_featured' => 'boolean',
             'delivery_fee' => 'nullable|numeric|min:0',
@@ -96,16 +104,17 @@ class PartnerController extends Controller
 
     public function toggleStatus(Partner $partner)
     {
-        $partner->update(['is_open' => !$partner->is_open]);
+        $partner->update(['is_open' => ! $partner->is_open]);
 
         $status = $partner->is_open ? 'opened' : 'closed';
+
         return redirect()->back()->with('success', "Partner {$status} successfully.");
     }
 
     public function destroy(Partner $partner)
     {
         $hasOrders = $partner->orders()->exists();
-        $hasDrivers = \App\Models\DriverProfile::where('partner_id', $partner->id)->exists();
+        $hasDrivers = DriverProfile::where('partner_id', $partner->id)->exists();
 
         if ($hasOrders || $hasDrivers) {
             return redirect()->back()->with('error', 'Cannot delete partner with existing orders or drivers. Remove them first.');

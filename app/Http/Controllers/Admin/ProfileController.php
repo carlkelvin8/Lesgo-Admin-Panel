@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\PasswordHistory;
-use App\Services\SessionAnomalyDetector;
+use App\Models\TwoFactorAuth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -35,6 +35,7 @@ class ProfileController extends Controller
         return view('admin.profile.edit', [
             'admin' => $request->user(),
             'sessions' => $sessions,
+            'twoFactor' => TwoFactorAuth::forUser($request->user()->id),
         ]);
     }
 
@@ -61,17 +62,18 @@ class ProfileController extends Controller
 
         $admin = $request->user();
 
-        if (PasswordHistory::isPasswordReused($admin->id, $validated['password'])) {
-            return back()->withErrors(['password' => 'You cannot reuse a recent password. Please choose a different one.'])->withInput();
+        if (Hash::check($validated['password'], $admin->getAuthPassword()) || PasswordHistory::isPasswordReused($admin->id, $validated['password'])) {
+            return back()->withErrors(['password' => 'You cannot reuse a recent password. Please choose a different one.']);
         }
 
-        $admin->forceFill([
-            'password' => Hash::make($validated['password']),
-            'password_changed_at' => now(),
-            'remember_token' => null,
-        ])->save();
-
-        PasswordHistory::recordPassword($admin->id, $validated['password']);
+        DB::transaction(function () use ($admin, $validated) {
+            PasswordHistory::create(['user_id' => $admin->id, 'password' => $admin->getAuthPassword()]);
+            $admin->forceFill([
+                'password' => Hash::make($validated['password']),
+                'password_changed_at' => now(),
+                'remember_token' => null,
+            ])->save();
+        });
 
         if (Schema::hasTable('sessions')) {
             DB::table('sessions')

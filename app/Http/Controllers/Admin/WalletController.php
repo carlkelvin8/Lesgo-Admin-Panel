@@ -14,14 +14,15 @@ use Illuminate\Validation\ValidationException;
 class WalletController extends Controller
 {
     use SearchEscaping;
+
     public function index(Request $request)
     {
         $query = Wallet::with(['user', 'transactions' => fn ($q) => $q->latest()->limit(1)]);
 
         if ($request->filled('search')) {
             $search = $this->escapeLikePattern($request->string('search'));
-            $query->whereHas('user', fn ($q) => $q->where('name', 'like', "%{$search}%")
-                ->orWhere('email', 'like', "%{$search}%"));
+            $query->whereHas('user', fn ($q) => $q->whereRaw($this->searchLikeSql('name'), ["%{$search}%"])
+                ->orWhereRaw($this->searchLikeSql('email'), ["%{$search}%"]));
         }
 
         $wallets = $query->latest()->paginate(20)->withQueryString();
@@ -45,11 +46,11 @@ class WalletController extends Controller
         if ($request->filled('search')) {
             $search = $this->escapeLikePattern($request->string('search'));
             $query->where(function ($builder) use ($search) {
-                $builder->where('external_id', 'like', "%{$search}%")
-                    ->orWhere('gateway_reference', 'like', "%{$search}%")
+                $builder->whereRaw($this->searchLikeSql('external_id'), ["%{$search}%"])
+                    ->orWhereRaw($this->searchLikeSql('gateway_reference'), ["%{$search}%"])
                     ->orWhereHas('user', fn ($userQuery) => $userQuery
-                        ->where('name', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%"));
+                        ->whereRaw($this->searchLikeSql('name'), ["%{$search}%"])
+                        ->orWhereRaw($this->searchLikeSql('email'), ["%{$search}%"]));
             });
         }
 
@@ -95,7 +96,7 @@ class WalletController extends Controller
                 'balance_before' => $before,
                 'balance_after' => $after,
                 'description' => $validated['reason'],
-                'reference' => $validated['reference'] ?: 'ADMIN-'.now()->format('YmdHis').'-'.$lockedWallet->id,
+                'reference' => ($validated['reference'] ?? null) ?: 'ADMIN-'.now()->format('YmdHis').'-'.$lockedWallet->id,
                 'created_by' => $request->user()->id,
             ]);
         });

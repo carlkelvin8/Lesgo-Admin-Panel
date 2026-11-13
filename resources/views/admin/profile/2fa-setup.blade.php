@@ -15,7 +15,10 @@
 
         <div class="flex justify-center mb-6">
             <div class="bg-white p-4 rounded-xl border-2 border-gray-200">
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={{ urlencode($qrCodeUrl) }}" alt="2FA QR Code" class="w-48 h-48">
+                <div x-data="totpQr(@js($qrCodeUrl))" class="w-48">
+                    <div role="img" aria-label="2FA QR Code" x-html="svg"></div>
+                    <p x-show="error" x-cloak class="text-sm text-red-600">Unable to display the QR code. Enter the secret below in your authenticator.</p>
+                </div>
             </div>
         </div>
 

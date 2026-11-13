@@ -3,10 +3,13 @@
 @section('header', 'Payments Management')
 
 @section('actions')
+<a href="{{ route('admin.data.index', 'registration-payments') }}" class="rounded-lg border px-4 py-2 text-sm">Registration Payments</a>
+@if(auth()->user()->hasAdminPermission('wallets.view'))<a href="{{ route('admin.wallets.top-ups.index') }}" class="rounded-lg border px-4 py-2 text-sm">Wallet Top-ups</a>@endif
 <a href="{{ route('admin.payments.export', request()->query()) }}" class="border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg text-sm"><i class="fas fa-download mr-1"></i> Export CSV</a>
 @endsection
 
 @section('content')
+<p class="mb-4 text-sm text-gray-500">This ledger contains order payment records. Registration fees and wallet top-ups are listed separately.</p>
 <div class="bg-white rounded-xl shadow-sm p-4 mb-6">
     <x-filter-panel action="{{ request()->url() }}">
         <x-filter-input name="search" label="Search" placeholder="Search by customer name, email..." value="{{ request('search') }}" />

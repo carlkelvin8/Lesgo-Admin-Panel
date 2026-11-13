@@ -14,11 +14,11 @@
     $classes = "bg-white rounded-xl shadow-sm p-6 border-l-4 {$c['border']}";
     if ($href) $classes .= ' hover:shadow-md transition-shadow';
     $displayValue = $value;
-    if ($format === 'currency') $displayValue = number_format((float) $value, 2);
+    if ($format === 'currency') $displayValue = '₱' . number_format((float) $value, 2);
     elseif ($format === 'number') $displayValue = number_format((int) $value);
 @endphp
 
-<{{ $tag }} {{ $href ? "href=\"{$href}\"" : '' }} class="{{ $classes }}">
+<{{ $tag }} @if($href) href="{{ $href }}" @endif {{ $attributes->class($classes) }}>
     <div class="flex items-center justify-between">
         <div>
             <p class="text-sm text-gray-500">{{ $label }}</p>
@@ -26,7 +26,7 @@
         </div>
         @if($icon)
         <div class="w-12 h-12 {{ $c['bg'] }} rounded-full flex items-center justify-center">
-            <i class="fas {{ $icon }} {{ $c['text'] }}"></i>
+            <i class="fas {{ str_starts_with($icon, 'fa-') ? $icon : 'fa-'.$icon }} {{ $c['text'] }}"></i>
         </div>
         @endif
     </div>

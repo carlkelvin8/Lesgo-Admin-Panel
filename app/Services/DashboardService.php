@@ -16,12 +16,23 @@ use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class DashboardService
 {
+    public static function invalidate(): void
+    {
+        Cache::forever('dashboard:version', (string) Str::uuid());
+    }
+
+    private function cacheKey(string $name): string
+    {
+        return 'dashboard:'.Cache::get('dashboard:version', 'initial').':'.$name;
+    }
+
     public function getStats(): array
     {
-        return Cache::remember('dashboard:stats', 300, function () {
+        return Cache::remember($this->cacheKey('stats'), 300, function () {
             return [
                 'total_users' => User::count(),
                 'total_orders' => Order::count(),
@@ -42,7 +53,7 @@ class DashboardService
 
     public function getRecentOrders(int $limit = 10)
     {
-        return Cache::remember("dashboard:recent_orders:{$limit}", 60, function () use ($limit) {
+        return Cache::remember($this->cacheKey("recent_orders:{$limit}"), 60, function () use ($limit) {
             return Order::with(['customer', 'partner'])
                 ->latest()
                 ->take($limit)
@@ -52,16 +63,16 @@ class DashboardService
 
     public function getRecentUsers(int $limit = 10)
     {
-        return Cache::remember("dashboard:recent_users:{$limit}", 60, function () use ($limit) {
+        return Cache::remember($this->cacheKey("recent_users:{$limit}"), 60, function () use ($limit) {
             return User::latest()->take($limit)->get();
         });
     }
 
     public function getDailyRevenue(int $days = 7)
     {
-        $startDate = Carbon::now()->subDays($days)->startOfDay();
+        $startDate = Carbon::now()->subDays(max(0, $days - 1))->startOfDay();
 
-        return Cache::remember("dashboard:daily_revenue:{$days}", 300, function () use ($startDate) {
+        return Cache::remember($this->cacheKey("daily_revenue:{$days}"), 300, function () use ($startDate) {
             return Payment::where('status', 'paid')
                 ->where('created_at', '>=', $startDate)
                 ->select(
@@ -77,9 +88,9 @@ class DashboardService
 
     public function getOrderStatusDistribution()
     {
-        return Cache::remember('dashboard:order_status_dist', 300, function () {
+        return Cache::remember($this->cacheKey('order_status_dist'), 300, function () {
             return Order::select('status', DB::raw('count(*) as total'))
-                ->whereIn('status', ['pending', 'accepted', 'in_progress', 'completed', 'cancelled'])
+                ->whereIn('status', ['pending', 'accepted', 'driver_arrived', 'in_progress', 'picked_up', 'completed', 'cancelled'])
                 ->groupBy('status')
                 ->get();
         });
@@ -87,9 +98,9 @@ class DashboardService
 
     public function getDailyUsers(int $days = 7)
     {
-        $startDate = Carbon::now()->subDays($days)->startOfDay();
+        $startDate = Carbon::now()->subDays(max(0, $days - 1))->startOfDay();
 
-        return Cache::remember("dashboard:daily_users:{$days}", 300, function () use ($startDate) {
+        return Cache::remember($this->cacheKey("daily_users:{$days}"), 300, function () use ($startDate) {
             return User::where('created_at', '>=', $startDate)
                 ->select(
                     DB::raw('DATE(created_at) as date'),
@@ -103,9 +114,9 @@ class DashboardService
 
     public function getTopPartners(int $days = 7, int $limit = 5)
     {
-        $startDate = Carbon::now()->subDays($days)->startOfDay();
+        $startDate = Carbon::now()->subDays(max(0, $days - 1))->startOfDay();
 
-        return Cache::remember("dashboard:top_partners:{$days}", 300, function () use ($startDate, $limit) {
+        return Cache::remember($this->cacheKey("top_partners:{$days}:{$limit}"), 300, function () use ($startDate, $limit) {
             return Order::with('partner')
                 ->where('created_at', '>=', $startDate)
                 ->select('partner_id', DB::raw('COUNT(*) as order_count'), DB::raw('SUM(actual_fare) as revenue'))

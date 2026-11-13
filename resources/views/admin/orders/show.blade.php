@@ -10,7 +10,9 @@
         <div class="space-y-3 text-sm">
             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Status</span><x-status-badge status="{{ $order->status }}" /></div>
             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Customer</span><span>{{ $order->customer?->name ?? 'N/A' }}</span></div>
+            @if($order->customer?->trashed())<p class="text-xs text-gray-500">Deleted account · Customer history retained</p>@endif
             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Partner</span><span>{{ $order->partner?->name ?? 'N/A' }}</span></div>
+            @if($order->branch)<div class="flex justify-between border-b pb-2"><span class="text-gray-500">Branch</span><span>{{ $order->branch->name }}</span></div><p class="text-xs text-gray-500">{{ $order->branch->address_line1 }} {{ $order->branch->city }}</p>@endif
             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Driver</span><span>{{ $order->driver?->user?->name ?? 'Unassigned' }}</span></div>
             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Service</span><span>{{ $order->service?->name ?? 'N/A' }}</span></div>
             <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Payment</span><span>{{ ucfirst($order->payment_status) }} ({{ ucfirst($order->payment_method ?? 'N/A') }})</span></div>
@@ -49,6 +51,22 @@
                 </div>
             </div>
         </div>
+
+        @if($order->fare_breakdown)
+        <section class="rounded-xl bg-white p-6 shadow-sm"><h3 class="mb-4 font-semibold text-gray-800">Detailed fare calculation</h3><dl class="space-y-3 text-sm">
+        @foreach((array) $order->fare_breakdown as $label => $amount)
+        <div class="grid gap-2 sm:grid-cols-2"><dt class="text-gray-500">{{ \Illuminate\Support\Str::headline((string) $label) }}</dt><dd class="whitespace-pre-wrap break-words">{{ is_array($amount) ? json_encode($amount, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) : (is_bool($amount) ? ($amount ? 'Yes' : 'No') : $amount) }}</dd></div>
+        @endforeach
+        </dl></section>
+        @endif
+        @if($order->proof_images)
+        <section class="rounded-xl bg-white p-6 shadow-sm"><h3 class="mb-4 font-semibold text-gray-800">Delivery proof</h3>
+        <div class="grid gap-4 sm:grid-cols-2">
+        @forelse($order->proofImageUrls() as $proofUrl)
+        <a href="{{ $proofUrl }}" target="_blank" rel="noopener noreferrer" class="block"><img src="{{ $proofUrl }}" alt="Order delivery proof {{ $loop->iteration }}" loading="lazy" referrerpolicy="no-referrer" class="max-h-64 w-full rounded-lg border object-contain"><span class="mt-2 block text-sm text-purple-700">Open proof {{ $loop->iteration }}</span></a>
+        @empty<p class="text-sm text-gray-500">Proof records exist, but no supported image link is available.</p>@endforelse
+        </div>@if($order->proof_uploaded_at)<p class="mt-3 text-xs text-gray-500">Uploaded {{ $order->proof_uploaded_at->format('M d, Y H:i') }}</p>@endif</section>
+        @endif
 
         <!-- Update Status -->
         <div class="bg-white rounded-xl shadow-sm p-6">

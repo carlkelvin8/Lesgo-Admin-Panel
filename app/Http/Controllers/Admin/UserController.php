@@ -7,9 +7,9 @@ use App\Http\Requests\Admin\StoreUserRequest;
 use App\Http\Requests\Admin\UpdateUserRequest;
 use App\Models\AdminRole;
 use App\Models\User;
+use App\Traits\SearchEscaping;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use App\Traits\SearchEscaping;
 use Illuminate\Validation\Rule;
 
 class UserController extends Controller
@@ -19,13 +19,14 @@ class UserController extends Controller
     public function index(Request $request)
     {
         $query = User::query();
+        $this->applyAccountScope($query, $request);
 
         if ($request->filled('search')) {
             $search = $this->escapeLikePattern($request->search);
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('phone_number', 'like', "%{$search}%");
+                $q->whereRaw($this->searchLikeSql('name'), ["%{$search}%"])
+                    ->orWhereRaw($this->searchLikeSql('email'), ["%{$search}%"])
+                    ->orWhereRaw($this->searchLikeSql('phone_number'), ["%{$search}%"]);
             });
         }
 
@@ -143,13 +144,14 @@ class UserController extends Controller
     public function export(Request $request)
     {
         $query = User::query();
+        $this->applyAccountScope($query, $request);
 
         if ($request->filled('search')) {
             $search = $this->escapeLikePattern($request->search);
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('phone_number', 'like', "%{$search}%");
+                $q->whereRaw($this->searchLikeSql('name'), ["%{$search}%"])
+                    ->orWhereRaw($this->searchLikeSql('email'), ["%{$search}%"])
+                    ->orWhereRaw($this->searchLikeSql('phone_number'), ["%{$search}%"]);
             });
         }
 
@@ -163,7 +165,7 @@ class UserController extends Controller
 
         $headers = [
             'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="users_export_' . now()->format('Y-m-d_His') . '.csv"',
+            'Content-Disposition' => 'attachment; filename="users_export_'.now()->format('Y-m-d_His').'.csv"',
             'Cache-Control' => 'no-cache, no-store, must-revalidate',
         ];
 
@@ -218,5 +220,15 @@ class UserController extends Controller
         return AdminRole::definitions()
             ->sortBy(fn (AdminRole $role) => $order[$role->getKey()] ?? PHP_INT_MAX)
             ->values();
+    }
+
+    private function applyAccountScope($query, Request $request): void
+    {
+        $request->validate(['scope' => ['nullable', Rule::in(['current', 'deleted', 'all'])]]);
+        if ($request->input('scope') === 'all') {
+            $query->withTrashed();
+        } elseif ($request->input('scope') === 'deleted') {
+            $query->onlyTrashed();
+        }
     }
 }

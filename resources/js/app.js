@@ -1,8 +1,26 @@
 import Alpine from 'alpinejs';
 import Chart from 'chart.js/auto';
+import dashboardCharts from './dashboard-charts';
 
 window.Alpine = Alpine;
 window.Chart = Chart;
+Alpine.data('dashboardCharts', dashboardCharts);
+
+Alpine.data('totpQr', (uri) => ({
+    svg: '',
+    error: false,
+    async init() {
+        try {
+            const { default: qrcode } = await import('qrcode-generator');
+            const qr = qrcode(0, 'M');
+            qr.addData(uri);
+            qr.make();
+            this.svg = qr.createSvgTag({ scalable: true, margin: 8 });
+        } catch {
+            this.error = true;
+        }
+    }
+}));
 
 Alpine.store('toast', {
     items: [],

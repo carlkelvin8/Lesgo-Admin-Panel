@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 class SecurityEventController extends Controller
 {
     use SearchEscaping;
+
     public function index(Request $request)
     {
         $query = SecurityEvent::with('user');
@@ -17,12 +18,12 @@ class SecurityEventController extends Controller
         if ($request->filled('search')) {
             $search = $this->escapeLikePattern($request->string('search'));
             $query->where(function ($builder) use ($search) {
-                $builder->where('event_type', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%")
-                    ->orWhere('ip_address', 'like', "%{$search}%")
+                $builder->whereRaw($this->searchLikeSql('event_type'), ["%{$search}%"])
+                    ->orWhereRaw($this->searchLikeSql('description'), ["%{$search}%"])
+                    ->orWhereRaw($this->searchLikeSql('ip_address'), ["%{$search}%"])
                     ->orWhereHas('user', fn ($userQuery) => $userQuery
-                        ->where('name', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%"));
+                        ->whereRaw($this->searchLikeSql('name'), ["%{$search}%"])
+                        ->orWhereRaw($this->searchLikeSql('email'), ["%{$search}%"]));
             });
         }
 
@@ -34,7 +35,7 @@ class SecurityEventController extends Controller
             $query->where('is_resolved', $request->status === 'resolved');
         }
 
-        $events = $query->latest('detected_at')->paginate(20)->withQueryString();
+        $events = $query->latest('detected_at')->orderByDesc('id')->paginate(20)->withQueryString();
         $summary = [
             'open' => SecurityEvent::where('is_resolved', false)->count(),
             'critical' => SecurityEvent::where('is_resolved', false)->where('severity', 'critical')->count(),

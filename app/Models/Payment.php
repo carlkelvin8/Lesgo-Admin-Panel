@@ -51,11 +51,11 @@ class Payment extends Model
 
     public function customer()
     {
-        return $this->belongsTo(User::class, 'customer_id');
+        return $this->belongsTo(User::class, 'customer_id')->withTrashed();
     }
 
     public function reconciler()
     {
-        return $this->belongsTo(User::class, 'reconciled_by');
+        return $this->belongsTo(User::class, 'reconciled_by')->withTrashed();
     }
 }

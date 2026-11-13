@@ -54,7 +54,7 @@ class RatingReview extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class)->withTrashed();
     }
 
     public function order()
@@ -64,6 +64,6 @@ class RatingReview extends Model
 
     public function moderator()
     {
-        return $this->belongsTo(User::class, 'moderated_by');
+        return $this->belongsTo(User::class, 'moderated_by')->withTrashed();
     }
 }
