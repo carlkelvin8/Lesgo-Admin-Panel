@@ -137,6 +137,17 @@ class RegistrationFeeController extends Controller
             : 'Registration fee waived and application approved, but the account could not be activated.');
     }
 
+    public function exemptRenewal(Request $request, RegistrationFeePayment $registrationFee)
+    {
+        $validated = $request->validate(['reason' => 'nullable|string|max:1000']);
+        try {
+            RegistrationFeeService::exemptFromAnnualRenewal($registrationFee, $request->user(), $validated['reason'] ?? null);
+        } catch (\DomainException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+        return back()->with('success', 'Partner exempted from the annual renewal (long-time partner).');
+    }
+
     public function reject(Request $request, RegistrationFeePayment $registrationFee)
     {
         $validated = $request->validate(['reason' => 'nullable|string|max:1000']);
