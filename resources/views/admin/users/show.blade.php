@@ -50,8 +50,8 @@
     <!-- Profile Card -->
     <div class="bg-white rounded-xl shadow-sm p-6">
         <div class="text-center">
-            @if($user->profileImageUrl())
-                <img src="{{ $user->profileImageUrl() }}" alt="{{ $user->name }}" class="w-20 h-20 rounded-full object-cover mx-auto mb-4 border">
+            @if($selfieUrl)
+                <img src="{{ $selfieUrl }}" alt="{{ $user->name }}" class="w-20 h-20 rounded-full object-cover mx-auto mb-4 border">
             @else
                 <div class="w-20 h-20 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-2xl mx-auto mb-4">
                     {{ substr($user->name, 0, 1) }}
@@ -125,6 +125,59 @@
             </div>
         </div>
         @endif
+
+        <!-- Identity Documents -->
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b">
+                <h3 class="font-semibold text-gray-800"><i class="fas fa-id-card mr-2 text-purple-600"></i>Identity Documents</h3>
+            </div>
+            <div class="p-6 space-y-6">
+                @forelse($identityVerifications as $verification)
+                    <section class="space-y-3">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <div>
+                                <p class="font-medium text-gray-800">Government ID</p>
+                                <p class="text-xs text-gray-500">Submitted {{ ($verification->submitted_at ?? $verification->created_at)?->format('M d, Y') ?? 'date unavailable' }}</p>
+                            </div>
+                            <x-status-badge :status="$verification->status" />
+                        </div>
+
+                        @php($documentUrls = collect($verification->document_urls ?? [])->filter(fn ($url) => is_string($url) && trim($url) !== '')->values())
+                        @if($documentUrls->isNotEmpty())
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                @foreach($documentUrls as $index => $path)
+                                    @php
+                                        $documentUrl = \App\Services\MediaUrlService::publicUrl($path);
+                                        $extension = strtolower(pathinfo(parse_url($documentUrl ?? '', PHP_URL_PATH) ?? '', PATHINFO_EXTENSION));
+                                        $isImage = in_array($extension, ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'], true);
+                                    @endphp
+                                    @if($documentUrl)
+                                        <a href="{{ $documentUrl }}" target="_blank" rel="noopener noreferrer" class="group block rounded-lg border border-gray-200 p-3 hover:border-blue-400 hover:shadow-sm">
+                                            @if($isImage)
+                                                <img src="{{ $documentUrl }}" alt="Government ID image {{ $index + 1 }}" class="w-full h-48 object-contain bg-gray-50 rounded">
+                                            @else
+                                                <div class="h-48 flex flex-col items-center justify-center gap-3 rounded bg-gray-50 text-gray-500">
+                                                    <i class="fas {{ $extension === 'pdf' ? 'fa-file-pdf text-red-500' : 'fa-file-alt' }} text-4xl"></i>
+                                                    <span class="text-sm">{{ $extension === 'pdf' ? 'PDF document' : 'Document attachment' }}</span>
+                                                </div>
+                                            @endif
+                                            <span class="mt-3 inline-flex items-center gap-2 text-sm font-medium text-blue-600 group-hover:text-blue-800">
+                                                <i class="fas fa-external-link-alt text-xs"></i>
+                                                Open ID {{ $index === 0 ? 'Front' : ($index === 1 ? 'Back' : 'Attachment '.($index + 1)) }}
+                                            </span>
+                                        </a>
+                                    @endif
+                                @endforeach
+                            </div>
+                        @else
+                            <p class="text-sm text-gray-500">No ID files were attached to this verification.</p>
+                        @endif
+                    </section>
+                @empty
+                    <p class="text-sm text-gray-500">No identity documents uploaded.</p>
+                @endforelse
+            </div>
+        </div>
 
         <!-- Recent Orders -->
         <div class="bg-white rounded-xl shadow-sm overflow-hidden">

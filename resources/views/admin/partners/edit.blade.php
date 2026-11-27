@@ -14,15 +14,9 @@
                 <input type="text" name="name" value="{{ old('name', $partner->name) }}" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">
             </div>
 
-            <div class="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Legal Name</label>
-                    <input type="text" name="legal_name" value="{{ old('legal_name', $partner->legal_name) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Business Type</label>
-                    <input type="text" name="business_type" value="{{ old('business_type', $partner->business_type) }}" placeholder="e.g. restaurant, retail" class="w-full border border-gray-300 rounded-lg px-3 py-2">
-                </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Legal Name</label>
+                <input type="text" name="legal_name" value="{{ old('legal_name', $partner->legal_name) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
             </div>
 
             <div class="mb-4">
