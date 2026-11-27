@@ -142,7 +142,13 @@
                             <x-status-badge :status="$verification->status" />
                         </div>
 
-                        @php($documentUrls = collect($verification->document_urls ?? [])->filter(fn ($url) => is_string($url) && trim($url) !== '')->values())
+                        @php
+                            $documentUrls = collect($verification->document_urls ?? [])
+                                ->filter(function ($url) {
+                                    return is_string($url) && trim($url) !== '';
+                                })
+                                ->values();
+                        @endphp
                         @if($documentUrls->isNotEmpty())
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 @foreach($documentUrls as $index => $path)
