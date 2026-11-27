@@ -53,11 +53,25 @@ class UserController extends Controller
 
     public function show(User $user)
     {
-        $user->load(['driverProfile', 'orders' => function ($q) {
-            $q->latest()->take(10);
-        }]);
+        $user->load([
+            'driverProfile',
+            'orders' => function ($q) {
+                $q->latest()->take(10);
+            },
+            'documentVerifications' => function ($q) {
+                $q->latest();
+            },
+        ]);
 
-        return view('admin.users.show', compact('user'));
+        $identityVerifications = $user->documentVerifications
+            ->where('document_type', 'valid_id')
+            ->values();
+        $selfieUrl = $user->profileImageUrl()
+            ?: \App\Services\MediaUrlService::publicUrl(
+                $identityVerifications->first()?->metadata['selfie_url'] ?? null
+            );
+
+        return view('admin.users.show', compact('user', 'identityVerifications', 'selfieUrl'));
     }
 
     public function create()
