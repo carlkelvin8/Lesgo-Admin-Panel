@@ -50,7 +50,7 @@ class AnalyticsController extends Controller
 
         // ── Today metrics ─────────────────────────────────────────────────────
         $todayMetrics = $this->safeGet(
-            fn () => DailyMetric::where('date', $today)->get()->groupBy('metric_type'),
+            fn () => DailyMetric::whereDate('date', $today)->get()->groupBy('metric_type'),
             collect()
         );
 

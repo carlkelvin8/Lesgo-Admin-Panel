@@ -58,7 +58,7 @@ class AdminReliabilityTest extends TestCase
         $this->get(route('admin.profile.edit'))->assertSee('Unique sidebar notice');
         $this->patch(route('admin.notifications.read', $notice))->assertSessionHas('success');
         $this->get(route('admin.profile.edit'))->assertOk();
-        $this->assertSame(0, Cache::get('admin:notification_unread_count'));
+        $this->assertSame(0, Cache::get('admin:notification_unread_count:v2'));
         $this->delete(route('admin.notifications.destroy', $notice))->assertSessionHas('success');
         $this->get(route('admin.profile.edit'))->assertDontSee('Unique sidebar notice');
     }

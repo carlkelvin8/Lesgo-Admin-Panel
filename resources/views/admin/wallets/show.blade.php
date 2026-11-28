@@ -35,10 +35,10 @@
     <p class="mt-1 text-sm text-gray-500">Every credit or debit creates an immutable ledger record with your administrator ID.</p>
     <form method="POST" action="{{ route('admin.wallets.adjust', $wallet) }}" class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-5" onsubmit="return confirm('Record this wallet adjustment?')">
         @csrf
-        <div><label class="mb-1 block text-xs font-medium">Type</label><select name="type" required class="w-full rounded-lg border px-3 py-2"><option value="credit">Credit</option><option value="debit">Debit</option></select></div>
-        <div><label class="mb-1 block text-xs font-medium">Amount</label><input type="number" name="amount" min="0.01" step="0.01" required class="w-full rounded-lg border px-3 py-2"></div>
-        <div><label class="mb-1 block text-xs font-medium">Reference</label><input name="reference" maxlength="255" class="w-full rounded-lg border px-3 py-2" placeholder="Optional ticket/reference"></div>
-        <div class="lg:col-span-2"><label class="mb-1 block text-xs font-medium">Reason</label><div class="flex gap-2"><input name="reason" minlength="10" maxlength="1000" required class="min-w-0 flex-1 rounded-lg border px-3 py-2" placeholder="Required operational reason"><button class="rounded-lg bg-purple-700 px-4 py-2 text-sm font-semibold text-white">Record</button></div></div>
+        <div><label class="mb-1 block text-xs font-medium">Type</label><select aria-label="Type" name="type" required class="w-full rounded-lg border px-3 py-2"><option value="credit">Credit</option><option value="debit">Debit</option></select></div>
+        <div><label class="mb-1 block text-xs font-medium">Amount</label><input aria-label="Amount" type="number" name="amount" min="0.01" step="0.01" required class="w-full rounded-lg border px-3 py-2"></div>
+        <div><label class="mb-1 block text-xs font-medium">Reference</label><input aria-label="Reference" name="reference" maxlength="255" class="w-full rounded-lg border px-3 py-2" placeholder="Optional ticket/reference"></div>
+        <div class="lg:col-span-2"><label class="mb-1 block text-xs font-medium">Reason</label><div class="flex gap-2"><input aria-label="Adjustment reason" name="reason" minlength="10" maxlength="1000" required class="min-w-0 flex-1 rounded-lg border px-3 py-2" placeholder="Required operational reason"><button class="rounded-lg bg-purple-700 px-4 py-2 text-sm font-semibold text-white">Record</button></div></div>
     </form>
 </div>
 @endif

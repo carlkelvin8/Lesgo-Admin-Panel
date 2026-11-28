@@ -22,11 +22,11 @@ class ReportController extends Controller
         $query = DailyReport::query();
 
         if ($request->filled('date_from')) {
-            $query->where('report_date', '>=', $request->date_from);
+            $query->whereDate('report_date', '>=', $request->date_from);
         }
 
         if ($request->filled('date_to')) {
-            $query->where('report_date', '<=', $request->date_to);
+            $query->whereDate('report_date', '<=', $request->date_to);
         }
 
         $reports = $query->orderByDesc('report_date')->paginate(20)->withQueryString();
@@ -160,15 +160,15 @@ class ReportController extends Controller
         }
 
         $transactionCount = (clone $revenueQuery)->count();
-        RevenueAnalytics::updateOrCreate(
-            ['date' => $date, 'revenue_type' => 'gross', 'revenue_source' => 'orders', 'service_id' => null, 'partner_id' => null],
-            [
+        $revenueKey = ['revenue_type' => 'gross', 'revenue_source' => 'orders', 'service_id' => null, 'partner_id' => null];
+        $revenue = RevenueAnalytics::where($revenueKey)->whereDate('date', $date)->orderBy('id')->first()
+            ?? new RevenueAnalytics(['date' => $date, ...$revenueKey]);
+        $revenue->fill([
                 'amount' => $values['total_revenue'],
                 'currency' => 'PHP',
                 'transaction_count' => $transactionCount,
                 'average_transaction_value' => $transactionCount > 0 ? $values['total_revenue'] / $transactionCount : 0,
-            ]
-        );
+        ])->save();
     }
 
     public function daily(Request $request, string $date)
@@ -205,11 +205,11 @@ class ReportController extends Controller
             'meta' => $stored?->meta ?? [],
         ];
 
-        $metrics = DailyMetric::where('date', $date)
+        $metrics = DailyMetric::whereDate('date', $date)
             ->get()
             ->groupBy('metric_type');
 
-        $revenueDetails = RevenueAnalytics::where('date', $date)
+        $revenueDetails = RevenueAnalytics::whereDate('date', $date)
             ->select('revenue_type', DB::raw('SUM(amount) as total_amount'), DB::raw('SUM(transaction_count) as total_transactions'))
             ->groupBy('revenue_type')
             ->get();
@@ -264,7 +264,7 @@ class ReportController extends Controller
             ->select(
                 DB::raw('SUM(amount) as total_revenue'),
                 DB::raw('SUM(transaction_count) as total_transactions'),
-                DB::raw('AVG(average_transaction_value) as avg_transaction'),
+                DB::raw('SUM(amount) * 1.0 / NULLIF(SUM(transaction_count), 0) as avg_transaction'),
                 DB::raw('COUNT(DISTINCT date) as days_with_data')
             )
             ->first();
@@ -283,7 +283,7 @@ class ReportController extends Controller
             ->get();
 
         $bySource = (clone $query)
-            ->select('revenue_source', DB::raw('SUM(amount) as total_amount'), DB::raw('SUM(transaction_count) as total_transactions'), DB::raw('AVG(average_transaction_value) as avg_transaction'))
+            ->select('revenue_source', DB::raw('SUM(amount) as total_amount'), DB::raw('SUM(transaction_count) as total_transactions'), DB::raw('SUM(amount) * 1.0 / NULLIF(SUM(transaction_count), 0) as avg_transaction'))
             ->groupBy('revenue_source')
             ->orderByDesc('total_amount')
             ->get();
@@ -302,11 +302,11 @@ class ReportController extends Controller
         $query = DailyReport::query();
 
         if ($request->filled('date_from')) {
-            $query->where('report_date', '>=', $request->date_from);
+            $query->whereDate('report_date', '>=', $request->date_from);
         }
 
         if ($request->filled('date_to')) {
-            $query->where('report_date', '<=', $request->date_to);
+            $query->whereDate('report_date', '<=', $request->date_to);
         }
 
         $reports = $query->orderByDesc('report_date')->get();

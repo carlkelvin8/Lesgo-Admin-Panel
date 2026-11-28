@@ -131,6 +131,29 @@ class AdminPageCoverageTest extends TestCase
             'token' => 'test-token',
         ];
         DailyReport::create(['report_date' => $parameters['date']]);
+        $parameters['voucher'] = \App\Models\Voucher::create([
+            'code' => 'PAGE-COVERAGE', 'title' => 'Coverage voucher', 'type' => 'fixed',
+        ]);
+        $parameters['missionTemplate'] = \App\Models\MissionTemplate::create([
+            'title' => 'Coverage mission', 'type' => 'daily', 'goal_type' => 'complete_orders',
+            'goal_target' => 1, 'reward_amount' => 10,
+        ]);
+        $mission = \App\Models\DriverMission::create([
+            'driver_profile_id' => $parameters['driver']->id,
+            'mission_template_id' => $parameters['missionTemplate']->id,
+            'goal_target' => 1, 'mission_date' => today(),
+        ]);
+        $parameters['missionReward'] = \App\Models\MissionRewardPayout::create([
+            'rider_user_id' => $parameters['driver']->user_id,
+            'driver_profile_id' => $parameters['driver']->id,
+            'mission_id' => $mission->id,
+            'mission_template_id' => $parameters['missionTemplate']->id,
+            'reward_amount' => 10, 'idempotency_key' => 'coverage-reward',
+        ]);
+        $parameters['registrationFee'] = \App\Models\RegistrationFeePayment::create([
+            'user_id' => $parameters['driver']->user_id, 'account_type' => 'rider',
+            'amount' => 100, 'idempotency_key' => 'coverage-registration',
+        ]);
 
         $failures = [];
         foreach (Route::getRoutes() as $route) {
@@ -147,15 +170,21 @@ class AdminPageCoverageTest extends TestCase
             }
             $args = array_intersect_key($parameters, array_flip($route->parameterNames()));
             $response = $this->get(route($name, $args));
+            if ($name === 'admin.') {
+                $response->assertRedirect(route('admin.dashboard'));
+                continue;
+            }
             if ($response->getStatusCode() !== 200) {
                 $failures[] = $name.': '.$response->getStatusCode().' '.($response->exception?->getMessage() ?? '');
             }
-            $this->assertStringNotContainsString('document.body.appendChild', $response->getContent(), $name.' leaked confirmation script into rendered page text.');
-            $this->assertStringNotContainsString('form.submit();', $response->getContent(), $name.' leaked form submission script into rendered page text.');
             if ($response->getStatusCode() === 200 && ! str_ends_with($name, '.export')) {
                 $document = new \DOMDocument;
                 @$document->loadHTML($response->getContent());
                 $xpath = new \DOMXPath($document);
+                foreach ($xpath->query('//body//text()[not(ancestor::script) and not(ancestor::style)]') as $text) {
+                    $this->assertStringNotContainsString('document.body.appendChild', $text->nodeValue, $name.' leaked confirmation script into visible text.');
+                    $this->assertStringNotContainsString('form.submit();', $text->nodeValue, $name.' leaked form submission script into visible text.');
+                }
                 $ids = [];
                 foreach ($xpath->query('//*[@id]') as $element) {
                     $id = $element->getAttribute('id');

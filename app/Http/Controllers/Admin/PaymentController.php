@@ -19,25 +19,62 @@ class PaymentController extends Controller
 
     private function buildPaymentQuery(Request $request)
     {
-        return Order::with(['customer'])
-            ->whereNotNull('payment_status')
-            ->where('payment_status', '!=', '')
-            ->when($request->filled('search'), function ($q) use ($request) {
-                $search = $this->escapeLikePattern($request->search);
-                $q->whereHas('customer', fn ($cq) => $cq->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%"));
-            })
-            ->when($request->filled('status'), fn ($q) => $q->where('payment_status', $request->status))
-            ->when($request->filled('method'), fn ($q) => $q->where('payment_method', $request->method))
-            ->when($request->filled('date_from'), fn ($q) => $q->where('created_at', '>=', $request->date_from))
-            ->when($request->filled('date_to'), fn ($q) => $q->where('created_at', '<=', $request->date_to.' 23:59:59'));
+        $payments = Payment::query()->select('id', 'created_at')->selectRaw("'payment' as source");
+        $orders = Order::query()
+            ->select('id', 'created_at')->selectRaw("'order' as source")
+            ->whereNotNull('payment_status')->where('payment_status', '!=', '')
+            ->whereDoesntHave('payments');
+
+        foreach ([[$payments, 'status', 'method'], [$orders, 'payment_status', 'payment_method']] as [$query, $status, $method]) {
+            if ($request->filled('search')) {
+                $pattern = '%'.$this->escapeLikePattern($request->string('search')->toString()).'%';
+                $query->whereHas('customer', fn ($customer) => $customer
+                    ->whereRaw($this->searchLikeSql('name'), [$pattern])
+                    ->orWhereRaw($this->searchLikeSql('email'), [$pattern]));
+            }
+            if ($request->filled('status')) {
+                $query->where($status, $request->input('status'));
+            }
+            if ($request->filled('method')) {
+                $query->where($method, $request->input('method'));
+            }
+            if ($request->filled('date_from')) {
+                $query->whereDate('created_at', '>=', $request->input('date_from'));
+            }
+            if ($request->filled('date_to')) {
+                $query->whereDate('created_at', '<=', $request->input('date_to'));
+            }
+        }
+
+        return DB::query()->fromSub($payments->toBase()->unionAll($orders->toBase()), 'payment_rows')
+            ->orderByDesc('created_at')->orderByDesc('id')->orderBy('source');
     }
 
-    private function orderToPayment($order)
+    private function hydrateRows($rows)
     {
-        return new class($order)
+        $payments = Payment::with('customer')->whereKey($rows->where('source', 'payment')->pluck('id')->all())
+            ->get()->keyBy('id');
+        $orders = Order::with('customer')->whereKey($rows->where('source', 'order')->pluck('id')->all())
+            ->get()->keyBy('id');
+
+        return $rows->map(function ($row) use ($payments, $orders) {
+            if ($row->source === 'payment') {
+                return $payments->get($row->id);
+            }
+
+            $order = $orders->get($row->id);
+
+            return $order ? $this->orderToPayment($order, 'order-'.$row->id) : null;
+        })->filter()->values();
+    }
+
+    private function orderToPayment(Order $order, string $reference)
+    {
+        return new class($order, $reference)
         {
             public $id;
+
+            public string $routeReference;
 
             public $order_id;
 
@@ -71,12 +108,13 @@ class PaymentController extends Controller
 
             public function getRouteKey()
             {
-                return $this->id;
+                return $this->routeReference;
             }
 
-            public function __construct($order)
+            public function __construct(Order $order, string $reference)
             {
                 $this->id = $order->id;
+                $this->routeReference = $reference;
                 $this->order_id = $order->id;
                 $this->customer = $order->customer;
                 $this->amount = (float) ($order->actual_fare ?? $order->estimated_fare ?? 0);
@@ -94,21 +132,31 @@ class PaymentController extends Controller
 
     public function index(Request $request)
     {
-        $orders = $this->buildPaymentQuery($request)->latest()->orderByDesc('id')->paginate(20)->withQueryString();
+        $payments = $this->buildPaymentQuery($request)->paginate(20)->withQueryString();
+        $payments->setCollection($this->hydrateRows($payments->getCollection()));
+        $methods = Payment::query()->whereNotNull('method')->distinct()->pluck('method')
+            ->merge(Order::query()->whereNotNull('payment_method')->distinct()->pluck('payment_method'))
+            ->filter()->unique()->sort()->values();
 
-        $payments = $orders->getCollection()->map(fn ($o) => $this->orderToPayment($o));
-        $orders->setCollection($payments);
+        return view('admin.payments.index', compact('payments', 'methods'));
+    }
 
-        return view('admin.payments.index', ['payments' => $orders]);
+    private function orderPaymentId(string $reference): string
+    {
+        $id = str_starts_with($reference, 'order-') ? substr($reference, 6) : $reference;
+        abort_unless(ctype_digit($id), 404);
+
+        return $id;
     }
 
     public function show(string $payment)
     {
-        $paymentModel = Payment::with(['customer', 'order', 'reconciler'])->find($payment);
+        $id = $this->orderPaymentId($payment);
+        $paymentModel = str_starts_with($payment, 'order-') ? null : Payment::with(['customer', 'order', 'reconciler'])->find($id);
 
         if (! $paymentModel) {
-            $order = Order::with(['customer'])->findOrFail($payment);
-            $paymentModel = $this->orderToPayment($order);
+            $order = Order::with('customer')->whereDoesntHave('payments')->findOrFail($id);
+            $paymentModel = $this->orderToPayment($order, $payment);
         }
 
         return view('admin.payments.show', ['payment' => $paymentModel]);
@@ -118,15 +166,23 @@ class PaymentController extends Controller
     {
         $validated = $request->validated();
 
-        $paymentModel = Payment::find($payment);
+        $id = $this->orderPaymentId($payment);
+        $paymentModel = str_starts_with($payment, 'order-') ? null : Payment::find($id);
         if (! $paymentModel) {
-            $order = Order::findOrFail($payment);
+            DB::transaction(function () use ($id, $validated) {
+                $order = Order::whereDoesntHave('payments')->lockForUpdate()->findOrFail($id);
 
-            if ($order->payment_status !== 'paid') {
-                throw ValidationException::withMessages(['amount' => 'Only paid payments can receive a refund record.']);
-            }
+                if ($order->payment_status !== 'paid') {
+                    throw ValidationException::withMessages(['amount' => 'Only paid payments can receive a refund record.']);
+                }
 
-            $order->update(['payment_status' => 'refunded']);
+                $recordedFare = round((float) ($order->actual_fare ?? $order->estimated_fare), 2);
+                if (round((float) $validated['amount'], 2) !== $recordedFare) {
+                    throw ValidationException::withMessages(['amount' => 'Enter the full recorded fare to refund a payment tracked on its order.']);
+                }
+
+                $order->update(['payment_status' => 'refunded']);
+            });
 
             return back()->with('success', 'Refund recorded on order.');
         }
@@ -168,9 +224,10 @@ class PaymentController extends Controller
     {
         $validated = $request->validated();
 
-        $paymentModel = Payment::find($payment);
+        $id = $this->orderPaymentId($payment);
+        $paymentModel = str_starts_with($payment, 'order-') ? null : Payment::find($id);
         if (! $paymentModel) {
-            return back()->with('success', 'Reconciliation saved.');
+            return back()->withErrors(['payment' => 'A payment record is required for reconciliation.']);
         }
 
         $paymentModel->update([
@@ -184,7 +241,7 @@ class PaymentController extends Controller
 
     public function export(Request $request)
     {
-        $orders = $this->buildPaymentQuery($request)->latest()->get();
+        $query = $this->buildPaymentQuery($request);
 
         $headers = [
             'Content-Type' => 'text/csv',
@@ -192,21 +249,23 @@ class PaymentController extends Controller
             'Cache-Control' => 'no-cache, no-store, must-revalidate',
         ];
 
-        $callback = function () use ($orders) {
+        $callback = function () use ($query) {
             $file = fopen('php://output', 'w');
             fputcsv($file, ['Payment ID', 'Customer', 'Order ID', 'Amount', 'Method', 'Status', 'Paid Date']);
 
-            foreach ($orders as $order) {
-                fputcsv($file, [
-                    $order->id,
-                    CsvFormatter::cell($order->customer?->name ?? 'N/A'),
-                    $order->id,
-                    $order->actual_fare ?? $order->estimated_fare ?? 0,
-                    CsvFormatter::cell($order->payment_method ?? 'N/A'),
-                    CsvFormatter::cell($order->payment_status),
-                    $order->completed_at ? $order->completed_at->format('Y-m-d H:i:s') : '',
-                ]);
-            }
+            $query->chunk(500, function ($rows) use ($file) {
+                foreach ($this->hydrateRows($rows) as $payment) {
+                    fputcsv($file, [
+                        $payment->id,
+                        CsvFormatter::cell($payment->customer?->name ?? 'N/A'),
+                        $payment->order_id,
+                        $payment->amount,
+                        CsvFormatter::cell($payment->method ?? 'N/A'),
+                        CsvFormatter::cell($payment->status),
+                        $payment->paid_at?->format('Y-m-d H:i:s') ?? '',
+                    ]);
+                }
+            });
 
             fclose($file);
         };

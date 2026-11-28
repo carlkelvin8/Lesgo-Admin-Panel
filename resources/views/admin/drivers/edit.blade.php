@@ -11,7 +11,7 @@
 
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <select name="status" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                <select aria-label="Status" name="status" class="w-full border border-gray-300 rounded-lg px-3 py-2">
                     @foreach(['pending','active','inactive','suspended'] as $s)
                         <option value="{{ $s }}" {{ old('status', $driver->status) === $s ? 'selected' : '' }}>{{ ucfirst($s) }}</option>
                     @endforeach
@@ -21,28 +21,28 @@
             <div class="grid grid-cols-2 gap-4 mb-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">License Number</label>
-                    <input type="text" name="license_number" value="{{ old('license_number', $driver->license_number) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                    <input aria-label="License Number" type="text" name="license_number" value="{{ old('license_number', $driver->license_number) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">License Expiry</label>
-                    <input type="date" name="license_expiry_date" value="{{ old('license_expiry_date', $driver->license_expiry_date?->format('Y-m-d')) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                    <input aria-label="License Expiry" type="date" name="license_expiry_date" value="{{ old('license_expiry_date', $driver->license_expiry_date?->format('Y-m-d')) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
                 </div>
             </div>
 
             <div class="grid grid-cols-2 gap-4 mb-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Vehicle Type</label>
-                    <input type="text" name="vehicle_type" value="{{ old('vehicle_type', $driver->vehicle_type) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                    <input aria-label="Vehicle Type" type="text" name="vehicle_type" value="{{ old('vehicle_type', $driver->vehicle_type) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Plate Number</label>
-                    <input type="text" name="plate_number" value="{{ old('plate_number', $driver->plate_number) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                    <input aria-label="Plate Number" type="text" name="plate_number" value="{{ old('plate_number', $driver->plate_number) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
                 </div>
             </div>
 
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Package Tier</label>
-                <input type="text" name="package_tier" value="{{ old('package_tier', $driver->package_tier) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="basic / premium / elite">
+                <input aria-label="Package Tier" type="text" name="package_tier" value="{{ old('package_tier', $driver->package_tier) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="basic / premium / elite">
             </div>
 
             @php $riderProfileUrl = $driver->user?->profileImageUrl(); @endphp
@@ -66,14 +66,14 @@
             @csrf @method('PUT')
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">ID Document</label>
-                <input type="file" name="id_document" accept=".jpg,.jpeg,.png,.pdf" class="w-full text-sm border rounded-lg px-3 py-2">
+                <input aria-label="ID Document" type="file" name="id_document" accept=".jpg,.jpeg,.png,.pdf" class="w-full text-sm border rounded-lg px-3 py-2">
                 @if($driver->id_document_path)<label class="inline-flex items-center gap-2 mt-2 text-xs"><input type="checkbox" name="remove_id_document" value="1"> Remove current</label>@endif
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div><label class="block text-xs text-gray-500 mb-1">license_front</label><input type="file" name="documents[license_front]" accept=".jpg,.jpeg,.png,.pdf" class="w-full text-sm border rounded px-2 py-1">@if(data_get($driver->documents,'license_front'))<p class="text-xs text-green-600 truncate">{{ data_get($driver->documents,'license_front') }}</p>@endif</div>
-                <div><label class="block text-xs text-gray-500 mb-1">or_cr</label><input type="file" name="documents[or_cr]" accept=".jpg,.jpeg,.png,.pdf" class="w-full text-sm border rounded px-2 py-1">@if(data_get($driver->documents,'or_cr'))<p class="text-xs text-green-600 truncate">{{ data_get($driver->documents,'or_cr') }}</p>@endif</div>
-                <div><label class="block text-xs text-gray-500 mb-1">nbi_clearance</label><input type="file" name="documents[nbi_clearance]" accept=".jpg,.jpeg,.png,.pdf" class="w-full text-sm border rounded px-2 py-1">@if(data_get($driver->documents,'nbi_clearance'))<p class="text-xs text-green-600 truncate">{{ data_get($driver->documents,'nbi_clearance') }}</p>@endif</div>
-                <div><label class="block text-xs text-gray-500 mb-1">vehicle_photo</label><input type="file" name="documents[vehicle_photo]" accept=".jpg,.jpeg,.png,.pdf" class="w-full text-sm border rounded px-2 py-1">@if(data_get($driver->documents,'vehicle_photo'))<p class="text-xs text-green-600 truncate">{{ data_get($driver->documents,'vehicle_photo') }}</p>@endif</div>
+                <div><label class="block text-xs text-gray-500 mb-1">license_front</label><input aria-label="license_front" type="file" name="documents[license_front]" accept=".jpg,.jpeg,.png,.pdf" class="w-full text-sm border rounded px-2 py-1">@if(data_get($driver->documents,'license_front'))<p class="text-xs text-green-600 truncate">{{ data_get($driver->documents,'license_front') }}</p>@endif</div>
+                <div><label class="block text-xs text-gray-500 mb-1">or_cr</label><input aria-label="or_cr" type="file" name="documents[or_cr]" accept=".jpg,.jpeg,.png,.pdf" class="w-full text-sm border rounded px-2 py-1">@if(data_get($driver->documents,'or_cr'))<p class="text-xs text-green-600 truncate">{{ data_get($driver->documents,'or_cr') }}</p>@endif</div>
+                <div><label class="block text-xs text-gray-500 mb-1">nbi_clearance</label><input aria-label="nbi_clearance" type="file" name="documents[nbi_clearance]" accept=".jpg,.jpeg,.png,.pdf" class="w-full text-sm border rounded px-2 py-1">@if(data_get($driver->documents,'nbi_clearance'))<p class="text-xs text-green-600 truncate">{{ data_get($driver->documents,'nbi_clearance') }}</p>@endif</div>
+                <div><label class="block text-xs text-gray-500 mb-1">vehicle_photo</label><input aria-label="vehicle_photo" type="file" name="documents[vehicle_photo]" accept=".jpg,.jpeg,.png,.pdf" class="w-full text-sm border rounded px-2 py-1">@if(data_get($driver->documents,'vehicle_photo'))<p class="text-xs text-green-600 truncate">{{ data_get($driver->documents,'vehicle_photo') }}</p>@endif</div>
             </div>
             <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm">Save Documents</button>
         </form>

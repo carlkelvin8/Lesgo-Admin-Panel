@@ -34,7 +34,7 @@
         <table class="responsive-table w-full text-sm">
             <thead class="bg-gray-50 border-b">
                 <tr>
-                    <th class="px-4 py-3 w-10"><input type="checkbox" aria-label="Select all riders on this page" @change="selected = $event.target.checked ? @js($drivers->pluck('id')->map(fn ($id) => (string) $id)->values()) : []"></th>
+                    <th class="px-4 py-3 w-10"><input type="checkbox" aria-label="Select all riders on this page" x-on:change="selected = $event.target.checked ? @js($drivers->pluck('id')->map(fn ($id) => (string) $id)->values()) : []"></th>
                     <th class="text-left px-6 py-3 text-gray-500 font-medium">Driver</th>
                     <th class="text-left px-6 py-3 text-gray-500 font-medium">License</th>
                     <th class="text-left px-6 py-3 text-gray-500 font-medium">Vehicle</th>
@@ -101,9 +101,9 @@
                             <a href="{{ route('admin.drivers.edit', $driver) }}" class="text-yellow-600 hover:text-yellow-800 mr-2"><i class="fas fa-edit"></i></a>
                             <button type="button" class="text-red-600 hover:text-red-800" title="Delete rider profile"
                                 x-data
-                                @click="$dispatch('confirm-modal', {
+                                x-on:click="$dispatch('confirm-modal', {
                                     title: 'Delete Rider Profile',
-                                    message: 'Permanently delete {{ addslashes($driver->user?->name ?? 'this rider') }}, the linked user account, orders, payments, wallet activity, documents, messages, reviews, and all other linked data? This cannot be undone.',
+                                    message: @js('Permanently delete ' . ($driver->user?->name ?? 'this rider') . ', the linked user account, orders, payments, wallet activity, documents, messages, reviews, and all other linked data? This cannot be undone.'),
                                     confirmText: 'Delete Rider & Data',
                                     onConfirm: () => {
                                         const form = document.createElement('form'); form.method = 'POST'; form.action = '{{ route('admin.drivers.destroy', $driver) }}';

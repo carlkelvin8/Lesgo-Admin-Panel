@@ -10,18 +10,18 @@
 
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Title *</label>
-                <input type="text" name="title" value="{{ old('title') }}" required placeholder="Book 1 LesEat today" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                <input aria-label="Title *" type="text" name="title" value="{{ old('title') }}" required placeholder="Book 1 LesEat today" class="w-full border border-gray-300 rounded-lg px-3 py-2">
             </div>
 
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <textarea name="description" rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2">{{ old('description') }}</textarea>
+                <textarea aria-label="Description" name="description" rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2">{{ old('description') }}</textarea>
             </div>
 
             <div class="grid grid-cols-2 gap-4 mb-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Target Audience *</label>
-                    <select name="target_audience" required class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                    <select aria-label="Target Audience *" name="target_audience" required class="w-full border border-gray-300 rounded-lg px-3 py-2">
                         <option value="customer" @selected(old('target_audience')=='customer')>Customer</option>
                         <option value="driver" @selected(old('target_audience')=='driver')>Driver</option>
                         <option value="merchant" @selected(old('target_audience')=='merchant')>Merchant</option>
@@ -29,7 +29,7 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Type *</label>
-                    <select name="type" required class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                    <select aria-label="Type *" name="type" required class="w-full border border-gray-300 rounded-lg px-3 py-2">
                         <option value="daily" @selected(old('type', 'daily')=='daily')>Daily</option>
                         <option value="weekly" @selected(old('type')=='weekly')>Weekly</option>
                         <option value="monthly" @selected(old('type')=='monthly')>Monthly</option>
@@ -41,7 +41,7 @@
             <div class="grid grid-cols-2 gap-4 mb-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Goal Type *</label>
-                    <select name="goal_type" required class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                    <select aria-label="Goal Type *" name="goal_type" required class="w-full border border-gray-300 rounded-lg px-3 py-2">
                         <optgroup label="Generic">
                             <option value="complete_orders" @selected(old('goal_type')=='complete_orders')>Complete Orders (any)</option>
                             <option value="specific_service" @selected(old('goal_type')=='specific_service')>Specific Service</option>
@@ -59,7 +59,7 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Goal Target *</label>
-                    <input type="number" name="goal_target" value="{{ old('goal_target', 1) }}" required min="1" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                    <input aria-label="Goal Target *" type="number" name="goal_target" value="{{ old('goal_target', 1) }}" required min="1" class="w-full border border-gray-300 rounded-lg px-3 py-2">
                     <p class="text-xs text-gray-500">e.g. 5 orders</p>
                 </div>
             </div>
@@ -67,17 +67,17 @@
             <div class="grid grid-cols-2 gap-4 mb-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Reward Amount (₱) *</label>
-                    <input type="number" step="0.01" name="reward_amount" value="{{ old('reward_amount', 50) }}" required class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                    <input aria-label="Reward Amount (₱) *" type="number" step="0.01" name="reward_amount" value="{{ old('reward_amount', 50) }}" required class="w-full border border-gray-300 rounded-lg px-3 py-2">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Reward Currency</label>
-                    <input type="text" name="reward_currency" value="{{ old('reward_currency', 'PHP') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                    <input aria-label="Reward Currency" type="text" name="reward_currency" value="{{ old('reward_currency', 'PHP') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
                 </div>
             </div>
 
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Service Code (for specific_service)</label>
-                <input type="text" name="service_code" value="{{ old('service_code') }}" placeholder="LESEAT, LESRIDE, LESBUY or leave blank" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                <input aria-label="Service Code (for specific_service)" type="text" name="service_code" value="{{ old('service_code') }}" placeholder="LESEAT, LESRIDE, LESBUY or leave blank" class="w-full border border-gray-300 rounded-lg px-3 py-2">
                 <p class="text-xs text-gray-500">Only needed when Goal Type = Specific Service</p>
             </div>
 

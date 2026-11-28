@@ -12,6 +12,7 @@ use App\Services\CascadeEntityDeletionService;
 use App\Services\RegistrationFeeService;
 use App\Traits\SearchEscaping;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
@@ -83,7 +84,11 @@ class DriverController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
+            'user_id' => [
+                'required',
+                Rule::exists('users', 'id')->where(fn ($query) => $query->where('role', 'driver')->whereNull('deleted_at')),
+                Rule::unique('driver_profiles', 'user_id'),
+            ],
             'partner_id' => 'nullable|exists:partners,id',
             'license_number' => 'nullable|string|max:255',
             'license_expiry_date' => 'nullable|date',

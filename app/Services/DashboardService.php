@@ -212,7 +212,7 @@ class DashboardService
         // DB-agnostic: DATE() is MySQL-only and fatals on Postgres
         // (laravel.cloud), so aggregate in PHP. Same shape as before:
         // only days with data, ascending, {date, total, count}.
-        $startDate = Carbon::now()->subDays($days)->startOfDay();
+        $startDate = Carbon::now()->subDays(max(0, $days - 1))->startOfDay();
 
         try {
             if ($this->usesOrdersForRevenue()) {
@@ -273,7 +273,7 @@ class DashboardService
         // DB-agnostic: DATE() is MySQL-only and fatals on Postgres
         // (laravel.cloud), so aggregate in PHP. Same shape as before:
         // only days with data, ascending, {date, total}.
-        $startDate = Carbon::now()->subDays($days)->startOfDay();
+        $startDate = Carbon::now()->subDays(max(0, $days - 1))->startOfDay();
 
         try {
             $grouped = [];
@@ -315,7 +315,7 @@ class DashboardService
      */
     private function fetchTopPartners(int $days = 7, int $limit = 5): array
     {
-        $startDate = Carbon::now()->subDays($days)->startOfDay();
+        $startDate = Carbon::now()->subDays(max(0, $days - 1))->startOfDay();
 
         $rows = $this->queryTopPartnerRows($startDate, $limit);
 
