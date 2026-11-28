@@ -96,7 +96,7 @@
                 <div class="space-y-4">
                     <div>
                         <label class="block text-xs text-gray-500 mb-1">Status</label>
-                        <select name="status" id="reviewStatus" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none">
+                        <select aria-label="Status" name="status" id="reviewStatus" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none">
                             <option value="under_review" {{ $documentVerification->status === 'under_review' ? 'selected' : '' }}>Under Review</option>
                             <option value="approved">Approved</option>
                             <option value="rejected">Rejected</option>
@@ -104,12 +104,12 @@
                     </div>
                     <div>
                         <label class="block text-xs text-gray-500 mb-1">Admin Notes</label>
-                        <textarea name="admin_notes" rows="3" placeholder="Internal notes about this review..."
+                        <textarea aria-label="Admin Notes" name="admin_notes" rows="3" placeholder="Internal notes about this review..."
                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none">{{ $documentVerification->admin_notes }}</textarea>
                     </div>
                     <div id="rejectionReasonDiv" style="display: none;">
                         <label class="block text-xs text-gray-500 mb-1">Rejection Reason</label>
-                        <textarea name="rejection_reason" rows="3" placeholder="Explain why this document is being rejected..."
+                        <textarea aria-label="Rejection Reason" name="rejection_reason" rows="3" placeholder="Explain why this document is being rejected..."
                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none">{{ $documentVerification->rejection_reason }}</textarea>
                     </div>
                     <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg text-sm font-medium">Submit Review</button>

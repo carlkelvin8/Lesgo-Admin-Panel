@@ -11,38 +11,38 @@
 
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                <input type="text" name="name" value="{{ old('name', $partner->name) }}" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">
+                <input aria-label="Name" type="text" name="name" value="{{ old('name', $partner->name) }}" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">
             </div>
 
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Legal Name</label>
-                <input type="text" name="legal_name" value="{{ old('legal_name', $partner->legal_name) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                <input aria-label="Legal Name" type="text" name="legal_name" value="{{ old('legal_name', $partner->legal_name) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
             </div>
 
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                <input type="text" name="category" value="{{ old('category', $partner->category) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">
+                <input aria-label="Category" type="text" name="category" value="{{ old('category', $partner->category) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">
             </div>
 
             <div class="grid grid-cols-2 gap-4 mb-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Tax ID</label>
-                    <input type="text" name="tax_id" value="{{ old('tax_id', $partner->tax_id) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                    <input aria-label="Tax ID" type="text" name="tax_id" value="{{ old('tax_id', $partner->tax_id) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Support Email</label>
-                    <input type="email" name="support_email" value="{{ old('support_email', $partner->support_email) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                    <input aria-label="Support Email" type="email" name="support_email" value="{{ old('support_email', $partner->support_email) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
                 </div>
             </div>
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Support Phone</label>
-                <input type="text" name="support_phone" value="{{ old('support_phone', $partner->support_phone) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                <input aria-label="Support Phone" type="text" name="support_phone" value="{{ old('support_phone', $partner->support_phone) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2">
             </div>
 
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <select name="status" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">
-                    @foreach(['pending', 'approved', 'active', 'rejected', 'suspended'] as $s)
+                <select aria-label="Status" name="status" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">
+                    @foreach(\App\Models\Partner::STATUSES as $s)
                         <option value="{{ $s }}" {{ old('status', $partner->status) === $s ? 'selected' : '' }}>{{ ucfirst($s) }}</option>
                     @endforeach
                 </select>
@@ -50,24 +50,24 @@
 
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Delivery Fee (₱)</label>
-                <input type="number" step="0.01" name="delivery_fee" value="{{ old('delivery_fee', $partner->delivery_fee) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">
+                <input aria-label="Delivery Fee (₱)" type="number" step="0.01" name="delivery_fee" value="{{ old('delivery_fee', $partner->delivery_fee) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">
             </div>
 
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <textarea name="description" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">{{ old('description', $partner->description) }}</textarea>
+                <textarea aria-label="Description" name="description" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 outline-none">{{ old('description', $partner->description) }}</textarea>
             </div>
 
             <div class="grid grid-cols-2 gap-4 mb-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Logo</label>
                     @if($partner->logo_url)<img src="{{ \Illuminate\Support\Str::startsWith($partner->logo_url, ['http://','https://']) ? $partner->logo_url : \Illuminate\Support\Facades\Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->url($partner->logo_url) }}" class="w-12 h-12 rounded-full object-cover mb-2 border"><label class="inline-flex items-center gap-1 text-xs"><input type="checkbox" name="remove_logo" value="1"> Remove</label>@endif
-                    <input type="file" name="logo" accept=".jpg,.jpeg,.png,.webp" class="w-full text-sm border rounded-lg px-3 py-2 mt-1">
+                    <input aria-label="Partner logo" type="file" name="logo" accept=".jpg,.jpeg,.png,.webp" class="w-full text-sm border rounded-lg px-3 py-2 mt-1">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Cover Image</label>
                     @if($partner->cover_image_url)<img src="{{ \Illuminate\Support\Str::startsWith($partner->cover_image_url, ['http://','https://']) ? $partner->cover_image_url : \Illuminate\Support\Facades\Storage::disk(config('filesystems.default') === 's3' ? 's3' : 'public')->url($partner->cover_image_url) }}" class="w-full h-20 object-cover rounded mb-2 border"><label class="inline-flex items-center gap-1 text-xs"><input type="checkbox" name="remove_cover" value="1"> Remove</label>@endif
-                    <input type="file" name="cover_image" accept=".jpg,.jpeg,.png,.webp" class="w-full text-sm border rounded-lg px-3 py-2 mt-1">
+                    <input aria-label="Partner cover image" type="file" name="cover_image" accept=".jpg,.jpeg,.png,.webp" class="w-full text-sm border rounded-lg px-3 py-2 mt-1">
                 </div>
             </div>
 

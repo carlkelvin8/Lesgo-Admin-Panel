@@ -20,16 +20,29 @@ class UserController extends Controller
 {
     use SearchEscaping;
 
-    public function index(Request $request)
+    private function usersQuery(Request $request)
     {
         $query = User::query();
+        if ($request->input('scope') === 'deleted') {
+            $query->onlyTrashed();
+        }
+
+        $phoneStatus = $request->input('phone_status');
+        if ($phoneStatus === 'missing') {
+            $query->where(fn ($q) => $q->whereNull('phone_number')->orWhereRaw("TRIM(phone_number) = ''"));
+        } elseif (in_array($phoneStatus, ['verified', 'unverified'], true)) {
+            $query->whereNotNull('phone_number')->whereRaw("TRIM(phone_number) <> ''");
+            $phoneStatus === 'verified'
+                ? $query->whereNotNull('phone_verified_at')
+                : $query->whereNull('phone_verified_at');
+        }
 
         if ($request->filled('search')) {
             $search = $this->escapeLikePattern($request->search);
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('phone_number', 'like', "%{$search}%");
+                $q->whereRaw($this->searchLikeSql('name'), ["%{$search}%"])
+                    ->orWhereRaw($this->searchLikeSql('email'), ["%{$search}%"])
+                    ->orWhereRaw($this->searchLikeSql('phone_number'), ["%{$search}%"]);
             });
         }
 
@@ -46,30 +59,32 @@ class UserController extends Controller
             $query->where('is_active', $request->status === 'active');
         }
 
+        return $query;
+    }
+
+    public function index(Request $request)
+    {
+        $query = $this->usersQuery($request);
         $users = $query->latest()->orderByDesc('id')->paginate(20)->withQueryString();
 
         return view('admin.users.index', compact('users'));
     }
 
-    public function show(User $user)
+    public function show(Request $request, User $user)
     {
         $user->load([
             'driverProfile',
             'orders' => function ($q) {
                 $q->latest()->take(10);
             },
-            'documentVerifications' => function ($q) {
-                $q->latest();
-            },
         ]);
 
-        $identityVerifications = $user->documentVerifications
-            ->where('document_type', 'valid_id')
-            ->values();
+        $identityVerifications = $request->user()->hasAdminPermission('verifications.manage')
+            ? $user->documentVerifications()->where('document_type', 'valid_id')->latest()->get()
+            : collect();
+        $selfie = $identityVerifications->first()?->metadata['selfie_url'] ?? null;
         $selfieUrl = $user->profileImageUrl()
-            ?: \App\Services\MediaUrlService::publicUrl(
-                $identityVerifications->first()?->metadata['selfie_url'] ?? null
-            );
+            ?: (is_string($selfie) ? \App\Services\MediaUrlService::publicUrl($selfie) : null);
 
         return view('admin.users.show', compact('user', 'identityVerifications', 'selfieUrl'));
     }
@@ -116,6 +131,7 @@ class UserController extends Controller
         $validated['is_active'] = true;
 
         User::create($validated);
+        app(\App\Services\DashboardService::class)->flushCache();
 
         return redirect()->route('admin.users.index')
             ->with($permsIgnored ? 'warning' : 'success', $permsIgnored
@@ -218,7 +234,12 @@ class UserController extends Controller
         }
 
         $oldPerms = $user->admin_permissions;
-        $user->update($validated);
+        $user->fill($validated);
+        if ($user->isDirty('phone_number')) {
+            $user->phone_verified_at = null;
+        }
+        $user->save();
+        app(\App\Services\DashboardService::class)->flushCache();
 
         if ($passwordChanged) {
             $user->forceFill(['remember_token' => null])->save();
@@ -337,29 +358,7 @@ class UserController extends Controller
 
     public function export(Request $request)
     {
-        $query = User::query();
-
-        if ($request->filled('search')) {
-            $search = $this->escapeLikePattern($request->search);
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('phone_number', 'like', "%{$search}%");
-            });
-        }
-
-        if ($request->filled('role')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('role', $request->role);
-                if ($request->role === 'partner') {
-                    $q->orWhere('role', 'partner_admin');
-                }
-            });
-        }
-
-        if ($request->filled('status')) {
-            $query->where('is_active', $request->status === 'active');
-        }
+        $query = $this->usersQuery($request);
 
         $headers = [
             'Content-Type' => 'text/csv',

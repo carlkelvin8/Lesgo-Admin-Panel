@@ -15,6 +15,8 @@
     <x-filter-input name="search" label="Search" placeholder="Name, email, phone..." />
     <x-filter-input name="role" label="Role" type="select" :options="['' => 'All Roles', 'customer' => 'Customer', 'driver' => 'Driver', 'partner' => 'Partner', 'partner_admin' => 'Partner Admin', 'admin' => 'Admin']" />
     <x-filter-input name="status" label="Status" type="select" :options="['' => 'All', 'active' => 'Active', 'inactive' => 'Inactive']" />
+    <x-filter-input name="phone_status" label="Phone verification" type="select" :options="['' => 'All', 'missing' => 'No number linked', 'unverified' => 'Unverified', 'verified' => 'Verified']" />
+    <x-filter-input name="scope" label="Accounts" type="select" :options="['' => 'Current accounts', 'deleted' => 'Deleted accounts']" />
 </x-filter-panel>
 
 <!-- Table -->
@@ -31,7 +33,7 @@
         <table class="w-full text-sm responsive-table">
             <thead class="bg-gray-50 border-b">
                 <tr>
-                    <th class="px-4 py-3 w-10"><input type="checkbox" aria-label="Select all users on this page" @change="selected = $event.target.checked ? @js($users->pluck('id')->map(fn ($id) => (string) $id)->values()) : []"></th>
+                    <th class="px-4 py-3 w-10"><input type="checkbox" aria-label="Select all users on this page" x-on:change="selected = $event.target.checked ? @js($users->reject(fn ($user) => $user->trashed())->pluck('id')->map(fn ($id) => (string) $id)->values()) : []"></th>
                     <th class="text-left px-6 py-3 text-gray-500 font-medium">User</th>
                     <th class="text-left px-6 py-3 text-gray-500 font-medium">Phone</th>
                     <th class="text-left px-6 py-3 text-gray-500 font-medium">Role</th>
@@ -43,7 +45,7 @@
             <tbody class="divide-y divide-gray-100">
                 @forelse($users as $user)
                     <tr class="hover:bg-gray-50">
-                        <td class="px-4 py-4"><input type="checkbox" name="ids[]" value="{{ $user->id }}" x-model="selected" aria-label="Select {{ $user->name }}"></td>
+                        <td class="px-4 py-4"><input type="checkbox" name="ids[]" value="{{ $user->id }}" x-model="selected" @disabled($user->trashed()) aria-label="Select {{ $user->name }}"></td>
                         <td class="px-6 py-4" data-label="User">
                             <div class="flex items-center gap-3">
                                 @if($user->profileImageUrl())
@@ -59,7 +61,7 @@
                                 </div>
                             </div>
                         </td>
-                        <td class="px-6 py-4 text-gray-600" data-label="Phone">{{ $user->phone_number ?? '-' }}</td>
+                        <td class="px-6 py-4 text-gray-600" data-label="Phone"><x-user-phone :user="$user" /></td>
                         <td class="px-6 py-4" data-label="Role">
                             <x-status-badge :status="$user->role" />
                         </td>
@@ -73,14 +75,14 @@
                         <td class="px-6 py-4 text-gray-500 text-xs" data-label="Joined">{{ $user->created_at->diffForHumans() }}</td>
                         <td class="px-6 py-4 text-right" data-label="Actions">
                             <a href="{{ route('admin.users.show', $user) }}" class="text-blue-600 hover:text-blue-800 mr-2" title="View"><i class="fas fa-eye"></i></a>
-                            @if(auth()->user()->hasAdminPermission('users.manage'))
+                            @if(auth()->user()->hasAdminPermission('users.manage') && ! $user->trashed())
                                 <a href="{{ route('admin.users.edit', $user) }}" class="text-yellow-600 hover:text-yellow-800 mr-2" title="Edit"><i class="fas fa-edit"></i></a>
                                 @unless($user->is(auth()->user()))
                                     <button type="button" class="text-red-600 hover:text-red-800" title="Delete"
                                         x-data
-                                        @click="$dispatch('confirm-modal', {
+                                        x-on:click="$dispatch('confirm-modal', {
                                             title: 'Delete User',
-                                            message: 'Delete {{ addslashes($user->name) }}? This user will no longer be able to access their account.',
+                                            message: @js('Delete ' . ($user->name) . '? This user will no longer be able to access their account.'),
                                             confirmText: 'Delete',
                                             onConfirm: () => {
                                                 const form = document.createElement('form');

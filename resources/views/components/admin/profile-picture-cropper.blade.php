@@ -8,7 +8,7 @@
         </div>
     </div>
     <div class="flex-1">
-        <label class="block text-xs font-medium text-gray-600 mb-1">Profile Picture</label>
+        <label for="{{ $inputId }}" class="block text-xs font-medium text-gray-600 mb-1">Profile Picture</label>
         <input type="file" id="{{ $inputId }}" name="profile_picture" accept=".jpg,.jpeg,.png,.webp" class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 file:mr-3 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
         <p class="text-xs text-gray-500 mt-1">JPG/PNG/WEBP, max 2MB — will be cropped to 1:1 circle</p>
         <input type="hidden" name="cropped_profile_picture" id="{{ $hiddenInputId }}">

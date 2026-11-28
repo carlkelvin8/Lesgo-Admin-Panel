@@ -10,6 +10,7 @@ use App\Services\CascadeEntityDeletionService;
 use App\Services\RegistrationFeeService;
 use App\Traits\SearchEscaping;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -64,7 +65,11 @@ class PartnerController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
+            'user_id' => [
+                'required',
+                Rule::exists('users', 'id')->where(fn ($query) => $query->whereIn('role', ['partner', 'partner_admin'])->whereNull('deleted_at')),
+                Rule::unique('partners', 'user_id'),
+            ],
             'name' => 'required|string|max:255',
             'legal_name' => 'nullable|string|max:255',
             'business_type' => 'nullable|string|max:255',
@@ -109,7 +114,7 @@ class PartnerController extends Controller
             'legal_name' => 'nullable|string|max:255',
             'business_type' => 'nullable|string|max:255',
             'category' => 'nullable|string|max:255',
-            'status' => 'required|in:pending,approved,active,rejected,suspended',
+            'status' => ['required', Rule::in(Partner::STATUSES)],
             'is_open' => 'boolean',
             'is_featured' => 'boolean',
             'delivery_fee' => 'nullable|numeric|min:0',

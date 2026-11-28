@@ -55,6 +55,51 @@ class UserIdentityAttachmentsTest extends TestCase
             ->assertSee('Jan 15, 2026');
     }
 
+    public function test_admin_can_find_customers_who_need_phone_verification(): void
+    {
+        $missing = User::factory()->create(['phone_number' => null]);
+        $unverified = User::factory()->create(['phone_number' => '+639171234567']);
+        $verified = User::factory()->create(['phone_number' => '+639181234567']);
+        $verified->forceFill(['phone_verified_at' => now()])->save();
+
+        foreach (['missing' => $missing, 'unverified' => $unverified, 'verified' => $verified] as $status => $user) {
+            $this->get(route('admin.users.index', ['role' => 'customer', 'phone_status' => $status]))
+                ->assertOk()
+                ->assertViewHas('users', fn ($users) => $users->pluck('id')->all() === [$user->id]);
+        }
+        $this->get(route('admin.users.show', $missing))->assertSee('No number linked');
+        $this->get(route('admin.users.show', $verified))->assertSee('OTP verified');
+
+        $this->put(route('admin.users.update', $verified), [
+            'name' => 'Updated Customer',
+            'email' => $verified->email,
+            'phone_number' => '+639191234567',
+            'role' => 'customer',
+            'is_active' => 1,
+        ])->assertSessionHas('success');
+        $this->assertNull($verified->fresh()->phone_verified_at);
+    }
+
+    public function test_admin_without_verification_permission_cannot_view_id_attachments(): void
+    {
+        $customer = User::factory()->create();
+        DocumentVerification::create([
+            'user_id' => $customer->id,
+            'document_type' => 'valid_id',
+            'document_urls' => ['https://media.example.test/private-id.jpg'],
+        ]);
+
+        $support = User::factory()->create([
+            'role' => 'admin', 'admin_role' => 'support', 'is_active' => true,
+            'admin_permissions' => ['users.view'],
+        ]);
+
+        $this->actingAs($support)->get(route('admin.users.show', $customer))
+            ->assertOk()
+            ->assertDontSee('Identity Documents')
+            ->assertDontSee('private-id.jpg');
+    }
+
     public function test_partner_edit_hides_business_type_and_preserves_legacy_value(): void
     {
         $partner = Partner::factory()->create([

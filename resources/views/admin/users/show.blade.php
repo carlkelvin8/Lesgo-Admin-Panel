@@ -3,44 +3,21 @@
 @section('header', 'User Details')
 
 @section('actions')
-@if(auth()->user()->hasAdminPermission('users.manage'))
+@if(auth()->user()->hasAdminPermission('users.manage') && ! $user->trashed())
 <a href="{{ route('admin.users.edit', $user) }}" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm"><i class="fas fa-edit mr-1"></i> Edit</a>
-@unless($user->is(auth()->user()))
-<button type="button" class="bg-{{ $user->is_active ? 'red' : 'green' }}-500 hover:bg-{{ $user->is_active ? 'red' : 'green' }}-600 text-white px-4 py-2 rounded-lg text-sm"
-    x-data
-    @click="$dispatch('confirm-modal', {
-        title: '{{ $user->is_active ? 'Deactivate' : 'Activate' }} User',
-        message: 'Are you sure you want to {{ $user->is_active ? 'deactivate' : 'activate' }} {{ addslashes($user->name) }}?',
-        confirmText: '{{ $user->is_active ? 'Deactivate' : 'Activate' }}',
-        confirmClass: '{{ $user->is_active ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700' }}',
-        onConfirm: () => {
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '{{ route('admin.users.toggle', $user) }}';
-            const i1=document.createElement('input');i1.type='hidden';i1.name='_token';i1.value='{{ csrf_token() }}';form.appendChild(i1);
-            document.body.appendChild(form);
-            form.submit();
-        }
-    })">
-    <i class="fas fa-{{ $user->is_active ? 'ban' : 'check' }} mr-1"></i> {{ $user->is_active ? 'Deactivate' : 'Activate' }}
-</button>
-<button type="button" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm"
-    x-data
-    @click="$dispatch('confirm-modal', {
-        title: 'Delete User',
-        message: 'Delete {{ addslashes($user->name) }}? This user will no longer be able to access their account.',
-        confirmText: 'Delete',
-        onConfirm: () => {
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '{{ route('admin.users.destroy', $user) }}';
-            const i1=document.createElement('input');i1.type='hidden';i1.name='_token';i1.value='{{ csrf_token() }}';form.appendChild(i1);const i2=document.createElement('input');i2.type='hidden';i2.name='_method';i2.value='DELETE';form.appendChild(i2);
-            document.body.appendChild(form);
-            form.submit();
-        }
-    })">
-    <i class="fas fa-trash mr-1"></i> Delete
-</button>
+@unless($user->is(auth()->user()) || $user->trashed())
+<x-confirm-action :action="route('admin.users.toggle', $user)"
+    :title="($user->is_active ? 'Deactivate' : 'Activate').' User'"
+    :message="($user->is_active ? 'Deactivate ' : 'Activate ').$user->name.'?'"
+    :confirm-text="$user->is_active ? 'Deactivate' : 'Activate'"
+    class="rounded-lg bg-amber-600 px-4 py-2 text-sm text-white">
+    {{ $user->is_active ? 'Deactivate' : 'Activate' }}
+</x-confirm-action>
+<x-confirm-action :action="route('admin.users.destroy', $user)" method="DELETE"
+    title="Delete User" :message="'Delete '.$user->name.'? They will lose account access.'"
+    confirm-text="Delete" class="rounded-lg bg-red-600 px-4 py-2 text-sm text-white">
+    Delete
+</x-confirm-action>
 @endunless
 @endif
 @endsection
@@ -60,11 +37,14 @@
             <h3 class="text-xl font-bold text-gray-800">{{ $user->name }}</h3>
             <p class="text-gray-500">{{ $user->email }}</p>
             <x-status-badge :status="$user->role" />
+            @if($user->trashed())
+                <p class="mt-2 text-sm text-gray-500">Deleted account</p>
+            @endif
         </div>
         <div class="mt-6 space-y-3 text-sm">
             <div class="flex justify-between border-b pb-2">
                 <span class="text-gray-500">Phone</span>
-                <span class="text-gray-800">{{ $user->phone_number ?? '-' }}</span>
+                <span class="text-gray-800"><x-user-phone :user="$user" /></span>
             </div>
             <div class="flex justify-between border-b pb-2">
                 <span class="text-gray-500">Role</span>
@@ -126,6 +106,7 @@
         </div>
         @endif
 
+        @if(auth()->user()->hasAdminPermission('verifications.manage'))
         <!-- Identity Documents -->
         <div class="bg-white rounded-xl shadow-sm overflow-hidden">
             <div class="px-6 py-4 border-b">
@@ -147,13 +128,13 @@
                                 ->filter(function ($url) {
                                     return is_string($url) && trim($url) !== '';
                                 })
-                                ->values();
+                                ->map(fn ($path) => \App\Services\MediaUrlService::publicUrl($path))
+                                ->filter();
                         @endphp
                         @if($documentUrls->isNotEmpty())
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                @foreach($documentUrls as $index => $path)
+                                @foreach($documentUrls as $index => $documentUrl)
                                     @php
-                                        $documentUrl = \App\Services\MediaUrlService::publicUrl($path);
                                         $extension = strtolower(pathinfo(parse_url($documentUrl ?? '', PHP_URL_PATH) ?? '', PATHINFO_EXTENSION));
                                         $isImage = in_array($extension, ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'], true);
                                     @endphp
@@ -184,6 +165,8 @@
                 @endforelse
             </div>
         </div>
+
+        @endif
 
         <!-- Recent Orders -->
         <div class="bg-white rounded-xl shadow-sm overflow-hidden">

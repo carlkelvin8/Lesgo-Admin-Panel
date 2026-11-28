@@ -15,6 +15,8 @@ class Notification extends Model
         $invalidatePreview = function (): void {
             Cache::forget('admin:notification_unread_count');
             Cache::forget('admin:recent_notifications');
+            Cache::forget('admin:notification_unread_count:v2');
+            Cache::forget('admin:recent_notifications:v2');
         };
         static::saved($invalidatePreview);
         static::deleted($invalidatePreview);

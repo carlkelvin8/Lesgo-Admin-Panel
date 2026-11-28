@@ -6,7 +6,7 @@
 <a href="{{ route('admin.drivers.edit', $driver) }}" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm"><i class="fas fa-edit mr-1"></i> Edit</a>
 <button type="button" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm"
     x-data
-    @click="$dispatch('confirm-modal', {
+    x-on:click="$dispatch('confirm-modal', {
         title: 'Delete Rider Profile',
         message: 'Permanently delete this rider, the linked user account, orders, payments, wallet activity, documents, messages, reviews, and all other linked data? This cannot be undone.',
         confirmText: 'Delete Rider & Data',
@@ -19,7 +19,7 @@
     })"><i class="fas fa-trash mr-1"></i> Delete Rider & Data</button>
 <button type="button" class="bg-{{ $driver->status === 'active' ? 'red' : 'green' }}-500 text-white px-4 py-2 rounded-lg text-sm"
     x-data
-    @click="$dispatch('confirm-modal', {
+    x-on:click="$dispatch('confirm-modal', {
         title: '{{ $driver->status === 'active' ? 'Deactivate' : 'Activate' }} Driver',
         message: 'Are you sure you want to {{ $driver->status === 'active' ? 'deactivate' : 'activate' }} this driver?',
         confirmText: '{{ $driver->status === 'active' ? 'Deactivate' : 'Activate' }}',
@@ -84,7 +84,7 @@
                 <form method="POST" action="{{ route('admin.registration-fees.approve', $registrationFee) }}">@csrf<button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm" onclick="return confirm('Approve application? Account activates only when the fee is PAID or WAIVED.')">Approve Application</button></form>
                 @endif
                 @if(!$registrationFee->isFeeSatisfied() && !$registrationFee->is_grandfathered)
-                <form method="POST" action="{{ route('admin.registration-fees.waive', $registrationFee) }}" class="flex gap-2">@csrf<input name="reason" maxlength="1000" placeholder="Waiver reason (optional)" class="rounded border px-3 py-2 text-sm"><button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm" onclick="return confirm('Waive the fee, approve this rider, and activate the account?')">Waive &amp; Activate</button></form>
+                <form method="POST" action="{{ route('admin.registration-fees.waive', $registrationFee) }}" class="flex gap-2">@csrf<input aria-label="Waiver reason" name="reason" maxlength="1000" placeholder="Waiver reason (optional)" class="rounded border px-3 py-2 text-sm"><button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm" onclick="return confirm('Waive the fee, approve this rider, and activate the account?')">Waive &amp; Activate</button></form>
                 @endif
                 @if($registrationFee->application_status !== 'rejected')
                 <form method="POST" action="{{ route('admin.registration-fees.reject', $registrationFee) }}">@csrf<input type="hidden" name="reason" value="Rejected by admin"><button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm" onclick="return confirm('Reject application? Account will remain restricted.')">Reject Application</button></form>
@@ -174,14 +174,14 @@
                     @csrf @method('PUT')
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">ID Document (id_document_path)</label>
-                        <input type="file" name="id_document" accept=".jpg,.jpeg,.png,.pdf" class="w-full text-sm border rounded-lg px-3 py-2">
+                        <input aria-label="ID Document (id_document_path)" type="file" name="id_document" accept=".jpg,.jpeg,.png,.pdf" class="w-full text-sm border rounded-lg px-3 py-2">
                         @if($driver->id_document_path)<label class="inline-flex items-center gap-2 mt-2 text-xs"><input type="checkbox" name="remove_id_document" value="1"> Remove current</label>@endif
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div><label class="block text-xs text-gray-500 mb-1">documents[license_front]</label><input type="file" name="documents[license_front]" accept=".jpg,.jpeg,.png,.pdf" class="w-full text-sm border rounded px-2 py-1"></div>
-                        <div><label class="block text-xs text-gray-500 mb-1">documents[or_cr]</label><input type="file" name="documents[or_cr]" accept=".jpg,.jpeg,.png,.pdf" class="w-full text-sm border rounded px-2 py-1"></div>
-                        <div><label class="block text-xs text-gray-500 mb-1">documents[nbi_clearance]</label><input type="file" name="documents[nbi_clearance]" accept=".jpg,.jpeg,.png,.pdf" class="w-full text-sm border rounded px-2 py-1"></div>
-                        <div><label class="block text-xs text-gray-500 mb-1">documents[vehicle_photo]</label><input type="file" name="documents[vehicle_photo]" accept=".jpg,.jpeg,.png,.pdf" class="w-full text-sm border rounded px-2 py-1"></div>
+                        <div><label class="block text-xs text-gray-500 mb-1">documents[license_front]</label><input aria-label="documents[license_front]" type="file" name="documents[license_front]" accept=".jpg,.jpeg,.png,.pdf" class="w-full text-sm border rounded px-2 py-1"></div>
+                        <div><label class="block text-xs text-gray-500 mb-1">documents[or_cr]</label><input aria-label="documents[or_cr]" type="file" name="documents[or_cr]" accept=".jpg,.jpeg,.png,.pdf" class="w-full text-sm border rounded px-2 py-1"></div>
+                        <div><label class="block text-xs text-gray-500 mb-1">documents[nbi_clearance]</label><input aria-label="documents[nbi_clearance]" type="file" name="documents[nbi_clearance]" accept=".jpg,.jpeg,.png,.pdf" class="w-full text-sm border rounded px-2 py-1"></div>
+                        <div><label class="block text-xs text-gray-500 mb-1">documents[vehicle_photo]</label><input aria-label="documents[vehicle_photo]" type="file" name="documents[vehicle_photo]" accept=".jpg,.jpeg,.png,.pdf" class="w-full text-sm border rounded px-2 py-1"></div>
                     </div>
                     <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm">Save Documents</button>
                 </form>
@@ -190,12 +190,12 @@
                     @csrf
                     <p class="text-sm font-medium">Add Verification Record</p>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div><label class="block text-xs text-gray-500 mb-1">Document Type</label><select name="document_type" required class="w-full border rounded px-3 py-2 text-sm"><option value="driver_license">Driver License</option><option value="vehicle_registration">Vehicle Registration</option><option value="or_cr">OR/CR</option><option value="nbi_clearance">NBI Clearance</option><option value="brgy_clearance">Brgy Clearance</option><option value="vehicle_photo">Vehicle Photo</option><option value="valid_id">Valid ID</option><option value="other">Other</option></select></div>
-                        <div><label class="block text-xs text-gray-500 mb-1">Document Number</label><input name="document_number" placeholder="e.g. DL12345" class="w-full border rounded px-3 py-2 text-sm"></div>
-                        <div><label class="block text-xs text-gray-500 mb-1">File (jpg/png/pdf, 5MB)</label><input type="file" name="document_file" required accept=".jpg,.jpeg,.png,.pdf" class="w-full text-sm border rounded px-3 py-2"></div>
-                        <div><label class="block text-xs text-gray-500 mb-1">Expires At</label><input type="date" name="expires_at" class="w-full border rounded px-3 py-2 text-sm"></div>
+                        <div><label class="block text-xs text-gray-500 mb-1">Document Type</label><select aria-label="Document Type" name="document_type" required class="w-full border rounded px-3 py-2 text-sm"><option value="driver_license">Driver License</option><option value="vehicle_registration">Vehicle Registration</option><option value="or_cr">OR/CR</option><option value="nbi_clearance">NBI Clearance</option><option value="brgy_clearance">Brgy Clearance</option><option value="vehicle_photo">Vehicle Photo</option><option value="valid_id">Valid ID</option><option value="other">Other</option></select></div>
+                        <div><label class="block text-xs text-gray-500 mb-1">Document Number</label><input aria-label="Document Number" name="document_number" placeholder="e.g. DL12345" class="w-full border rounded px-3 py-2 text-sm"></div>
+                        <div><label class="block text-xs text-gray-500 mb-1">File (jpg/png/pdf, 5MB)</label><input aria-label="File (jpg/png/pdf, 5MB)" type="file" name="document_file" required accept=".jpg,.jpeg,.png,.pdf" class="w-full text-sm border rounded px-3 py-2"></div>
+                        <div><label class="block text-xs text-gray-500 mb-1">Expires At</label><input aria-label="Expires At" type="date" name="expires_at" class="w-full border rounded px-3 py-2 text-sm"></div>
                     </div>
-                    <div><label class="block text-xs text-gray-500 mb-1">Description</label><textarea name="description" rows="2" class="w-full border rounded px-3 py-2 text-sm" placeholder="Notes..."></textarea></div>
+                    <div><label class="block text-xs text-gray-500 mb-1">Description</label><textarea aria-label="Description" name="description" rows="2" class="w-full border rounded px-3 py-2 text-sm" placeholder="Notes..."></textarea></div>
                     <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm">Add Verification</button>
                 </form>
             </div>

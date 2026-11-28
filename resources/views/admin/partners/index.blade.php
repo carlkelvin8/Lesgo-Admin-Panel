@@ -27,7 +27,7 @@
         <table class="responsive-table w-full text-sm">
             <thead class="bg-gray-50 border-b">
                 <tr>
-                    <th class="px-4 py-3 w-10"><input type="checkbox" aria-label="Select all partners on this page" @change="selected = $event.target.checked ? @js($partners->pluck('id')->map(fn ($id) => (string) $id)->values()) : []"></th>
+                    <th class="px-4 py-3 w-10"><input type="checkbox" aria-label="Select all partners on this page" x-on:change="selected = $event.target.checked ? @js($partners->pluck('id')->map(fn ($id) => (string) $id)->values()) : []"></th>
                     <th class="text-left px-6 py-3 text-gray-500 font-medium">Partner</th>
                     <th class="text-left px-6 py-3 text-gray-500 font-medium">Category</th>
                     <th class="text-left px-6 py-3 text-gray-500 font-medium">Status</th>
@@ -59,9 +59,9 @@
                             <a href="{{ route('admin.partners.edit', $partner) }}" class="text-yellow-600 hover:text-yellow-800 mr-2"><i class="fas fa-edit"></i></a>
                             <button type="button" class="text-red-600 hover:text-red-800" title="Delete partner"
                                 x-data
-                                @click="$dispatch('confirm-modal', {
+                                x-on:click="$dispatch('confirm-modal', {
                                     title: 'Delete Partner',
-                                    message: 'Permanently delete {{ addslashes($partner->name) }}, its owner account, assigned riders, orders, payments, menu, staff, analytics, and all other linked data? This cannot be undone.',
+                                    message: @js('Permanently delete ' . ($partner->name) . ', its owner account, assigned riders, orders, payments, menu, staff, analytics, and all other linked data? This cannot be undone.'),
                                     confirmText: 'Delete Restaurant & Data',
                                     onConfirm: () => {
                                         const form = document.createElement('form'); form.method = 'POST'; form.action = '{{ route('admin.partners.destroy', $partner) }}';

@@ -24,9 +24,9 @@
                 @endif
                 @error('profile_picture')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
             </div>
-            <div><label class="mb-1 block text-sm font-medium">Name</label><input name="name" value="{{ old('name', $admin->name) }}" required class="w-full rounded-lg border px-3 py-2"></div>
-            <div><label class="mb-1 block text-sm font-medium">Email</label><input type="email" name="email" value="{{ old('email', $admin->email) }}" required class="w-full rounded-lg border px-3 py-2"></div>
-            <div><label class="mb-1 block text-sm font-medium">Phone number</label><input name="phone_number" value="{{ old('phone_number', $admin->phone_number) }}" class="w-full rounded-lg border px-3 py-2"></div>
+            <div><label for="profile-name" class="mb-1 block text-sm font-medium">Name</label><input name="name" id="profile-name" value="{{ old('name', $admin->name) }}" required class="w-full rounded-lg border px-3 py-2"></div>
+            <div><label for="profile-email" class="mb-1 block text-sm font-medium">Email</label><input type="email" name="email" id="profile-email" value="{{ old('email', $admin->email) }}" required class="w-full rounded-lg border px-3 py-2"></div>
+            <div><label for="profile-phone_number" class="mb-1 block text-sm font-medium">Phone number</label><input name="phone_number" id="profile-phone_number" value="{{ old('phone_number', $admin->phone_number) }}" class="w-full rounded-lg border px-3 py-2"></div>
             <button class="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white">Save profile</button>
         </form>
     </section>
@@ -36,9 +36,9 @@
         <p class="mt-1 text-sm text-gray-500">Changing your password signs out your other admin sessions.</p>
         <form method="POST" action="{{ route('admin.profile.password') }}" class="mt-5 space-y-4">
             @csrf @method('PUT')
-            <div><label class="mb-1 block text-sm font-medium">Current password</label><input type="password" name="current_password" required autocomplete="current-password" class="w-full rounded-lg border px-3 py-2"></div>
-            <div><label class="mb-1 block text-sm font-medium">New password</label><input type="password" name="password" required autocomplete="new-password" class="w-full rounded-lg border px-3 py-2"><p class="mt-1 text-xs text-gray-500">At least 10 characters with uppercase, lowercase, and a number.</p></div>
-            <div><label class="mb-1 block text-sm font-medium">Confirm new password</label><input type="password" name="password_confirmation" required autocomplete="new-password" class="w-full rounded-lg border px-3 py-2"></div>
+            <div><label for="profile-current_password" class="mb-1 block text-sm font-medium">Current password</label><input type="password" name="current_password" id="profile-current_password" required autocomplete="current-password" class="w-full rounded-lg border px-3 py-2"></div>
+            <div><label for="profile-password" class="mb-1 block text-sm font-medium">New password</label><input type="password" name="password" id="profile-password" required autocomplete="new-password" class="w-full rounded-lg border px-3 py-2"><p class="mt-1 text-xs text-gray-500">At least 10 characters with uppercase, lowercase, and a number.</p></div>
+            <div><label for="profile-password_confirmation" class="mb-1 block text-sm font-medium">Confirm new password</label><input type="password" name="password_confirmation" id="profile-password_confirmation" required autocomplete="new-password" class="w-full rounded-lg border px-3 py-2"></div>
             <button class="rounded-lg bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white">Update password</button>
         </form>
     </section>
@@ -69,19 +69,15 @@
     </div>
     <div class="mt-4">
         @if($isEnabled)
-            <div class="flex items-center gap-3">
-                <form method="POST" action="{{ route('admin.2fa.disable') }}" x-data onsubmit="return confirm('Are you sure you want to disable two-factor authentication?')">
-                    @csrf
-                    <input type="hidden" name="password" value="">
-                    <button type="button" @click="$el.closest('form').querySelector('input[name=password]').value = prompt('Enter your current password to confirm:') || ''; if($el.closest('form').querySelector('input[name=password]').value) $el.closest('form').submit()"
-                        class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm transition">
-                        <i class="fas fa-ban mr-1"></i> Disable 2FA
-                    </button>
-                </form>
-                <a href="{{ route('admin.2fa.setup') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm transition">
-                    <i class="fas fa-rotate mr-1"></i> Regenerate Codes
-                </a>
-            </div>
+            <form method="POST" action="{{ route('admin.2fa.regenerate') }}" class="space-y-3">
+                @csrf
+                <label for="two-factor-password" class="block text-sm font-medium">Current password</label>
+                <input id="two-factor-password" type="password" name="password" required autocomplete="current-password" class="w-full rounded-lg border px-3 py-2">
+                <div class="flex flex-wrap gap-3">
+                    <button class="rounded-lg bg-gray-200 px-4 py-2 text-sm text-gray-700">Regenerate Codes</button>
+                    <button formaction="{{ route('admin.2fa.disable') }}" onclick="return confirm('Disable two-factor authentication?')" class="rounded-lg bg-red-600 px-4 py-2 text-sm text-white">Disable 2FA</button>
+                </div>
+            </form>
         @else
             <a href="{{ route('admin.2fa.setup') }}" class="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition">
                 <i class="fas fa-shield-halved"></i> Set Up Two-Factor Authentication
@@ -97,7 +93,7 @@
             <div class="flex flex-col gap-3 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
                 <div class="min-w-0"><p class="truncate text-sm font-medium text-gray-800">{{ $session->user_agent ?: 'Unknown browser' }}</p><p class="mt-1 text-xs text-gray-500">{{ $session->ip_address ?: 'Unknown IP' }} · {{ $session->last_activity->diffForHumans() }} @if($session->is_current) · <span class="font-semibold text-green-600">Current session</span>@endif</p></div>
                 @unless($session->is_current)
-                    <button type="button" class="text-sm font-semibold text-red-600" x-data @click="$dispatch('confirm-modal', { title: 'Sign Out Session', message: 'Sign out this administrator session?', confirmText: 'Sign Out', onConfirm: () => { const f = document.createElement('form'); f.method = 'POST'; f.action = '{{ route('admin.profile.sessions.destroy', $session->id) }}'; const i1=document.createElement('input');i1.type='hidden';i1.name='_token';i1.value='{{ csrf_token() }}';f.appendChild(i1);const i2=document.createElement('input');i2.type='hidden';i2.name='_method';i2.value='DELETE';f.appendChild(i2); document.body.appendChild(f); f.submit(); } })">Sign out</button>
+                    <button type="button" class="text-sm font-semibold text-red-600" x-data x-on:click="$dispatch('confirm-modal', { title: 'Sign Out Session', message: 'Sign out this administrator session?', confirmText: 'Sign Out', onConfirm: () => { const f = document.createElement('form'); f.method = 'POST'; f.action = '{{ route('admin.profile.sessions.destroy', $session->id) }}'; const i1=document.createElement('input');i1.type='hidden';i1.name='_token';i1.value='{{ csrf_token() }}';f.appendChild(i1);const i2=document.createElement('input');i2.type='hidden';i2.name='_method';i2.value='DELETE';f.appendChild(i2); document.body.appendChild(f); f.submit(); } })">Sign out</button>
                 @endunless
             </div>
         @empty
